@@ -18,19 +18,19 @@ const preguntasEspeciales = [
     id: 6,
     pregunta: "¿Con qué elemento conectas más?",
     campo: "elemento",
-    opciones: ["🔥 Fuego — Pasión y acción", "🌊 Agua — Emoción y fluidez", "🌍 Tierra — Estabilidad y calma", "💨 Aire — Pensamiento y libertad"]
+    opciones: ["🜂 Fuego — Pasión y acción", "🜄 Agua — Emoción y fluidez", "🜃 Tierra — Estabilidad y calma", "🜁 Aire — Pensamiento y libertad"]
   },
   {
     id: 7,
     pregunta: "¿Qué animal sientes que te representa?",
     campo: "animal",
-    opciones: ["🦁 León — Valentía", "🦋 Mariposa — Transformación", "🦅 Águila — Visión", "🐺 Lobo — Intuición", "🐬 Delfín — Sabiduría", "🦊 Zorro — Astucia", "🐉 Dragón — Poder", "🦉 Búho — Conocimiento"]
+    opciones: ["León — Valentía", "Mariposa — Transformación", "Águila — Visión", "Lobo — Intuición", "Delfín — Sabiduría", "Zorro — Astucia", "Dragón — Poder", "Búho — Conocimiento"]
   },
   {
     id: 8,
     pregunta: "¿Cómo tomas tus decisiones importantes?",
     campo: "decision",
-    opciones: ["🧠 Con la razón siempre", "❤️ Con el corazón siempre", "⚖️ Equilibrando ambos", "🔮 Sigo mi intuición"]
+    opciones: ["Con la razón siempre", "Con el corazón siempre", "Equilibrando ambos", "Sigo mi intuición"]
   },
 ]
 
@@ -53,6 +53,7 @@ export default function Onboarding() {
       ? pasos[paso - 1].campo
       : preguntasEspeciales[paso - pasos.length - 1].campo
     setData(d => ({ ...d, [campo]: val }))
+    localStorage.setItem(campo, val)
     setValor('')
     if (paso < totalPasos) {
       setPaso(p => p + 1)
@@ -81,7 +82,10 @@ export default function Onboarding() {
           ))}
         </div>
 
-        <h2 className="text-2xl font-semibold text-center mb-8" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.9)' }}>
+        <h2
+          className="text-2xl font-semibold text-center mb-8"
+          style={{ textShadow: '0 2px 8px rgba(0,0,0,0.9)' }}
+        >
           {pasoActual.pregunta}
         </h2>
 
@@ -103,7 +107,10 @@ export default function Onboarding() {
               Continuar
             </button>
             {pasoActual.tipo === 'time' && (
-              <button onClick={() => guardarYseguir('no sé')} className="text-white/50 text-sm text-center">
+              <button
+                onClick={() => guardarYseguir('no sé')}
+                className="text-white/50 text-sm text-center"
+              >
                 Omitir — no sé mi hora de nacimiento
               </button>
             )}
@@ -117,7 +124,7 @@ export default function Onboarding() {
               <button
                 key={op}
                 onClick={() => guardarYseguir(op)}
-                className="w-full bg-white/10 border border-white/30 backdrop-blur rounded-2xl px-4 py-3 text-left text-white hover:bg-purple-600/40 hover:border-purple-400 transition text-base"
+                className="w-full bg-white/10 border border-white/30 backdrop-blur rounded-2xl px-4 py-3 text-left text-white hover:bg-purple-600/40 hover:border-purple-400 transition text-base tracking-wide"
               >
                 {op}
               </button>
