@@ -8,46 +8,48 @@ export default function Landing() {
         backgroundPosition: 'center',
       }}
     >
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 bg-black/60" />
       
       <div className="relative z-10 flex flex-col items-center">
 
-        <div className="mb-6 text-6xl">✨</div>
+        <div className="mb-6 text-6xl" style={{ filter: 'drop-shadow(0 0 20px rgba(192,132,252,0.8))' }}>✨</div>
         
         <h1 className="text-5xl font-bold mb-4" style={{
           background: 'linear-gradient(to right, #c084fc, #f9a8d4, #e0c3fc)',
           WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent'
+          WebkitTextFillColor: 'transparent',
+          filter: 'drop-shadow(0 2px 8px rgba(192,132,252,0.9))'
         }}>
           UNIVERSE
         </h1>
         
-        <p className="text-purple-200 text-lg mb-1 font-light tracking-wide">
+        <p className="text-white text-lg mb-1 font-light tracking-wide" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.9)' }}>
           Your personal AI guide to astrology,
         </p>
-        <p className="text-purple-200 text-lg mb-12 font-light tracking-wide">
+        <p className="text-white text-lg mb-12 font-light tracking-wide" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.9)' }}>
           tarot and self-discovery.
         </p>
 
         <button
           onClick={() => window.location.href = '/onboarding'}
-          className="bg-white/10 backdrop-blur border border-white/30 text-white font-semibold py-4 px-10 rounded-full text-lg hover:bg-white/20 transition"
+          className="bg-white/10 backdrop-blur border border-white/40 text-white font-semibold py-4 px-10 rounded-full text-lg hover:bg-white/20 transition"
+          style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}
         >
           Explore my Universe
         </button>
 
-        <div className="mt-10 flex gap-8 text-2xl opacity-80">
+        <div className="mt-10 flex gap-8 text-2xl">
           <div className="flex flex-col items-center gap-1">
             <span>❤️</span>
-            <span className="text-xs text-purple-200">Love</span>
+            <span className="text-xs text-white" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>Love</span>
           </div>
           <div className="flex flex-col items-center gap-1">
             <span>🌙</span>
-            <span className="text-xs text-purple-200">My future</span>
+            <span className="text-xs text-white" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>My future</span>
           </div>
           <div className="flex flex-col items-center gap-1">
             <span>✨</span>
-            <span className="text-xs text-purple-200">My path</span>
+            <span className="text-xs text-white" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>My path</span>
           </div>
         </div>
 
