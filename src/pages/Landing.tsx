@@ -3,15 +3,13 @@ export default function Landing() {
     <div 
       className="min-h-screen text-white flex flex-col items-center justify-center px-6 text-center relative"
       style={{
-        backgroundImage: 'url(/images/stocksnap-constellations-2609647.jpg)',
+        backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
     >
-      {/* Overlay oscuro para legibilidad */}
       <div className="absolute inset-0 bg-black/50" />
       
-      {/* Contenido */}
       <div className="relative z-10 flex flex-col items-center">
 
         <div className="mb-6 text-6xl">✨</div>
