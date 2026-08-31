@@ -11,14 +11,9 @@ export async function getUser() {
 }
 
 export async function guardarPerfil(userId: string, datos: Record<string, string>) {
-  const { error } = await supabase
+  await supabase
     .from('profiles')
-    .upsert({
-      id: userId,
-      name: datos.nombre || '',
-      language: 'es',
-    })
-  if (error) console.error('Error guardando perfil:', error)
+    .upsert({ id: userId, name: datos.nombre || '', language: 'es' })
 
   if (datos.fechaNacimiento) {
     await supabase
