@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { getCartaDiaria, getCartaDiariaSVG } from '../lib/motores/tarotDiario'
+import { getCartaDiaria } from '../lib/motores/tarotDiario'
+import { getCartaSVG } from '../components/svg/TarotSVG'
 import Compartir from '../components/Compartir'
 
 export default function TarotDiario() {
@@ -62,17 +63,29 @@ Escribe una interpretación del día profunda, personal y poética de máximo 3 
 
         {!revelada ? (
           <div className="flex flex-col items-center gap-8">
+            {/* Carta boca abajo */}
             <div
-              className="w-32 h-48 rounded-xl border border-purple-500/40 bg-gradient-to-b from-purple-900/60 to-black/60 backdrop-blur flex items-center justify-center cursor-pointer hover:border-purple-400 transition"
+              className="w-36 h-56 rounded-xl cursor-pointer hover:scale-105 transition-transform"
               onClick={revelarCarta}
+              style={{ boxShadow: '0 0 30px rgba(139,92,246,0.4)' }}
             >
-              <svg viewBox="0 0 80 120" fill="none" className="w-20 h-28 opacity-40">
-                <rect x="2" y="2" width="76" height="116" rx="8" stroke="#8b5cf6" strokeWidth="1.5"/>
-                <path d="M40 20 L40 100 M10 60 L70 60" stroke="#8b5cf6" strokeWidth="0.5" strokeDasharray="4 4"/>
-                <circle cx="40" cy="60" r="20" stroke="#8b5cf6" strokeWidth="1"/>
-                <circle cx="40" cy="60" r="4" fill="#8b5cf6" opacity="0.5"/>
+              <svg viewBox="0 0 120 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                <rect width="120" height="200" fill="#1a0f2e" rx="8"/>
+                <rect x="4" y="4" width="112" height="192" fill="none" stroke="#c084fc" strokeWidth="1" rx="6"/>
+                <rect x="8" y="8" width="104" height="184" fill="none" stroke="#7c3aed" strokeWidth="0.5" rx="4" strokeDasharray="3 3"/>
+                {/* Patrón de dorso */}
+                {[...Array(6)].map((_, i) => (
+                  <ellipse key={i} cx="60" cy="100" rx={15 + i * 12} ry={25 + i * 18} fill="none" stroke="#7c3aed" strokeWidth="0.5" opacity={0.8 - i * 0.1}/>
+                ))}
+                <circle cx="60" cy="100" r="8" fill="none" stroke="#c084fc" strokeWidth="1.5"/>
+                <circle cx="60" cy="100" r="3" fill="#c084fc"/>
+                {/* Estrellas decorativas */}
+                {[[20,30],[100,30],[20,170],[100,170],[60,15],[60,185]].map(([x,y],i) => (
+                  <path key={i} d={`M${x} ${y-4} L${x+1} ${y-1} L${x+4} ${y-1} L${x+2} ${y+1} L${x+3} ${y+4} L${x} ${y+2} L${x-3} ${y+4} L${x-2} ${y+1} L${x-4} ${y-1} L${x-1} ${y-1} Z`} fill="#7c3aed" opacity="0.6"/>
+                ))}
               </svg>
             </div>
+
             <div className="text-center">
               <p className="text-white/60 text-sm mb-6">Centra tu mente. Cuando estés listo, toca la carta.</p>
               <button
@@ -85,7 +98,13 @@ Escribe una interpretación del día profunda, personal y poética de máximo 3 
           </div>
         ) : (
           <div className="flex flex-col items-center gap-6 w-full">
-            {getCartaDiariaSVG(carta.numero)}
+            {/* Carta SVG real */}
+            <div
+              className="w-36 h-56 rounded-xl overflow-hidden"
+              style={{ boxShadow: '0 0 40px rgba(192,132,252,0.5)' }}
+            >
+              {getCartaSVG(carta.nombre)}
+            </div>
 
             <div className="text-center">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-1">{carta.numero}</p>
