@@ -17,6 +17,7 @@ const CATEGORIAS = [
       { id: 'monedas', nombre: 'Oracle de Monedas', subtitulo: 'Cleromancia · Decisión', descripcion: 'Tres monedas, seis patrones posibles. El azar como espejo de la energía presente.', ruta: '/monedas' },
       { id: 'bibliomancia', nombre: 'Bibliomancia', subtitulo: 'Textos en dominio público', descripcion: 'Abre un texto sagrado o filosófico al azar y encuentra orientación.', ruta: '/bibliomancia' },
       { id: 'litomancia', nombre: 'Litomancia', subtitulo: 'Oracle de piedras', descripcion: 'Tres cristales son seleccionados para ti y la IA interpreta su mensaje.', ruta: '/litomancia' },
+      { id: 'compatibilidad', nombre: 'Compatibilidad', subtitulo: 'Numerología · Dos personas', descripcion: 'Explora la energía numerológica entre dos personas — amorosa, familiar o profesional.', ruta: '/compatibilidad' },
       { id: 'omikuji', nombre: 'Omikuji', subtitulo: 'Fortuna del día · Japón', descripcion: 'Como en los santuarios japoneses, extrae tu fortuna diaria.', ruta: '/omikuji', etiqueta: 'DIARIO' },
       { id: 'numerologia', nombre: 'Numerología', subtitulo: 'Tradición pitagórica', descripcion: 'Tu nombre y fecha de nacimiento revelan tu misión.', ruta: '/numerologia' },
       { id: 'bazi', nombre: 'BaZi', subtitulo: 'Cuatro Pilares · China', descripcion: 'Tu energía esencial y ciclos de vida.', ruta: '/bazi' },
@@ -28,6 +29,8 @@ const CATEGORIAS = [
       { id: 'luna', nombre: 'Oracle Lunar', subtitulo: 'Fase lunar real · Hoy', descripcion: 'La fase lunar de hoy y su energía para tu vida.', ruta: '/luna', etiqueta: 'DIARIO' },
       { id: 'rueda', nombre: 'Rueda del Año', subtitulo: 'Ciclo estacional · Tradición pagana', descripcion: 'Los 8 Sabbats y la sabiduría de cada estación del año.', ruta: '/rueda' },
       { id: 'elementos', nombre: 'Oracle Elemental', subtitulo: 'Los cinco elementos', descripcion: 'Fuego, Agua, Tierra, Aire y Éter — explora desde la energía elemental.', ruta: '/elementos' },
+      { id: 'chakras', nombre: 'Chakra Oracle', subtitulo: 'Sistema de chakras · Tradición hindú', descripcion: 'Explora los 7 chakras y cuál necesita atención en tu vida ahora mismo.', ruta: '/chakras' },
+      { id: 'plantas', nombre: 'Plant Oracle', subtitulo: 'Simbolismo vegetal · Tradiciones del mundo', descripcion: 'Cada planta lleva un mensaje. Explora el simbolismo de la naturaleza.', ruta: '/plantas' },
       { id: 'suenos', nombre: 'Oracle de Sueños', subtitulo: 'Psicología · Simbolismo', descripcion: 'Interpreta tus sueños con psicología jungiana y simbolismo universal.', ruta: '/suenos' },
       { id: 'animales', nombre: 'Simbolismo Animal', subtitulo: 'Arquetipos · Tradiciones del mundo', descripcion: 'Explora el simbolismo de tu animal guía en diferentes culturas.', ruta: '/animales' },
       { id: 'presagios', nombre: 'Presagios y Señales', subtitulo: 'Sincronicidad · Simbolismo', descripcion: '¿Hay una señal que se repite en tu vida? Exploramos su significado.', ruta: '/presagios' },
@@ -102,6 +105,13 @@ export default function Tradiciones() {
         <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur text-center">
           <p className="text-white/30 text-xs">Exploramos, no apropiamos. Cada tradición se presenta con su contexto cultural original.</p>
         </div>
+
+        <button
+          onClick={() => window.location.href = '/disclaimer'}
+          className="text-white/20 text-xs text-center underline"
+        >
+          Aviso Legal
+        </button>
 
       </div>
     </div>
