@@ -31,11 +31,19 @@ export default function Landing() {
         </p>
 
         <button
-          onClick={() => window.location.href = '/onboarding'}
-          className="bg-white/10 backdrop-blur border border-white/40 text-white font-semibold py-4 px-10 rounded-full text-lg hover:bg-white/20 transition"
+          onClick={() => window.location.href = '/auth'}
+          className="bg-white/10 backdrop-blur border border-white/40 text-white font-semibold py-4 px-10 rounded-full text-lg hover:bg-white/20 transition mb-4"
           style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}
         >
           Explorar mi Universo
+        </button>
+
+        <button
+          onClick={() => window.location.href = '/onboarding'}
+          className="text-white/40 text-sm"
+          style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}
+        >
+          Continuar sin cuenta →
         </button>
 
         <div className="mt-10 flex gap-8 text-2xl">
