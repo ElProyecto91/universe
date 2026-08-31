@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { getCartaSVG } from '../components/svg/TarotSVG'
 import Compartir from '../components/Compartir'
 
 const ARCANOS_MAYORES = [
@@ -37,25 +38,6 @@ function cartaAleatoria() {
   const carta = ARCANOS_MAYORES[Math.floor(Math.random() * ARCANOS_MAYORES.length)]
   const invertida = Math.random() > 0.7
   return { ...carta, invertida }
-}
-
-function CartaSVG({ numero, invertida }: { numero: string; invertida: boolean }) {
-  return (
-    <div
-      className="flex flex-col items-center justify-between bg-gradient-to-b from-purple-900/80 to-black/80 border border-purple-500/40 rounded-2xl p-4 backdrop-blur"
-      style={{ width: '90px', height: '140px', transform: invertida ? 'rotate(180deg)' : 'none' }}
-    >
-      <div className="text-purple-300 text-xs font-light tracking-widest">{numero}</div>
-      <svg viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-12 h-16">
-        <circle cx="30" cy="30" r="15" stroke="#c084fc" strokeWidth="1.5" opacity="0.6"/>
-        <path d="M30 5 L30 55 M5 30 L55 30" stroke="#c084fc" strokeWidth="1" strokeLinecap="round" opacity="0.4"/>
-        <path d="M15 15 L45 45 M45 15 L15 45" stroke="#c084fc" strokeWidth="1" strokeLinecap="round" opacity="0.3"/>
-        <circle cx="30" cy="30" r="4" fill="#c084fc" opacity="0.8"/>
-        <path d="M30 15 L33 25 L44 25 L35 31 L38 42 L30 36 L22 42 L25 31 L16 25 L27 25 Z" stroke="#e879f9" strokeWidth="1" fill="none" opacity="0.5"/>
-      </svg>
-      <div className="text-purple-400 text-xs font-light">✦</div>
-    </div>
-  )
 }
 
 export default function Tarot() {
@@ -137,7 +119,8 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
                 <button
                   key={t.id}
                   onClick={() => iniciarTirada(t)}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-left hover:bg-purple-600/20 hover:border-purple-500/40 transition backdrop-blur"
+                  className="w-full bg-white/8 border border-white/20 rounded-2xl p-4 text-left hover:bg-purple-600/20 hover:border-purple-500/40 transition backdrop-blur"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
                 >
                   <p className="text-white font-semibold">{t.nombre}</p>
                   <p className="text-purple-300/70 text-xs mt-1">{t.descripcion}</p>
@@ -151,14 +134,25 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
           <>
             <div className="text-center">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Tus cartas</p>
+              <p className="text-white/60 text-sm">Las cartas han hablado</p>
             </div>
             <div className="flex gap-3 flex-wrap justify-center">
               {cartas.map((carta, i) => (
                 <div key={i} className="flex flex-col items-center gap-2">
-                  <CartaSVG numero={carta.numero} invertida={carta.invertida} />
-                  <p className="text-white text-xs font-medium text-center max-w-20">{carta.nombre}</p>
+                  <div
+                    className="rounded-xl overflow-hidden"
+                    style={{
+                      width: cartas.length === 1 ? '140px' : cartas.length <= 3 ? '90px' : '70px',
+                      height: cartas.length === 1 ? '220px' : cartas.length <= 3 ? '140px' : '110px',
+                      transform: carta.invertida ? 'rotate(180deg)' : 'none',
+                      boxShadow: '0 0 20px rgba(139,92,246,0.3)',
+                    }}
+                  >
+                    {getCartaSVG(carta.nombre)}
+                  </div>
+                  <p className="text-white text-xs font-medium text-center" style={{ maxWidth: cartas.length > 3 ? '70px' : '100px' }}>{carta.nombre}</p>
                   {carta.invertida && <p className="text-purple-400 text-xs">Invertida</p>}
-                  <p className="text-white/40 text-xs text-center max-w-24">{carta.keywords}</p>
+                  <p className="text-white/40 text-xs text-center" style={{ maxWidth: '80px' }}>{carta.keywords.split(' · ')[0]}</p>
                 </div>
               ))}
             </div>
@@ -176,8 +170,17 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
             <div className="flex gap-3 flex-wrap justify-center">
               {cartas.map((carta, i) => (
                 <div key={i} className="flex flex-col items-center gap-1">
-                  <CartaSVG numero={carta.numero} invertida={carta.invertida} />
-                  <p className="text-white/60 text-xs text-center max-w-20">{carta.nombre}</p>
+                  <div
+                    className="rounded-xl overflow-hidden"
+                    style={{
+                      width: '70px',
+                      height: '110px',
+                      transform: carta.invertida ? 'rotate(180deg)' : 'none',
+                    }}
+                  >
+                    {getCartaSVG(carta.nombre)}
+                  </div>
+                  <p className="text-white/60 text-xs text-center" style={{ maxWidth: '70px' }}>{carta.nombre}</p>
                 </div>
               ))}
             </div>
