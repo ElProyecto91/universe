@@ -18,6 +18,9 @@ import DiceOracle from './pages/DiceOracle'
 import Bibliomancia from './pages/Bibliomancia'
 import OghamOracle from './pages/OghamOracle'
 import PaganPaths from './pages/PaganPaths'
+import Lithomancy from './pages/Lithomancy'
+import AnimalOracle from './pages/AnimalOracle'
+import Scrying from './pages/Scrying'
 
 export default function App() {
   return (
@@ -42,6 +45,9 @@ export default function App() {
         <Route path="/bibliomancia" element={<Bibliomancia />} />
         <Route path="/ogham" element={<OghamOracle />} />
         <Route path="/pagan" element={<PaganPaths />} />
+        <Route path="/litomancia" element={<Lithomancy />} />
+        <Route path="/animales" element={<AnimalOracle />} />
+        <Route path="/scrying" element={<Scrying />} />
       </Routes>
     </BrowserRouter>
   )
