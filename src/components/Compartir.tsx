@@ -66,3 +66,15 @@ export default function Compartir({ titulo, texto, hashtags = [] }: Props) {
           className="bg-pink-600/20 border border-pink-500/30 text-pink-300 rounded-2xl py-3 text-xs font-semibold hover:bg-pink-600/30 transition"
         >
           Instagram
+        </button>
+      </div>
+
+      <button
+        onClick={copiarTexto}
+        className="w-full mt-3 bg-white/5 border border-white/10 text-white/50 rounded-2xl py-3 text-xs hover:bg-white/10 transition"
+      >
+        Copiar texto
+      </button>
+    </div>
+  )
+}
