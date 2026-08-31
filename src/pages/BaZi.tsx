@@ -1,5 +1,6 @@
 import { calcularBazi, CINCO_ELEMENTOS_DESC } from '../lib/motores/bazi'
 import { useState } from 'react'
+import Compartir from '../components/Compartir'
 
 export default function BaZi() {
   const [interpretacion, setInterpretacion] = useState('')
@@ -35,7 +36,7 @@ ${pilaresTexto}
 Day Master: ${bazi.dayMaster.nombre} (${bazi.dayMaster.elemento})
 Elemento dominante: ${bazi.elementoDominante}
 
-Escribe una lectura BaZi de 3-4 párrafos. Primero explica el Day Master y lo que revela sobre la personalidad esencial de ${nombre}. Luego habla del balance de los cinco elementos en su carta. Menciona las áreas de vida representadas por cada pilar. Termina con el período actual y qué energías están presentes. Habla directamente a ${nombre}. Usa la perspectiva de la filosofía china, no de la astrología occidental.`
+Escribe una lectura BaZi de 3-4 párrafos. Primero explica el Day Master y lo que revela sobre la personalidad esencial de ${nombre}. Luego habla del balance de los cinco elementos en su carta. Menciona las áreas de vida representadas por cada pilar. Termina con el período actual y qué energías están presentes. Habla directamente a ${nombre}.`
 
     try {
       const res = await fetch(
@@ -49,7 +50,7 @@ Escribe una lectura BaZi de 3-4 párrafos. Primero explica el Day Master y lo qu
         }
       )
       const data = await res.json()
-      setInterpretacion(data.candidates?.[0]?.content?.parts?.[0]?.text || 'Las estrellas guardan silencio por un momento.')
+      setInterpretacion(data.candidates?.[0]?.content?.parts?.[0]?.text || '')
     } catch {
       setInterpretacion(CINCO_ELEMENTOS_DESC[bazi.elementoDominante] || '')
     }
@@ -57,11 +58,7 @@ Escribe una lectura BaZi de 3-4 párrafos. Primero explica el Day Master y lo qu
   }
 
   const coloresElemento: Record<string, string> = {
-    'Madera': '#22c55e',
-    'Fuego': '#ef4444',
-    'Tierra': '#f59e0b',
-    'Metal': '#94a3b8',
-    'Agua': '#3b82f6',
+    'Madera': '#22c55e', 'Fuego': '#ef4444', 'Tierra': '#f59e0b', 'Metal': '#94a3b8', 'Agua': '#3b82f6',
   }
 
   return (
@@ -70,7 +67,6 @@ Escribe una lectura BaZi de 3-4 párrafos. Primero explica el Day Master y lo qu
 
       <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-6 py-10 gap-6">
 
-        {/* Header */}
         <div className="flex items-center">
           <button onClick={() => window.location.href = '/tradiciones'} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
@@ -79,14 +75,12 @@ Escribe una lectura BaZi de 3-4 párrafos. Primero explica el Day Master y lo qu
           </div>
         </div>
 
-        {/* Explicación */}
         <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur">
           <p className="text-white/60 text-sm leading-relaxed">
-            BaZi utiliza tu fecha de nacimiento para construir cuatro pilares, cada uno formado por un Tallo Celestial y una Rama Terrestre. Juntos revelan tu energía esencial y los ciclos de tu vida.
+            BaZi utiliza tu fecha de nacimiento para construir cuatro pilares. Juntos revelan tu energía esencial y los ciclos de tu vida.
           </p>
         </div>
 
-        {/* Cuatro pilares */}
         <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-5">Tus Cuatro Pilares</p>
           <div className="grid grid-cols-3 gap-3">
@@ -108,13 +102,11 @@ Escribe una lectura BaZi de 3-4 párrafos. Primero explica el Day Master y lo qu
                   </div>
                 </div>
                 <p className="text-white/50 text-xs text-center">{pilar.nombre}</p>
-                <p className="text-white/25 text-xs text-center leading-tight">{pilar.significado.split(' · ')[0]}</p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Day Master */}
         <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur">
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Day Master · Tu esencia</p>
           <div className="flex items-center gap-3">
@@ -128,7 +120,6 @@ Escribe una lectura BaZi de 3-4 párrafos. Primero explica el Day Master y lo qu
           </div>
         </div>
 
-        {/* Lectura IA */}
         {!generado ? (
           <button
             onClick={generarLectura}
@@ -149,6 +140,14 @@ Escribe una lectura BaZi de 3-4 párrafos. Primero explica el Day Master y lo qu
               <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>
             )}
           </div>
+        )}
+
+        {!cargando && interpretacion && (
+          <Compartir
+            titulo={`Mi BaZi: Day Master ${bazi.dayMaster.nombre} · ${bazi.dayMaster.elemento}`}
+            texto={interpretacion}
+            hashtags={['BaZi', 'Universe', 'CuatroPilares', 'AstrologiaChina']}
+          />
         )}
 
         {generado && !cargando && (
