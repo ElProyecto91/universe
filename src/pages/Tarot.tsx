@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Compartir from '../components/Compartir'
 
 const ARCANOS_MAYORES = [
   { nombre: 'El Mago', numero: 'I', keywords: 'Voluntad · Poder · Acción' },
@@ -42,11 +43,7 @@ function CartaSVG({ numero, invertida }: { numero: string; invertida: boolean })
   return (
     <div
       className="flex flex-col items-center justify-between bg-gradient-to-b from-purple-900/80 to-black/80 border border-purple-500/40 rounded-2xl p-4 backdrop-blur"
-      style={{
-        width: '90px',
-        height: '140px',
-        transform: invertida ? 'rotate(180deg)' : 'none',
-      }}
+      style={{ width: '90px', height: '140px', transform: invertida ? 'rotate(180deg)' : 'none' }}
     >
       <div className="text-purple-300 text-xs font-light tracking-widest">{numero}</div>
       <svg viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-12 h-16">
@@ -109,12 +106,10 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
         }
       )
       const data = await res.json()
-      const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Las cartas guardan silencio por un momento.'
-      setInterpretacion(texto)
+      setInterpretacion(data.candidates?.[0]?.content?.parts?.[0]?.text || 'Las cartas guardan silencio por un momento.')
     } catch {
       setInterpretacion('Las cartas guardan silencio por un momento. Inténtalo de nuevo.')
     }
-
     setCargando(false)
   }
 
@@ -122,7 +117,6 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
       <div className="absolute inset-0 bg-black/75" />
 
-      {/* Header */}
       <div className="relative z-10 flex items-center px-4 py-4 border-b border-white/10">
         <button onClick={() => window.location.href = '/universo'} className="text-purple-300 text-sm">← Volver</button>
         <div className="flex-1 text-center">
@@ -132,7 +126,6 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
 
       <div className="relative z-10 flex flex-col items-center px-6 py-8 gap-8">
 
-        {/* Elegir tirada */}
         {fase === 'elegir' && (
           <>
             <div className="text-center">
@@ -154,12 +147,10 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
           </>
         )}
 
-        {/* Revelar cartas */}
         {fase === 'revelar' && (
           <>
             <div className="text-center">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Tus cartas</p>
-              <p className="text-white/60 text-sm">Las cartas han hablado</p>
             </div>
             <div className="flex gap-3 flex-wrap justify-center">
               {cartas.map((carta, i) => (
@@ -180,7 +171,6 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
           </>
         )}
 
-        {/* Interpretación */}
         {fase === 'interpretar' && (
           <>
             <div className="flex gap-3 flex-wrap justify-center">
@@ -204,6 +194,16 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
                 <p className="text-white/90 text-sm leading-relaxed">{interpretacion}</p>
               )}
             </div>
+
+            {!cargando && interpretacion && (
+              <div className="w-full max-w-sm">
+                <Compartir
+                  titulo={`Mi tirada de Tarot: ${cartas.map(c => c.nombre).join(', ')}`}
+                  texto={interpretacion}
+                  hashtags={['Tarot', 'Universe', 'Lectura', 'Astrologia']}
+                />
+              </div>
+            )}
 
             {!cargando && (
               <div className="w-full max-w-sm flex flex-col gap-3">
@@ -229,7 +229,6 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
             )}
           </>
         )}
-
       </div>
     </div>
   )
