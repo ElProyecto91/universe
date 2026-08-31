@@ -21,6 +21,11 @@ import PaganPaths from './pages/PaganPaths'
 import Lithomancy from './pages/Lithomancy'
 import AnimalOracle from './pages/AnimalOracle'
 import Scrying from './pages/Scrying'
+import ElementOracle from './pages/ElementOracle'
+import WheelOfYear from './pages/WheelOfYear'
+import CoinOracle from './pages/CoinOracle'
+import OracleMix from './pages/OracleMix'
+import OmensOracle from './pages/OmensOracle'
 
 export default function App() {
   return (
@@ -48,6 +53,11 @@ export default function App() {
         <Route path="/litomancia" element={<Lithomancy />} />
         <Route path="/animales" element={<AnimalOracle />} />
         <Route path="/scrying" element={<Scrying />} />
+        <Route path="/elementos" element={<ElementOracle />} />
+        <Route path="/rueda" element={<WheelOfYear />} />
+        <Route path="/monedas" element={<CoinOracle />} />
+        <Route path="/oracle-mix" element={<OracleMix />} />
+        <Route path="/presagios" element={<OmensOracle />} />
       </Routes>
     </BrowserRouter>
   )
