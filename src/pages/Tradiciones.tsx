@@ -9,6 +9,7 @@ const CATEGORIAS = [
       { id: 'iching', nombre: 'I Ching', subtitulo: 'El Libro de los Cambios · China', descripcion: '64 hexagramas revelan la energía del momento.', ruta: '/iching' },
       { id: 'dados', nombre: 'Oracle de Dados', subtitulo: 'Cleromancia · Tradición antigua', descripcion: 'Lanza tres dados y explora el mensaje de los números.', ruta: '/dados' },
       { id: 'bibliomancia', nombre: 'Bibliomancia', subtitulo: 'Textos en dominio público', descripcion: 'Abre un texto sagrado o filosófico al azar y encuentra orientación.', ruta: '/bibliomancia' },
+      { id: 'litomancia', nombre: 'Litomancia', subtitulo: 'Oracle de piedras', descripcion: 'Tres cristales son seleccionados para ti y la IA interpreta su mensaje.', ruta: '/litomancia' },
       { id: 'omikuji', nombre: 'Omikuji', subtitulo: 'Fortuna del día · Japón', descripcion: 'Como en los santuarios japoneses, extrae tu fortuna diaria.', ruta: '/omikuji', etiqueta: 'DIARIO' },
       { id: 'numerologia', nombre: 'Numerología', subtitulo: 'Tradición pitagórica', descripcion: 'Tu nombre y fecha de nacimiento revelan tu misión.', ruta: '/numerologia' },
       { id: 'bazi', nombre: 'BaZi', subtitulo: 'Cuatro Pilares · China', descripcion: 'Tu energía esencial y ciclos de vida.', ruta: '/bazi' },
@@ -19,6 +20,8 @@ const CATEGORIAS = [
     tradiciones: [
       { id: 'luna', nombre: 'Oracle Lunar', subtitulo: 'Fase lunar real · Hoy', descripcion: 'La fase lunar de hoy y su energía para tu vida.', ruta: '/luna', etiqueta: 'DIARIO' },
       { id: 'suenos', nombre: 'Oracle de Sueños', subtitulo: 'Psicología · Simbolismo', descripcion: 'Interpreta tus sueños con psicología jungiana y simbolismo universal.', ruta: '/suenos' },
+      { id: 'animales', nombre: 'Simbolismo Animal', subtitulo: 'Arquetipos · Tradiciones del mundo', descripcion: 'Explora el simbolismo de tu animal guía en diferentes culturas.', ruta: '/animales' },
+      { id: 'scrying', nombre: 'Scrying', subtitulo: 'Contemplación · Visión interior', descripcion: 'Contempla la esfera de cristal y deja emerger las visiones simbólicas.', ruta: '/scrying' },
     ]
   },
   {
@@ -71,7 +74,7 @@ export default function Tradiciones() {
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <p className="text-white font-semibold">{t.nombre}</p>
                       {t.etiqueta && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${t.etiqueta === 'DIARIO' ? 'bg-purple-500/30 text-purple-300' : t.etiqueta === 'PRÓXIMAMENTE' ? 'bg-white/10 text-white/40' : ''}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${t.etiqueta === 'DIARIO' ? 'bg-purple-500/30 text-purple-300' : 'bg-white/10 text-white/40'}`}>
                           {t.etiqueta}
                         </span>
                       )}
