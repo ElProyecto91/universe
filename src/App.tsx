@@ -14,6 +14,10 @@ import Tradiciones from './pages/Tradiciones'
 import Runas from './pages/Runas'
 import LunaOracle from './pages/LunaOracle'
 import SuenosOracle from './pages/SuenosOracle'
+import DiceOracle from './pages/DiceOracle'
+import Bibliomancia from './pages/Bibliomancia'
+import OghamOracle from './pages/OghamOracle'
+import PaganPaths from './pages/PaganPaths'
 
 export default function App() {
   return (
@@ -34,6 +38,10 @@ export default function App() {
         <Route path="/runas" element={<Runas />} />
         <Route path="/luna" element={<LunaOracle />} />
         <Route path="/suenos" element={<SuenosOracle />} />
+        <Route path="/dados" element={<DiceOracle />} />
+        <Route path="/bibliomancia" element={<Bibliomancia />} />
+        <Route path="/ogham" element={<OghamOracle />} />
+        <Route path="/pagan" element={<PaganPaths />} />
       </Routes>
     </BrowserRouter>
   )
