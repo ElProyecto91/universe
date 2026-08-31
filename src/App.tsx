@@ -26,6 +26,7 @@ import WheelOfYear from './pages/WheelOfYear'
 import CoinOracle from './pages/CoinOracle'
 import OracleMix from './pages/OracleMix'
 import OmensOracle from './pages/OmensOracle'
+import Disclaimer from './pages/Disclaimer'
 
 export default function App() {
   return (
@@ -58,6 +59,7 @@ export default function App() {
         <Route path="/monedas" element={<CoinOracle />} />
         <Route path="/oracle-mix" element={<OracleMix />} />
         <Route path="/presagios" element={<OmensOracle />} />
+        <Route path="/disclaimer" element={<Disclaimer />} />
       </Routes>
     </BrowserRouter>
   )
