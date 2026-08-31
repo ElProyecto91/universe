@@ -1,5 +1,11 @@
 const CATEGORIAS = [
   {
+    nombre: '⭐ Destacado',
+    tradiciones: [
+      { id: 'oracle-mix', nombre: 'Oracle Mix', subtitulo: 'La killer feature · Múltiples tradiciones', descripcion: 'Combina hasta 4 sistemas de sabiduría para explorar tu pregunta desde múltiples perspectivas a la vez.', ruta: '/oracle-mix', destacado: true },
+    ]
+  },
+  {
     nombre: '🔮 Oráculos',
     tradiciones: [
       { id: 'tarot-diario', nombre: 'Carta del Día', subtitulo: 'Tarot · Cada día', descripcion: 'Una carta del Tarot cambia cada amanecer.', ruta: '/tarot-diario', etiqueta: 'DIARIO' },
@@ -8,6 +14,7 @@ const CATEGORIAS = [
       { id: 'ogham', nombre: 'Ogham', subtitulo: 'Alfabeto irlandés · Interpretación moderna', descripcion: 'Cada letra del Ogham corresponde a un árbol y sus cualidades simbólicas.', ruta: '/ogham' },
       { id: 'iching', nombre: 'I Ching', subtitulo: 'El Libro de los Cambios · China', descripcion: '64 hexagramas revelan la energía del momento.', ruta: '/iching' },
       { id: 'dados', nombre: 'Oracle de Dados', subtitulo: 'Cleromancia · Tradición antigua', descripcion: 'Lanza tres dados y explora el mensaje de los números.', ruta: '/dados' },
+      { id: 'monedas', nombre: 'Oracle de Monedas', subtitulo: 'Cleromancia · Decisión', descripcion: 'Tres monedas, seis patrones posibles. El azar como espejo de la energía presente.', ruta: '/monedas' },
       { id: 'bibliomancia', nombre: 'Bibliomancia', subtitulo: 'Textos en dominio público', descripcion: 'Abre un texto sagrado o filosófico al azar y encuentra orientación.', ruta: '/bibliomancia' },
       { id: 'litomancia', nombre: 'Litomancia', subtitulo: 'Oracle de piedras', descripcion: 'Tres cristales son seleccionados para ti y la IA interpreta su mensaje.', ruta: '/litomancia' },
       { id: 'omikuji', nombre: 'Omikuji', subtitulo: 'Fortuna del día · Japón', descripcion: 'Como en los santuarios japoneses, extrae tu fortuna diaria.', ruta: '/omikuji', etiqueta: 'DIARIO' },
@@ -19,8 +26,11 @@ const CATEGORIAS = [
     nombre: '🌙 Místico',
     tradiciones: [
       { id: 'luna', nombre: 'Oracle Lunar', subtitulo: 'Fase lunar real · Hoy', descripcion: 'La fase lunar de hoy y su energía para tu vida.', ruta: '/luna', etiqueta: 'DIARIO' },
+      { id: 'rueda', nombre: 'Rueda del Año', subtitulo: 'Ciclo estacional · Tradición pagana', descripcion: 'Los 8 Sabbats y la sabiduría de cada estación del año.', ruta: '/rueda' },
+      { id: 'elementos', nombre: 'Oracle Elemental', subtitulo: 'Los cinco elementos', descripcion: 'Fuego, Agua, Tierra, Aire y Éter — explora desde la energía elemental.', ruta: '/elementos' },
       { id: 'suenos', nombre: 'Oracle de Sueños', subtitulo: 'Psicología · Simbolismo', descripcion: 'Interpreta tus sueños con psicología jungiana y simbolismo universal.', ruta: '/suenos' },
       { id: 'animales', nombre: 'Simbolismo Animal', subtitulo: 'Arquetipos · Tradiciones del mundo', descripcion: 'Explora el simbolismo de tu animal guía en diferentes culturas.', ruta: '/animales' },
+      { id: 'presagios', nombre: 'Presagios y Señales', subtitulo: 'Sincronicidad · Simbolismo', descripcion: '¿Hay una señal que se repite en tu vida? Exploramos su significado.', ruta: '/presagios' },
       { id: 'scrying', nombre: 'Scrying', subtitulo: 'Contemplación · Visión interior', descripcion: 'Contempla la esfera de cristal y deja emerger las visiones simbólicas.', ruta: '/scrying' },
     ]
   },
@@ -63,11 +73,11 @@ export default function Tradiciones() {
         {CATEGORIAS.map(cat => (
           <div key={cat.nombre} className="flex flex-col gap-3">
             <p className="text-white/60 text-xs tracking-widest uppercase">{cat.nombre}</p>
-            {cat.tradiciones.map(t => (
+            {cat.tradiciones.map((t: any) => (
               <button
                 key={t.id}
                 onClick={() => { if (t.etiqueta !== 'PRÓXIMAMENTE') window.location.href = t.ruta }}
-                className={`w-full bg-white/5 border rounded-3xl p-5 text-left backdrop-blur transition border-white/10 ${t.etiqueta !== 'PRÓXIMAMENTE' ? 'hover:bg-white/10' : 'opacity-50 cursor-not-allowed'}`}
+                className={`w-full border rounded-3xl p-5 text-left backdrop-blur transition ${t.destacado ? 'bg-purple-600/20 border-purple-500/40 hover:bg-purple-600/30' : 'bg-white/5 border-white/10 hover:bg-white/10'} ${t.etiqueta === 'PRÓXIMAMENTE' ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
