@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { getCartaDiaria, getCartaDiariaSVG } from '../lib/motores/tarotDiario'
+import Compartir from '../components/Compartir'
 
 export default function TarotDiario() {
   const [revelada, setRevelada] = useState(false)
@@ -35,8 +36,7 @@ Escribe una interpretación del día profunda, personal y poética de máximo 3 
         }
       )
       const data = await res.json()
-      const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || carta.mensaje
-      setInterpretacion(texto)
+      setInterpretacion(data.candidates?.[0]?.content?.parts?.[0]?.text || carta.mensaje)
     } catch {
       setInterpretacion(carta.mensaje)
     }
@@ -51,7 +51,6 @@ Escribe una interpretación del día profunda, personal y poética de máximo 3 
 
       <div className="relative z-10 w-full max-w-sm flex flex-col items-center px-6 py-10 gap-8">
 
-        {/* Header */}
         <div className="w-full flex items-center">
           <button onClick={() => window.location.href = '/universo'} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
@@ -59,26 +58,21 @@ Escribe una interpretación del día profunda, personal y poética de máximo 3 
           </div>
         </div>
 
-        {/* Fecha */}
         <p className="text-white/40 text-xs tracking-wide capitalize">{hoy}</p>
 
-        {/* Carta */}
         {!revelada ? (
           <div className="flex flex-col items-center gap-8">
-            <div className="relative">
-              <div
-                className="w-32 h-48 rounded-xl border border-purple-500/40 bg-gradient-to-b from-purple-900/60 to-black/60 backdrop-blur flex items-center justify-center cursor-pointer hover:border-purple-400 transition"
-                onClick={revelarCarta}
-              >
-                <svg viewBox="0 0 80 120" fill="none" className="w-20 h-28 opacity-40">
-                  <rect x="2" y="2" width="76" height="116" rx="8" stroke="#8b5cf6" strokeWidth="1.5"/>
-                  <path d="M40 20 L40 100 M10 60 L70 60" stroke="#8b5cf6" strokeWidth="0.5" strokeDasharray="4 4"/>
-                  <circle cx="40" cy="60" r="20" stroke="#8b5cf6" strokeWidth="1"/>
-                  <circle cx="40" cy="60" r="4" fill="#8b5cf6" opacity="0.5"/>
-                </svg>
-              </div>
+            <div
+              className="w-32 h-48 rounded-xl border border-purple-500/40 bg-gradient-to-b from-purple-900/60 to-black/60 backdrop-blur flex items-center justify-center cursor-pointer hover:border-purple-400 transition"
+              onClick={revelarCarta}
+            >
+              <svg viewBox="0 0 80 120" fill="none" className="w-20 h-28 opacity-40">
+                <rect x="2" y="2" width="76" height="116" rx="8" stroke="#8b5cf6" strokeWidth="1.5"/>
+                <path d="M40 20 L40 100 M10 60 L70 60" stroke="#8b5cf6" strokeWidth="0.5" strokeDasharray="4 4"/>
+                <circle cx="40" cy="60" r="20" stroke="#8b5cf6" strokeWidth="1"/>
+                <circle cx="40" cy="60" r="4" fill="#8b5cf6" opacity="0.5"/>
+              </svg>
             </div>
-
             <div className="text-center">
               <p className="text-white/60 text-sm mb-6">Centra tu mente. Cuando estés listo, toca la carta.</p>
               <button
@@ -111,6 +105,14 @@ Escribe una interpretación del día profunda, personal y poética de máximo 3 
                 <p className="text-white/90 text-sm leading-relaxed">{interpretacion}</p>
               )}
             </div>
+
+            {!cargando && interpretacion && (
+              <Compartir
+                titulo={`Mi carta del día: ${carta.nombre}`}
+                texto={interpretacion}
+                hashtags={['Tarot', 'Universe', 'CartaDelDia', 'Astrologia']}
+              />
+            )}
 
             <div className="w-full flex flex-col gap-3">
               <button
