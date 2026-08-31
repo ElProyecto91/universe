@@ -1,16 +1,18 @@
-const signosZodiaco: Record<string, { simbolo: string; nombre: string; elemento: string; simboloElemento: string }> = {
-  'Aries': { simbolo: '♈', nombre: 'Aries', elemento: 'Fuego', simboloElemento: '🜂' },
-  'Tauro': { simbolo: '♉', nombre: 'Tauro', elemento: 'Tierra', simboloElemento: '🜃' },
-  'Géminis': { simbolo: '♊', nombre: 'Géminis', elemento: 'Aire', simboloElemento: '🜁' },
-  'Cáncer': { simbolo: '♋', nombre: 'Cáncer', elemento: 'Agua', simboloElemento: '🜄' },
-  'Leo': { simbolo: '♌', nombre: 'Leo', elemento: 'Fuego', simboloElemento: '🜂' },
-  'Virgo': { simbolo: '♍', nombre: 'Virgo', elemento: 'Tierra', simboloElemento: '🜃' },
-  'Libra': { simbolo: '♎', nombre: 'Libra', elemento: 'Aire', simboloElemento: '🜁' },
-  'Escorpio': { simbolo: '♏', nombre: 'Escorpio', elemento: 'Agua', simboloElemento: '🜄' },
-  'Sagitario': { simbolo: '♐', nombre: 'Sagitario', elemento: 'Fuego', simboloElemento: '🜂' },
-  'Capricornio': { simbolo: '♑', nombre: 'Capricornio', elemento: 'Tierra', simboloElemento: '🜃' },
-  'Acuario': { simbolo: '♒', nombre: 'Acuario', elemento: 'Aire', simboloElemento: '🜁' },
-  'Piscis': { simbolo: '♓', nombre: 'Piscis', elemento: 'Agua', simboloElemento: '🜄' },
+import { SimboloZodiaco, SimboloElemento, SimboloPlaneta } from '../components/Simbolos'
+
+const signosZodiaco: Record<string, { nombre: string; elemento: string; modalidad: string; descripcion: string }> = {
+  'Aries':      { nombre: 'Aries',      elemento: 'Fuego', modalidad: 'Cardinal',  descripcion: 'Pionero, valiente, impulsivo. Energía que abre caminos.' },
+  'Tauro':      { nombre: 'Tauro',      elemento: 'Tierra', modalidad: 'Fijo',     descripcion: 'Paciente, sensual, persistente. Energía que construye.' },
+  'Géminis':    { nombre: 'Géminis',    elemento: 'Aire',  modalidad: 'Mutable',   descripcion: 'Curioso, versátil, comunicativo. Energía que conecta.' },
+  'Cáncer':     { nombre: 'Cáncer',     elemento: 'Agua',  modalidad: 'Cardinal',  descripcion: 'Intuitivo, protector, emocional. Energía que nutre.' },
+  'Leo':        { nombre: 'Leo',        elemento: 'Fuego', modalidad: 'Fijo',      descripcion: 'Creativo, generoso, magnético. Energía que ilumina.' },
+  'Virgo':      { nombre: 'Virgo',      elemento: 'Tierra', modalidad: 'Mutable',  descripcion: 'Analítico, preciso, servicial. Energía que perfecciona.' },
+  'Libra':      { nombre: 'Libra',      elemento: 'Aire',  modalidad: 'Cardinal',  descripcion: 'Armonioso, diplomático, estético. Energía que equilibra.' },
+  'Escorpio':   { nombre: 'Escorpio',   elemento: 'Agua',  modalidad: 'Fijo',      descripcion: 'Profundo, intenso, transformador. Energía que regenera.' },
+  'Sagitario':  { nombre: 'Sagitario',  elemento: 'Fuego', modalidad: 'Mutable',   descripcion: 'Libre, filosófico, aventurero. Energía que expande.' },
+  'Capricornio':{ nombre: 'Capricornio',elemento: 'Tierra', modalidad: 'Cardinal', descripcion: 'Ambicioso, disciplinado, sabio. Energía que persevera.' },
+  'Acuario':    { nombre: 'Acuario',    elemento: 'Aire',  modalidad: 'Fijo',      descripcion: 'Visionario, original, humanitario. Energía que innova.' },
+  'Piscis':     { nombre: 'Piscis',     elemento: 'Agua',  modalidad: 'Mutable',   descripcion: 'Sensible, compasivo, espiritual. Energía que trasciende.' },
 }
 
 function getSignoSolar(fechaNacimiento: string): string {
@@ -32,15 +34,21 @@ function getSignoSolar(fechaNacimiento: string): string {
   return 'Piscis'
 }
 
-// PERFIL DE PRUEBA — se usa si no hay datos reales
 const PERFIL_PRUEBA = {
   nombre: 'Luna',
   fechaNacimiento: '1991-08-15',
   ciudad: 'Madrid',
-  elemento: '🜂 Fuego — Pasión y acción',
-  animal: 'Águila — Visión',
-  decision: 'Sigo mi intuición',
+  elemento: 'Fuego',
+  animal: 'Águila',
+  decision: 'Intuición',
   intencion: 'Espiritualidad',
+}
+
+const interpretaciones: Record<string, string> = {
+  'Fuego': 'Tu energía es iniciadora y apasionada. Llevas dentro una llama que impulsa la acción y la transformación. Inspiras a quienes te rodean con tu vitalidad natural.',
+  'Tierra': 'Tu energía es sólida y constante. Tienes una conexión profunda con lo tangible y lo real. Eres el pilar que sostiene a quienes te rodean.',
+  'Aire': 'Tu energía es mental y comunicativa. Tu mente fluye entre ideas con una velocidad única. Percibes conexiones que otros no ven.',
+  'Agua': 'Tu energía es profunda e intuitiva. Sientes el mundo antes de comprenderlo. Tu sensibilidad es tu mayor fortaleza y tu guía más fiel.',
 }
 
 export default function Universo() {
@@ -52,19 +60,20 @@ export default function Universo() {
 
   const nombre = localStorage.getItem('nombre') || PERFIL_PRUEBA.nombre
   const fechaNacimiento = localStorage.getItem('fechaNacimiento') || PERFIL_PRUEBA.fechaNacimiento
-
   const signoNombre = getSignoSolar(fechaNacimiento)
   const signo = signosZodiaco[signoNombre]
 
-  const interpretaciones: Record<string, string> = {
-    'Fuego': 'Tu energía es iniciadora y apasionada. Llevas dentro una llama que impulsa la acción y la transformación. Inspiras a quienes te rodean.',
-    'Tierra': 'Tu energía es sólida y constante. Tienes una conexión profunda con lo tangible y lo real. Eres el pilar que sostiene a los demás.',
-    'Aire': 'Tu energía es mental y comunicativa. Tu mente fluye entre ideas con una velocidad única. Ves conexiones que otros no perciben.',
-    'Agua': 'Tu energía es profunda e intuitiva. Sientes el mundo antes de comprenderlo. Tu sensibilidad es tu mayor fortaleza.',
-  }
+  const planetas = [
+    { clave: 'sol', nombre: 'Sol', valor: signo.nombre },
+    { clave: 'luna', nombre: 'Luna', valor: '—' },
+    { clave: 'ascendente', nombre: 'Ascendente', valor: '—' },
+    { clave: 'venus', nombre: 'Venus', valor: '—' },
+    { clave: 'marte', nombre: 'Marte', valor: '—' },
+    { clave: 'saturno', nombre: 'Saturno', valor: '—' },
+  ]
 
   return (
-    <div className="min-h-screen text-white flex flex-col items-center justify-center px-6 relative" style={bgStyle}>
+    <div className="min-h-screen text-white flex flex-col items-center px-6 relative" style={bgStyle}>
       <div className="absolute inset-0 bg-black/70" />
 
       <div className="relative z-10 w-full max-w-sm flex flex-col gap-6 py-10">
@@ -79,18 +88,16 @@ export default function Universo() {
 
         {/* Signo solar */}
         <div className="bg-white/5 border border-white/10 rounded-3xl p-6 flex flex-col items-center gap-3 backdrop-blur">
-          <p className="text-purple-300 text-xs tracking-widest uppercase">☉ Signo Solar</p>
-          <div
-            className="text-8xl font-thin text-white"
-            style={{ textShadow: '0 0 40px rgba(192,132,252,0.9)', fontFamily: 'serif' }}
-          >
-            {signo.simbolo}
-          </div>
+          <p className="text-purple-300 text-xs tracking-widest uppercase">Signo Solar</p>
+          <SimboloZodiaco signo={signo.nombre} />
           <p className="text-2xl font-semibold tracking-wide">{signo.nombre}</p>
           <div className="flex items-center gap-2 text-purple-300">
-            <span className="text-lg">{signo.simboloElemento}</span>
+            <SimboloElemento elemento={signo.elemento} />
             <span className="text-sm tracking-wider uppercase">{signo.elemento}</span>
+            <span className="text-white/30 text-sm">·</span>
+            <span className="text-sm tracking-wider text-purple-300/70">{signo.modalidad}</span>
           </div>
+          <p className="text-white/60 text-xs text-center leading-relaxed mt-1">{signo.descripcion}</p>
         </div>
 
         {/* Tu energía */}
@@ -103,26 +110,37 @@ export default function Universo() {
 
         {/* Mapa planetario */}
         <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
-          <p className="text-purple-300 text-xs tracking-widest uppercase mb-4">Mapa Planetario</p>
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              { simbolo: '☉', nombre: 'Sol', valor: signo.nombre },
-              { simbolo: '☽', nombre: 'Luna', valor: '—' },
-              { simbolo: '↑', nombre: 'Ascendente', valor: '—' },
-              { simbolo: '♀', nombre: 'Venus', valor: '—' },
-              { simbolo: '♂', nombre: 'Marte', valor: '—' },
-              { simbolo: '♄', nombre: 'Saturno', valor: '—' },
-            ].map(p => (
+          <p className="text-purple-300 text-xs tracking-widest uppercase mb-5">Mapa Planetario</p>
+          <div className="grid grid-cols-3 gap-5">
+            {planetas.map(p => (
               <div key={p.nombre} className="flex flex-col items-center gap-1">
-                <span className="text-2xl text-purple-300" style={{ fontFamily: 'serif' }}>{p.simbolo}</span>
+                <SimboloPlaneta simbolo={p.clave} />
                 <span className="text-white text-xs font-medium">{p.valor}</span>
                 <span className="text-white/40 text-xs">{p.nombre}</span>
               </div>
             ))}
           </div>
-          <p className="text-white/30 text-xs text-center mt-4">
+          <p className="text-white/25 text-xs text-center mt-5">
             Añade tu hora de nacimiento para completar tu carta natal
           </p>
+        </div>
+
+        {/* Mi perfil espiritual */}
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
+          <p className="text-purple-300 text-xs tracking-widest uppercase mb-4">Perfil Espiritual</p>
+          <div className="flex flex-col gap-3">
+            {[
+              { etiqueta: 'Animal', valor: localStorage.getItem('animal') || PERFIL_PRUEBA.animal },
+              { etiqueta: 'Elemento', valor: localStorage.getItem('elemento')?.split('—')[0].trim() || PERFIL_PRUEBA.elemento },
+              { etiqueta: 'Decisiones', valor: localStorage.getItem('decision') || PERFIL_PRUEBA.decision },
+              { etiqueta: 'Intención', valor: localStorage.getItem('intencion') || PERFIL_PRUEBA.intencion },
+            ].map(item => (
+              <div key={item.etiqueta} className="flex justify-between items-center border-b border-white/5 pb-2">
+                <span className="text-white/40 text-xs tracking-wide uppercase">{item.etiqueta}</span>
+                <span className="text-white/80 text-sm">{item.valor}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Botones */}
@@ -138,6 +156,12 @@ export default function Universo() {
             className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full text-base hover:bg-white/20 transition backdrop-blur"
           >
             Tirada de Tarot
+          </button>
+          <button
+            onClick={() => window.location.href = '/experto'}
+            className="w-full bg-white/5 border border-purple-500/30 text-purple-300 font-semibold py-4 rounded-full text-base hover:bg-purple-500/10 transition backdrop-blur"
+          >
+            Hablar con un Experto
           </button>
         </div>
 
