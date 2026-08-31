@@ -1,20 +1,20 @@
 import { useState } from 'react'
 import { HEXAGRAMAS, lanzarMonedas, lineasAHexagrama, dibujarHexagrama } from '../lib/motores/iching'
+import Compartir from '../components/Compartir'
 
 export default function IChing() {
-  const [fase, setFase] = useState<'pregunta' | 'lanzando' | 'resultado'>('pregunta')
+  const [fase, setFase] = useState<'pregunta' | 'resultado'>('pregunta')
   const [pregunta, setPregunta] = useState('')
   const [resultado, setResultado] = useState<any>(null)
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando, setCargando] = useState(false)
+  const nombre = localStorage.getItem('nombre') || 'viajero'
 
   const bgStyle = {
     backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
   }
-
-  const nombre = localStorage.getItem('nombre') || 'viajero'
 
   const consultar = async () => {
     const lineas = lanzarMonedas()
@@ -28,7 +28,7 @@ export default function IChing() {
     setFase('resultado')
     setCargando(true)
 
-    const prompt = `Eres un sabio intérprete del I Ching con profundo conocimiento de la filosofía taoísta. 
+    const prompt = `Eres un sabio intérprete del I Ching con profundo conocimiento de la filosofía taoísta.
 
 ${nombre} pregunta: "${pregunta}"
 
@@ -64,7 +64,6 @@ Escribe una interpretación sabia y poética de 3-4 párrafos. Primero describe 
 
       <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-6 py-10 gap-6">
 
-        {/* Header */}
         <div className="flex items-center">
           <button onClick={() => window.location.href = '/tradiciones'} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
@@ -93,10 +92,6 @@ Escribe una interpretación sabia y poética de 3-4 párrafos. Primero describe 
               />
             </div>
 
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-4 backdrop-blur text-center">
-              <p className="text-white/40 text-xs">Tradicionalmente se lanzan 3 monedas 6 veces para construir el hexagrama. Nuestro sistema digital replica este proceso.</p>
-            </div>
-
             <button
               onClick={consultar}
               disabled={!pregunta.trim()}
@@ -110,7 +105,6 @@ Escribe una interpretación sabia y poética de 3-4 párrafos. Primero describe 
         {fase === 'resultado' && resultado && (
           <div className="flex flex-col gap-5">
 
-            {/* Hexagrama */}
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-4">Tu hexagrama</p>
               <div className="flex gap-6 items-start">
@@ -128,7 +122,6 @@ Escribe una interpretación sabia y poética de 3-4 párrafos. Primero describe 
               </div>
             </div>
 
-            {/* Hexagrama resultante */}
             {resultado.hayCambio && (
               <div className="bg-white/5 border border-purple-500/20 rounded-3xl p-4 backdrop-blur">
                 <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Transformación hacia</p>
@@ -137,12 +130,10 @@ Escribe una interpretación sabia y poética de 3-4 párrafos. Primero describe 
               </div>
             )}
 
-            {/* Tu pregunta */}
             <div className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 backdrop-blur">
               <p className="text-white/40 text-xs">Tu pregunta: <span className="text-white/70 italic">"{pregunta}"</span></p>
             </div>
 
-            {/* Interpretación */}
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Interpretación</p>
               {cargando ? (
@@ -155,6 +146,14 @@ Escribe una interpretación sabia y poética de 3-4 párrafos. Primero describe 
                 <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>
               )}
             </div>
+
+            {!cargando && interpretacion && (
+              <Compartir
+                titulo={`Mi consulta al I Ching: ${resultado.hexData.nombre}`}
+                texto={interpretacion}
+                hashtags={['IChing', 'Universe', 'Sabiduria', 'China']}
+              />
+            )}
 
             <div className="flex flex-col gap-3">
               <button onClick={() => window.location.href = '/guia'} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full">
