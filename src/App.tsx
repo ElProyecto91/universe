@@ -11,6 +11,9 @@ import Omikuji from './pages/Omikuji'
 import BaZi from './pages/BaZi'
 import Numerologia from './pages/Numerologia'
 import Tradiciones from './pages/Tradiciones'
+import Runas from './pages/Runas'
+import LunaOracle from './pages/LunaOracle'
+import SuenosOracle from './pages/SuenosOracle'
 
 export default function App() {
   return (
@@ -28,6 +31,9 @@ export default function App() {
         <Route path="/bazi" element={<BaZi />} />
         <Route path="/numerologia" element={<Numerologia />} />
         <Route path="/tradiciones" element={<Tradiciones />} />
+        <Route path="/runas" element={<Runas />} />
+        <Route path="/luna" element={<LunaOracle />} />
+        <Route path="/suenos" element={<SuenosOracle />} />
       </Routes>
     </BrowserRouter>
   )
