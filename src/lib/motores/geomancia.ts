@@ -1,0 +1,31 @@
+export const FIGURAS_GEOMANTICAS = [
+  { nombre: 'Puer', simbolo: '⊙\n⊙\n⊙⊙\n⊙', keywords: 'Energía · Impulsividad · Juventud · Acción', elemento: 'Fuego', planeta: 'Marte', favorable: 'Batalla, competición, inicio de proyectos', desfavorable: 'Contratos, amor, negocios delicados', mensaje: 'Una energía joven e impulsiva. Hay fuerza disponible — la clave está en canalizarla con dirección.' },
+  { nombre: 'Amissio', simbolo: '⊙⊙\n⊙⊙\n⊙\n⊙', keywords: 'Pérdida · Soltar · Transformación', elemento: 'Tierra', planeta: 'Venus', favorable: 'Soltar, amor transitorio, recuperar lo perdido', desfavorable: 'Dinero, negocios, permanencia', mensaje: 'Algo está siendo soltado. La pérdida que percibes puede ser una liberación necesaria.' },
+  { nombre: 'Albus', simbolo: '⊙⊙\n⊙\n⊙⊙\n⊙⊙', keywords: 'Sabiduría · Claridad · Pureza · Prudencia', elemento: 'Aire', planeta: 'Mercurio', favorable: 'Negocios, estudio, contratos, comunicación', desfavorable: 'Inicio de empresas, aventura', mensaje: 'La sabiduría y la claridad están disponibles. Piensa antes de actuar — la mente es tu mejor herramienta ahora.' },
+  { nombre: 'Populus', simbolo: '⊙⊙\n⊙⊙\n⊙⊙\n⊙⊙', keywords: 'Comunidad · Neutralidad · Masa · Espejo', elemento: 'Agua', planeta: 'Luna', favorable: 'Todo, dependiendo del contexto', desfavorable: 'Decisiones individuales claras', mensaje: 'La figura más neutral. El resultado refleja lo que traes. Lo que siembras ahora se multiplica.' },
+  { nombre: 'Fortuna Major', simbolo: '⊙\n⊙\n⊙⊙\n⊙⊙', keywords: 'Gran fortuna · Éxito · Protección · Estabilidad', elemento: 'Fuego', planeta: 'Sol', favorable: 'Todo — especialmente éxito, poder, reconocimiento', desfavorable: 'Pocas cosas', mensaje: 'Una de las figuras más auspiciosas. El éxito viene desde dentro — tu fuerza interior es lo que triunfa.' },
+  { nombre: 'Fortuna Minor', simbolo: '⊙⊙\n⊙⊙\n⊙\n⊙', keywords: 'Fortuna pequeña · Velocidad · Oportunidad breve', elemento: 'Fuego', planeta: 'Sol', favorable: 'Situaciones que requieren rapidez', desfavorable: 'Proyectos a largo plazo', mensaje: 'Una oportunidad que no durará mucho. Actúa rápido si quieres aprovecharla.' },
+  { nombre: 'Conjunctio', simbolo: '⊙⊙\n⊙\n⊙\n⊙⊙', keywords: 'Unión · Encuentro · Comunicación · Conexión', elemento: 'Aire', planeta: 'Mercurio', favorable: 'Relaciones, comunicación, encuentros, contratos', desfavorable: 'Soledad necesaria', mensaje: 'Una unión o conexión está en juego. Los caminos se cruzan — el encuentro tiene potencial significativo.' },
+  { nombre: 'Puella', simbolo: '⊙\n⊙⊙\n⊙⊙\n⊙', keywords: 'Belleza · Armonía · Amor · Paz', elemento: 'Aire', planeta: 'Venus', favorable: 'Amor, arte, belleza, armonía, paz', desfavorable: 'Conflictos, negocios duros', mensaje: 'La belleza y la armonía son las fuerzas dominantes. Un momento de gracia y amor está disponible.' },
+  { nombre: 'Rubeus', simbolo: '⊙⊙\n⊙\n⊙\n⊙', keywords: 'Pasión · Peligro · Transformación oscura', elemento: 'Fuego', planeta: 'Marte', favorable: 'Magia, transformación, situaciones que requieren intensidad', desfavorable: 'La mayoría de preguntas convencionales', mensaje: 'Energía intensa y peligrosa. No es el momento para actuar desde el ego — la transformación requiere honestidad radical.' },
+  { nombre: 'Acquisitio', simbolo: '⊙\n⊙\n⊙⊙\n⊙', keywords: 'Adquisición · Ganancia · Éxito material', elemento: 'Fuego', planeta: 'Júpiter', favorable: 'Dinero, negocios, adquisiciones, ganancias', desfavorable: 'Espiritualidad, soltar', mensaje: 'Lo que buscas está llegando. Una figura de ganancia y éxito material — tus esfuerzos darán fruto.' },
+  { nombre: 'Carcer', simbolo: '⊙\n⊙\n⊙\n⊙', keywords: 'Límite · Restricción · Karma · Estructura', elemento: 'Tierra', planeta: 'Saturno', favorable: 'Estructura, límites necesarios, karma resuelto', desfavorable: 'Movimiento, cambio, libertad', mensaje: 'Un límite o restricción rodea la situación. Puede ser externa o interna. La paciencia y la aceptación son clave.' },
+  { nombre: 'Tristitia', simbolo: '⊙\n⊙\n⊙\n⊙⊙', keywords: 'Tristeza · Descenso · Interiorización', elemento: 'Tierra', planeta: 'Saturno', favorable: 'Introspección, espiritualidad, magia', desfavorable: 'Acción externa, alegría inmediata', mensaje: 'Un momento de descenso y profundización. La tristeza que encuentras tiene algo que enseñar si la atraviesas con consciencia.' },
+  { nombre: 'Laetitia', simbolo: '⊙⊙\n⊙\n⊙\n⊙', keywords: 'Alegría · Expansión · Optimismo · Elevación', elemento: 'Agua', planeta: 'Júpiter', favorable: 'Alegría, salud, expansión, esperanza', desfavorable: 'Pocas cosas', mensaje: 'Alegría y expansión. Un momento ascendente — aprovecha este impulso hacia arriba.' },
+  { nombre: 'Cauda Draconis', simbolo: '⊙\n⊙⊙\n⊙\n⊙', keywords: 'Final · Karma · Umbral · Salida', elemento: 'Fuego/Tierra', planeta: 'Nodo Sur', favorable: 'Finales, liberación de lo viejo, karma completado', desfavorable: 'Inicios, adquisiciones', mensaje: 'La cola del dragón marca un final. Algo está completando su ciclo — el cierre abre una nueva puerta.' },
+  { nombre: 'Caput Draconis', simbolo: '⊙\n⊙\n⊙⊙\n⊙', keywords: 'Inicio · Potencial · Entrada · Nuevo ciclo', elemento: 'Tierra/Aire', planeta: 'Nodo Norte', favorable: 'Inicios, adquisiciones, nuevos proyectos', desfavorable: 'Finales, liberación', mensaje: 'La cabeza del dragón marca un inicio poderoso. Un nuevo ciclo de crecimiento y adquisición comienza.' },
+  { nombre: 'Via', simbolo: '⊙\n⊙\n⊙\n⊙', keywords: 'Camino · Movimiento · Viaje · Decisión', elemento: 'Agua', planeta: 'Luna', favorable: 'Viajes, cambios, movimiento', desfavorable: 'Estabilidad, permanencia', mensaje: 'El camino está abierto. El movimiento es inevitable — la pregunta es en qué dirección quieres ir.' },
+]
+
+export function generarFigura(): typeof FIGURAS_GEOMANTICAS[0] {
+  return FIGURAS_GEOMANTICAS[Math.floor(Math.random() * FIGURAS_GEOMANTICAS.length)]
+}
+
+export function generarLectura3Figuras() {
+  const mezcladas = [...FIGURAS_GEOMANTICAS].sort(() => Math.random() - 0.5)
+  return {
+    escudo: mezcladas[0],
+    corazon: mezcladas[1],
+    testigo: mezcladas[2],
+  }
+}
