@@ -3,6 +3,8 @@ const CATEGORIAS = [
     nombre: '⭐ Destacado',
     tradiciones: [
       { id: 'oracle-mix', nombre: 'Oracle Mix', subtitulo: 'La killer feature · Múltiples tradiciones', descripcion: 'Combina hasta 4 sistemas de sabiduría para explorar tu pregunta desde múltiples perspectivas a la vez.', ruta: '/oracle-mix', destacado: true },
+      { id: 'astro-daily', nombre: 'Astro Daily', subtitulo: 'Tu signo solar · Cada día', descripcion: 'Mensaje astrológico diario personalizado basado en tu signo solar.', ruta: '/astro-daily', etiqueta: 'DIARIO' },
+      { id: 'mirror', nombre: 'Mirror Oracle', subtitulo: 'Autoconocimiento · Reflexión profunda', descripcion: 'Preguntas que actúan como espejos para revelar tu sabiduría interior.', ruta: '/mirror', etiqueta: 'DIARIO' },
     ]
   },
   {
@@ -13,14 +15,26 @@ const CATEGORIAS = [
       { id: 'runas', nombre: 'Runas', subtitulo: 'Tradición germánica', descripcion: 'Sistema de escritura histórico germánico. Reconstrucción moderna en adivinación.', ruta: '/runas' },
       { id: 'ogham', nombre: 'Ogham', subtitulo: 'Alfabeto irlandés · Interpretación moderna', descripcion: 'Cada letra del Ogham corresponde a un árbol y sus cualidades simbólicas.', ruta: '/ogham' },
       { id: 'iching', nombre: 'I Ching', subtitulo: 'El Libro de los Cambios · China', descripcion: '64 hexagramas revelan la energía del momento.', ruta: '/iching' },
+      { id: 'tibetan-mo', nombre: 'Mo Tibetano', subtitulo: 'Adivinación budista · Tibet', descripcion: 'Sistema de adivinación del budismo tibetano mediante dados. 36 posibles resultados.', ruta: '/tibetan-mo' },
+      { id: 'geomancia', nombre: 'Geomancia', subtitulo: 'ʿIlm al-raml · Tradición árabe-medieval', descripcion: '16 figuras geománticas revelan la energía de tu pregunta.', ruta: '/geomancia' },
       { id: 'dados', nombre: 'Oracle de Dados', subtitulo: 'Cleromancia · Tradición antigua', descripcion: 'Lanza tres dados y explora el mensaje de los números.', ruta: '/dados' },
       { id: 'monedas', nombre: 'Oracle de Monedas', subtitulo: 'Cleromancia · Decisión', descripcion: 'Tres monedas, seis patrones posibles. El azar como espejo de la energía presente.', ruta: '/monedas' },
       { id: 'bibliomancia', nombre: 'Bibliomancia', subtitulo: 'Textos en dominio público', descripcion: 'Abre un texto sagrado o filosófico al azar y encuentra orientación.', ruta: '/bibliomancia' },
       { id: 'litomancia', nombre: 'Litomancia', subtitulo: 'Oracle de piedras', descripcion: 'Tres cristales son seleccionados para ti y la IA interpreta su mensaje.', ruta: '/litomancia' },
-      { id: 'compatibilidad', nombre: 'Compatibilidad', subtitulo: 'Numerología · Dos personas', descripcion: 'Explora la energía numerológica entre dos personas — amorosa, familiar o profesional.', ruta: '/compatibilidad' },
       { id: 'omikuji', nombre: 'Omikuji', subtitulo: 'Fortuna del día · Japón', descripcion: 'Como en los santuarios japoneses, extrae tu fortuna diaria.', ruta: '/omikuji', etiqueta: 'DIARIO' },
-      { id: 'numerologia', nombre: 'Numerología', subtitulo: 'Tradición pitagórica', descripcion: 'Tu nombre y fecha de nacimiento revelan tu misión.', ruta: '/numerologia' },
-      { id: 'bazi', nombre: 'BaZi', subtitulo: 'Cuatro Pilares · China', descripcion: 'Tu energía esencial y ciclos de vida.', ruta: '/bazi' },
+    ]
+  },
+  {
+    nombre: '🌌 Astrología y Numerología',
+    tradiciones: [
+      { id: 'numerologia', nombre: 'Numerología', subtitulo: 'Tradición pitagórica', descripcion: 'Tu número de vida y tu misión.', ruta: '/numerologia' },
+      { id: 'numerologia-nombre', nombre: 'Numerología del Nombre', subtitulo: 'Expresión · Alma · Personalidad', descripcion: 'Tres números ocultos en tu nombre revelan cómo te expresas, qué anhelas y cómo te perciben.', ruta: '/numerologia-nombre' },
+      { id: 'ano-personal', nombre: 'Año Personal', subtitulo: 'Numerología · Tu ciclo actual', descripcion: '¿En qué año personal estás? Cada año del ciclo de 9 tiene una energía única.', ruta: '/ano-personal' },
+      { id: 'compatibilidad', nombre: 'Compatibilidad', subtitulo: 'Numerología · Dos personas', descripcion: 'Explora la energía numerológica entre dos personas.', ruta: '/compatibilidad' },
+      { id: 'bazi', nombre: 'BaZi', subtitulo: 'Cuatro Pilares · China', descripcion: 'Tu energía esencial y ciclos de vida según la astrología china.', ruta: '/bazi' },
+      { id: 'zi-wei', nombre: 'Zi Wei Dou Shu', subtitulo: 'Estrella Púrpura · China', descripcion: '12 palacios de vida. Explora el área que más te preocupa ahora.', ruta: '/zi-wei' },
+      { id: 'tzolkin', nombre: 'Tzolkʼin', subtitulo: 'Calendario maya · Tradición viva', descripcion: 'Tu signo en el calendario sagrado maya de 260 días.', ruta: '/tzolkin' },
+      { id: 'horoscopo-celtico', nombre: 'Horóscopo Celta', subtitulo: 'Los 13 árboles · Inspiración celta', descripcion: 'Cada fecha de nacimiento corresponde a un árbol sagrado celta.', ruta: '/horoscopo-celtico' },
     ]
   },
   {
@@ -31,9 +45,11 @@ const CATEGORIAS = [
       { id: 'elementos', nombre: 'Oracle Elemental', subtitulo: 'Los cinco elementos', descripcion: 'Fuego, Agua, Tierra, Aire y Éter — explora desde la energía elemental.', ruta: '/elementos' },
       { id: 'chakras', nombre: 'Chakra Oracle', subtitulo: 'Sistema de chakras · Tradición hindú', descripcion: 'Explora los 7 chakras y cuál necesita atención en tu vida ahora mismo.', ruta: '/chakras' },
       { id: 'plantas', nombre: 'Plant Oracle', subtitulo: 'Simbolismo vegetal · Tradiciones del mundo', descripcion: 'Cada planta lleva un mensaje. Explora el simbolismo de la naturaleza.', ruta: '/plantas' },
+      { id: 'color', nombre: 'Color Oracle', subtitulo: 'Cromoterapia simbólica · Tradiciones', descripcion: '¿Qué color te atrae hoy? Explora su significado en diferentes culturas.', ruta: '/color' },
       { id: 'suenos', nombre: 'Oracle de Sueños', subtitulo: 'Psicología · Simbolismo', descripcion: 'Interpreta tus sueños con psicología jungiana y simbolismo universal.', ruta: '/suenos' },
       { id: 'animales', nombre: 'Simbolismo Animal', subtitulo: 'Arquetipos · Tradiciones del mundo', descripcion: 'Explora el simbolismo de tu animal guía en diferentes culturas.', ruta: '/animales' },
       { id: 'presagios', nombre: 'Presagios y Señales', subtitulo: 'Sincronicidad · Simbolismo', descripcion: '¿Hay una señal que se repite en tu vida? Exploramos su significado.', ruta: '/presagios' },
+      { id: 'sincronicidad', nombre: 'Sincronicidad', subtitulo: 'Números ángel · Patrones', descripcion: '¿Ves 11:11, 333, 444? Explora el significado de los números que se repiten.', ruta: '/sincronicidad' },
       { id: 'scrying', nombre: 'Scrying', subtitulo: 'Contemplación · Visión interior', descripcion: 'Contempla la esfera de cristal y deja emerger las visiones simbólicas.', ruta: '/scrying' },
     ]
   },
@@ -41,12 +57,6 @@ const CATEGORIAS = [
     nombre: '🧙 Caminos Paganos',
     tradiciones: [
       { id: 'pagan', nombre: 'Caminos Paganos', subtitulo: 'Norse · Helénico · Egipcio · Celta · Eslavo · Wicca', descripcion: 'Explora preguntas desde seis grandes tradiciones espirituales del mundo.', ruta: '/pagan' },
-    ]
-  },
-  {
-    nombre: '🌌 Cósmico',
-    tradiciones: [
-      { id: 'vedico', nombre: 'Astrología Védica', subtitulo: 'Jyotisha · India', descripcion: 'El sistema astrológico más antiguo del mundo.', ruta: '/vedico', etiqueta: 'PRÓXIMAMENTE' },
     ]
   },
 ]
@@ -79,15 +89,15 @@ export default function Tradiciones() {
             {cat.tradiciones.map((t: any) => (
               <button
                 key={t.id}
-                onClick={() => { if (t.etiqueta !== 'PRÓXIMAMENTE') window.location.href = t.ruta }}
-                className={`w-full border rounded-3xl p-5 text-left backdrop-blur transition ${t.destacado ? 'bg-purple-600/20 border-purple-500/40 hover:bg-purple-600/30' : 'bg-white/5 border-white/10 hover:bg-white/10'} ${t.etiqueta === 'PRÓXIMAMENTE' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={() => window.location.href = t.ruta}
+                className={`w-full border rounded-3xl p-5 text-left backdrop-blur transition ${t.destacado ? 'bg-purple-600/20 border-purple-500/40 hover:bg-purple-600/30' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <p className="text-white font-semibold">{t.nombre}</p>
                       {t.etiqueta && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${t.etiqueta === 'DIARIO' ? 'bg-purple-500/30 text-purple-300' : 'bg-white/10 text-white/40'}`}>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/30 text-purple-300">
                           {t.etiqueta}
                         </span>
                       )}
@@ -95,7 +105,7 @@ export default function Tradiciones() {
                     <p className="text-purple-300/70 text-xs mb-1">{t.subtitulo}</p>
                     <p className="text-white/50 text-xs leading-relaxed">{t.descripcion}</p>
                   </div>
-                  {t.etiqueta !== 'PRÓXIMAMENTE' && <span className="text-purple-300/50 text-lg">›</span>}
+                  <span className="text-purple-300/50 text-lg">›</span>
                 </div>
               </button>
             ))}
