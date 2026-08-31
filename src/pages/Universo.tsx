@@ -14,11 +14,10 @@ const signosZodiaco: Record<string, { simbolo: string; nombre: string; elemento:
 }
 
 function getSignoSolar(fechaNacimiento: string): string {
-  if (!fechaNacimiento) return 'Aries'
+  if (!fechaNacimiento) return 'Leo'
   const fecha = new Date(fechaNacimiento)
   const mes = fecha.getMonth() + 1
   const dia = fecha.getDate()
-
   if ((mes === 3 && dia >= 21) || (mes === 4 && dia <= 19)) return 'Aries'
   if ((mes === 4 && dia >= 20) || (mes === 5 && dia <= 20)) return 'Tauro'
   if ((mes === 5 && dia >= 21) || (mes === 6 && dia <= 20)) return 'Géminis'
@@ -33,6 +32,17 @@ function getSignoSolar(fechaNacimiento: string): string {
   return 'Piscis'
 }
 
+// PERFIL DE PRUEBA — se usa si no hay datos reales
+const PERFIL_PRUEBA = {
+  nombre: 'Luna',
+  fechaNacimiento: '1991-08-15',
+  ciudad: 'Madrid',
+  elemento: '🜂 Fuego — Pasión y acción',
+  animal: 'Águila — Visión',
+  decision: 'Sigo mi intuición',
+  intencion: 'Espiritualidad',
+}
+
 export default function Universo() {
   const bgStyle = {
     backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
@@ -40,8 +50,9 @@ export default function Universo() {
     backgroundPosition: 'center',
   }
 
-  const fechaNacimiento = localStorage.getItem('fechaNacimiento') || ''
-  const nombre = localStorage.getItem('nombre') || 'Viajero'
+  const nombre = localStorage.getItem('nombre') || PERFIL_PRUEBA.nombre
+  const fechaNacimiento = localStorage.getItem('fechaNacimiento') || PERFIL_PRUEBA.fechaNacimiento
+
   const signoNombre = getSignoSolar(fechaNacimiento)
   const signo = signosZodiaco[signoNombre]
 
@@ -53,17 +64,14 @@ export default function Universo() {
   }
 
   return (
-    <div
-      className="min-h-screen text-white flex flex-col items-center justify-center px-6 relative"
-      style={bgStyle}
-    >
+    <div className="min-h-screen text-white flex flex-col items-center justify-center px-6 relative" style={bgStyle}>
       <div className="absolute inset-0 bg-black/70" />
 
-      <div className="relative z-10 w-full max-w-sm flex flex-col gap-6">
+      <div className="relative z-10 w-full max-w-sm flex flex-col gap-6 py-10">
 
         {/* Encabezado */}
         <div className="text-center">
-          <p className="text-purple-300 text-sm tracking-widest uppercase mb-1">Tu Universo</p>
+          <p className="text-purple-300 text-xs tracking-widest uppercase mb-1">Tu Universo</p>
           <h1 className="text-3xl font-bold" style={{ textShadow: '0 2px 12px rgba(192,132,252,0.8)' }}>
             {nombre}
           </h1>
@@ -72,7 +80,10 @@ export default function Universo() {
         {/* Signo solar */}
         <div className="bg-white/5 border border-white/10 rounded-3xl p-6 flex flex-col items-center gap-3 backdrop-blur">
           <p className="text-purple-300 text-xs tracking-widest uppercase">☉ Signo Solar</p>
-          <div className="text-8xl font-thin text-white" style={{ textShadow: '0 0 40px rgba(192,132,252,0.9)', fontFamily: 'serif' }}>
+          <div
+            className="text-8xl font-thin text-white"
+            style={{ textShadow: '0 0 40px rgba(192,132,252,0.9)', fontFamily: 'serif' }}
+          >
             {signo.simbolo}
           </div>
           <p className="text-2xl font-semibold tracking-wide">{signo.nombre}</p>
@@ -90,7 +101,7 @@ export default function Universo() {
           </p>
         </div>
 
-        {/* Planetas — próximamente */}
+        {/* Mapa planetario */}
         <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-4">Mapa Planetario</p>
           <div className="grid grid-cols-3 gap-4">
