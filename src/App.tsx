@@ -30,6 +30,17 @@ import Disclaimer from './pages/Disclaimer'
 import PlantOracle from './pages/PlantOracle'
 import ChakraOracle from './pages/ChakraOracle'
 import Compatibilidad from './pages/Compatibilidad'
+import AstroDaily from './pages/AstroDaily'
+import ColorOracle from './pages/ColorOracle'
+import TibetanMo from './pages/TibetanMo'
+import AnoPersonal from './pages/AnoPersonal'
+import MirrorOracle from './pages/MirrorOracle'
+import Geomancia from './pages/Geomancia'
+import NumerologiaNombre from './pages/NumerologiaNombre'
+import Sincronicidad from './pages/Sincronicidad'
+import Tzolkin from './pages/Tzolkin'
+import HoroscopoCeltico from './pages/HoroscopoCeltico'
+import ZiWei from './pages/ZiWei'
 
 export default function App() {
   return (
@@ -66,6 +77,17 @@ export default function App() {
         <Route path="/plantas" element={<PlantOracle />} />
         <Route path="/chakras" element={<ChakraOracle />} />
         <Route path="/compatibilidad" element={<Compatibilidad />} />
+        <Route path="/astro-daily" element={<AstroDaily />} />
+        <Route path="/color" element={<ColorOracle />} />
+        <Route path="/tibetan-mo" element={<TibetanMo />} />
+        <Route path="/ano-personal" element={<AnoPersonal />} />
+        <Route path="/mirror" element={<MirrorOracle />} />
+        <Route path="/geomancia" element={<Geomancia />} />
+        <Route path="/numerologia-nombre" element={<NumerologiaNombre />} />
+        <Route path="/sincronicidad" element={<Sincronicidad />} />
+        <Route path="/tzolkin" element={<Tzolkin />} />
+        <Route path="/horoscopo-celtico" element={<HoroscopoCeltico />} />
+        <Route path="/zi-wei" element={<ZiWei />} />
       </Routes>
     </BrowserRouter>
   )
