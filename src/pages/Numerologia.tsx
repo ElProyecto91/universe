@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { calcularNumerologia, SIGNIFICADOS_NUMEROLOGICOS } from '../lib/motores/numerologia'
+import Compartir from '../components/Compartir'
 
 export default function Numerologia() {
   const [interpretacion, setInterpretacion] = useState('')
@@ -64,7 +65,6 @@ Escribe una lectura numerológica personal de 3-4 párrafos para ${nombre}. Comi
           </div>
         </div>
 
-        {/* Números principales */}
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: 'Vida', numero: numeroVida, desc: 'Tu misión' },
@@ -79,7 +79,6 @@ Escribe una lectura numerológica personal de 3-4 párrafos para ${nombre}. Comi
           ))}
         </div>
 
-        {/* Número de vida principal */}
         {significado && (
           <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
             <p className="text-purple-300 text-xs tracking-widest uppercase mb-1">Número {numeroVida}</p>
@@ -116,6 +115,14 @@ Escribe una lectura numerológica personal de 3-4 párrafos para ${nombre}. Comi
               <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>
             )}
           </div>
+        )}
+
+        {!cargando && interpretacion && (
+          <Compartir
+            titulo={`Mi Número de Vida es ${numeroVida}: ${significado?.titulo}`}
+            texto={interpretacion}
+            hashtags={['Numerologia', 'Universe', 'NumeroDeLaVida']}
+          />
         )}
 
         {generado && !cargando && (
