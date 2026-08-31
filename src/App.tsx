@@ -27,6 +27,9 @@ import CoinOracle from './pages/CoinOracle'
 import OracleMix from './pages/OracleMix'
 import OmensOracle from './pages/OmensOracle'
 import Disclaimer from './pages/Disclaimer'
+import PlantOracle from './pages/PlantOracle'
+import ChakraOracle from './pages/ChakraOracle'
+import Compatibilidad from './pages/Compatibilidad'
 
 export default function App() {
   return (
@@ -60,6 +63,9 @@ export default function App() {
         <Route path="/oracle-mix" element={<OracleMix />} />
         <Route path="/presagios" element={<OmensOracle />} />
         <Route path="/disclaimer" element={<Disclaimer />} />
+        <Route path="/plantas" element={<PlantOracle />} />
+        <Route path="/chakras" element={<ChakraOracle />} />
+        <Route path="/compatibilidad" element={<Compatibilidad />} />
       </Routes>
     </BrowserRouter>
   )
