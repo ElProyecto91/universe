@@ -1,0 +1,27 @@
+export const OGHAM = [
+  { nombre: 'Beith', simbolo: 'ᚁ', arbol: 'Abedul', keywords: 'Nuevos comienzos · Purificación · Potencial', significado: 'El abedul es el primer árbol en florecer tras el invierno. Beith habla de nuevos comienzos, de limpiar lo viejo para que lo nuevo pueda crecer.' },
+  { nombre: 'Luis', simbolo: 'ᚂ', arbol: 'Serbal', keywords: 'Protección · Visión · Discernimiento', significado: 'El serbal protege contra la magia dañina. Luis habla de claridad de visión, de protección y de la capacidad de ver más allá de las apariencias.' },
+  { nombre: 'Fearn', simbolo: 'ᚃ', arbol: 'Aliso', keywords: 'Fundamentos · Apoyo · Resistencia', significado: 'El aliso crece en las orillas de los ríos, con raíces que resisten la corriente. Fearn habla de fundamentos sólidos y de apoyo en tiempos difíciles.' },
+  { nombre: 'Sail', simbolo: 'ᚄ', arbol: 'Sauce', keywords: 'Intuición · Luna · Ciclos', significado: 'El sauce se dobla pero no se rompe. Sail habla de flexibilidad, de conexión con la luna y los ciclos naturales, y de la intuición emocional.' },
+  { nombre: 'Nion', simbolo: 'ᚅ', arbol: 'Fresno', keywords: 'Conexión · Mundos · Expansión', significado: 'El fresno conecta los mundos en la tradición nórdica. Nion habla de expansión de la conciencia y de la conexión entre lo visible y lo invisible.' },
+  { nombre: 'Huath', simbolo: 'ᚆ', arbol: 'Espino', keywords: 'Espera · Purificación · Pausa', significado: 'El espino es la barrera que protege. Huath habla de la necesidad de pausa, de purificación antes de actuar, de respetar los umbrales.' },
+  { nombre: 'Duir', simbolo: 'ᚇ', arbol: 'Roble', keywords: 'Fortaleza · Sabiduría · Durabilidad', significado: 'El roble es el rey del bosque, símbolo de fortaleza y longevidad. Duir habla de poder, de sabiduría acumulada y de la capacidad de resistir.' },
+  { nombre: 'Tinne', simbolo: 'ᚈ', arbol: 'Acebo', keywords: 'Energía · Batalla · Equilibrio', significado: 'El acebo mantiene su verde en el invierno. Tinne habla de energía que persiste en la adversidad, de equilibrar las fuerzas opuestas.' },
+  { nombre: 'Coll', simbolo: 'ᚉ', arbol: 'Avellano', keywords: 'Sabiduría · Creatividad · Inspiración', significado: 'El avellano es el árbol de la sabiduría. Coll habla de conocimiento intuitivo, de inspiración creativa y del acceso a verdades más profundas.' },
+  { nombre: 'Quert', simbolo: 'ᚊ', arbol: 'Manzano', keywords: 'Belleza · Amor · Elección', significado: 'El manzano es el árbol de la isla de la juventud eterna. Quert habla de belleza, de las elecciones del corazón y de lo que realmente nutre el alma.' },
+  { nombre: 'Muin', simbolo: 'ᚋ', arbol: 'Vid', keywords: 'Profecía · Introspección · Revelación', significado: 'La vid es la planta de la transformación y la visión. Muin habla de mirar hacia adentro, de revelaciones que vienen del autoconocimiento profundo.' },
+  { nombre: 'Gort', simbolo: 'ᚌ', arbol: 'Hiedra', keywords: 'Determinación · Espiral · Persistencia', significado: 'La hiedra crece en espiral, persistente y tenaz. Gort habla de la determinación que supera los obstáculos y de los patrones que se repiten en nuestra vida.' },
+  { nombre: 'Ngetal', simbolo: 'ᚍ', arbol: 'Junco', keywords: 'Sanación · Acción · Claridad', significado: 'El junco crece en las aguas. Ngetal habla de sanación directa, de acción clara y decisiva, y de la limpieza que viene de decir la verdad.' },
+  { nombre: 'Straif', simbolo: 'ᚎ', arbol: 'Endrino', keywords: 'Destino · Inevitabilidad · Transformación', significado: 'El endrino es el árbol del destino inevitable. Straif habla de las fuerzas que no podemos controlar y de la necesidad de rendirse a la transformación.' },
+  { nombre: 'Ruis', simbolo: 'ᚏ', arbol: 'Saúco', keywords: 'Ancestros · Transición · Muerte y renacimiento', significado: 'El saúco conecta con el mundo de los ancestros. Ruis habla de transiciones, de honrar lo que fue y de la continuidad entre la muerte y el renacimiento.' },
+  { nombre: 'Ailm', simbolo: 'ᚐ', arbol: 'Pino/Abeto', keywords: 'Claridad · Perspectiva · Longevidad', significado: 'El pino se eleva hacia el cielo con claridad. Ailm habla de perspectiva amplia, de ver desde las alturas y de la claridad que viene de la distancia.' },
+  { nombre: 'Onn', simbolo: 'ᚑ', arbol: 'Retama', keywords: 'Vitalidad · Energía solar · Optimismo', significado: 'La retama florece con fuerza en suelos difíciles. Onn habla de vitalidad inagotable, de energía solar y del optimismo que resurge tras el invierno.' },
+  { nombre: 'Ur', simbolo: 'ᚒ', arbol: 'Brezo', keywords: 'Sueños · Pasión · Romanticismo', significado: 'El brezo cubre los páramos con su color. Ur habla de sueños apasionados, de amor y de la búsqueda de lo que el corazón anhela con más fuerza.' },
+  { nombre: 'Edad', simbolo: 'ᚓ', arbol: 'Álamo', keywords: 'Visión · Otro mundo · Umbral', significado: 'El álamo temblón es el árbol del umbral. Edad habla de visiones, de la capacidad de percibir lo que otros no ven y de los mundos que existen más allá del visible.' },
+  { nombre: 'Idad', simbolo: 'ᚔ', arbol: 'Tejo', keywords: 'Transformación · Eternidad · Muerte y vida', significado: 'El tejo vive miles de años y renace desde sus propias ramas muertas. Idad habla de transformación profunda, de eternidad y del ciclo continuo de muerte y renacimiento.' },
+]
+
+export function sacarOgham(cantidad: number) {
+  const mezclados = [...OGHAM].sort(() => Math.random() - 0.5)
+  return mezclados.slice(0, cantidad)
+}
