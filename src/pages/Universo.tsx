@@ -125,7 +125,7 @@ export default function Universo() {
           </p>
         </div>
 
-        {/* Mi perfil espiritual */}
+        {/* Perfil espiritual */}
         <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-4">Perfil Espiritual</p>
           <div className="flex flex-col gap-3">
@@ -143,7 +143,22 @@ export default function Universo() {
           </div>
         </div>
 
-        {/* Botones */}
+        {/* Carta del día */}
+        <button
+          onClick={() => window.location.href = '/tarot-diario'}
+          className="w-full bg-white/5 border border-purple-500/30 rounded-3xl p-5 text-left backdrop-blur hover:bg-purple-600/20 transition"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-purple-300 text-xs tracking-widest uppercase mb-1">Cada día</p>
+              <p className="text-white font-semibold">Carta del Día</p>
+              <p className="text-white/50 text-xs mt-1">Tu carta del Tarot de hoy te espera</p>
+            </div>
+            <span className="text-purple-300/50 text-2xl">›</span>
+          </div>
+        </button>
+
+        {/* Botones principales */}
         <div className="flex flex-col gap-3">
           <button
             onClick={() => window.location.href = '/guia'}
@@ -152,8 +167,14 @@ export default function Universo() {
             Hablar con mi Guía IA
           </button>
           <button
-            onClick={() => window.location.href = '/tarot'}
+            onClick={() => window.location.href = '/tradiciones'}
             className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full text-base hover:bg-white/20 transition backdrop-blur"
+          >
+            Explorar Tradiciones del Mundo
+          </button>
+          <button
+            onClick={() => window.location.href = '/tarot'}
+            className="w-full bg-white/5 border border-white/10 text-white/70 font-semibold py-4 rounded-full text-base hover:bg-white/10 transition backdrop-blur"
           >
             Tirada de Tarot
           </button>
