@@ -5,7 +5,10 @@ const CATEGORIAS = [
       { id: 'tarot-diario', nombre: 'Carta del Día', subtitulo: 'Tarot · Cada día', descripcion: 'Una carta del Tarot cambia cada amanecer.', ruta: '/tarot-diario', etiqueta: 'DIARIO' },
       { id: 'tarot', nombre: 'Tarot', subtitulo: 'Lectura completa', descripcion: 'Tiradas de 1, 3 o 5 cartas para explorar cualquier situación.', ruta: '/tarot' },
       { id: 'runas', nombre: 'Runas', subtitulo: 'Tradición germánica', descripcion: 'Sistema de escritura histórico germánico. Reconstrucción moderna en adivinación.', ruta: '/runas' },
+      { id: 'ogham', nombre: 'Ogham', subtitulo: 'Alfabeto irlandés · Interpretación moderna', descripcion: 'Cada letra del Ogham corresponde a un árbol y sus cualidades simbólicas.', ruta: '/ogham' },
       { id: 'iching', nombre: 'I Ching', subtitulo: 'El Libro de los Cambios · China', descripcion: '64 hexagramas revelan la energía del momento.', ruta: '/iching' },
+      { id: 'dados', nombre: 'Oracle de Dados', subtitulo: 'Cleromancia · Tradición antigua', descripcion: 'Lanza tres dados y explora el mensaje de los números.', ruta: '/dados' },
+      { id: 'bibliomancia', nombre: 'Bibliomancia', subtitulo: 'Textos en dominio público', descripcion: 'Abre un texto sagrado o filosófico al azar y encuentra orientación.', ruta: '/bibliomancia' },
       { id: 'omikuji', nombre: 'Omikuji', subtitulo: 'Fortuna del día · Japón', descripcion: 'Como en los santuarios japoneses, extrae tu fortuna diaria.', ruta: '/omikuji', etiqueta: 'DIARIO' },
       { id: 'numerologia', nombre: 'Numerología', subtitulo: 'Tradición pitagórica', descripcion: 'Tu nombre y fecha de nacimiento revelan tu misión.', ruta: '/numerologia' },
       { id: 'bazi', nombre: 'BaZi', subtitulo: 'Cuatro Pilares · China', descripcion: 'Tu energía esencial y ciclos de vida.', ruta: '/bazi' },
@@ -16,6 +19,12 @@ const CATEGORIAS = [
     tradiciones: [
       { id: 'luna', nombre: 'Oracle Lunar', subtitulo: 'Fase lunar real · Hoy', descripcion: 'La fase lunar de hoy y su energía para tu vida.', ruta: '/luna', etiqueta: 'DIARIO' },
       { id: 'suenos', nombre: 'Oracle de Sueños', subtitulo: 'Psicología · Simbolismo', descripcion: 'Interpreta tus sueños con psicología jungiana y simbolismo universal.', ruta: '/suenos' },
+    ]
+  },
+  {
+    nombre: '🧙 Caminos Paganos',
+    tradiciones: [
+      { id: 'pagan', nombre: 'Caminos Paganos', subtitulo: 'Norse · Helénico · Egipcio · Celta · Eslavo · Wicca', descripcion: 'Explora preguntas desde seis grandes tradiciones espirituales del mundo.', ruta: '/pagan' },
     ]
   },
   {
@@ -59,7 +68,7 @@ export default function Tradiciones() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <p className="text-white font-semibold">{t.nombre}</p>
                       {t.etiqueta && (
                         <span className={`text-xs px-2 py-0.5 rounded-full ${t.etiqueta === 'DIARIO' ? 'bg-purple-500/30 text-purple-300' : t.etiqueta === 'PRÓXIMAMENTE' ? 'bg-white/10 text-white/40' : ''}`}>
@@ -78,7 +87,7 @@ export default function Tradiciones() {
         ))}
 
         <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur text-center">
-          <p className="text-white/30 text-xs">Cada tradición se presenta con su contexto cultural original. Exploramos, no apropiamos.</p>
+          <p className="text-white/30 text-xs">Exploramos, no apropiamos. Cada tradición se presenta con su contexto cultural original.</p>
         </div>
 
       </div>
