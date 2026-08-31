@@ -2,7 +2,7 @@ const CATEGORIAS = [
   {
     nombre: '⭐ Destacado',
     tradiciones: [
-      { id: 'oracle-mix', nombre: 'Oracle Mix', subtitulo: 'La killer feature · Múltiples tradiciones', descripcion: 'Combina hasta 4 sistemas de sabiduría para explorar tu pregunta desde múltiples perspectivas a la vez.', ruta: '/oracle-mix', destacado: true },
+      { id: 'oracle-mix', nombre: 'Oracle Mix', subtitulo: 'Múltiples tradiciones · Una pregunta', descripcion: 'Combina hasta 4 sistemas de sabiduría para explorar tu pregunta desde múltiples perspectivas a la vez.', ruta: '/oracle-mix', destacado: true },
       { id: 'astro-daily', nombre: 'Astro Daily', subtitulo: 'Tu signo solar · Cada día', descripcion: 'Mensaje astrológico diario personalizado basado en tu signo solar.', ruta: '/astro-daily', etiqueta: 'DIARIO' },
       { id: 'mirror', nombre: 'Mirror Oracle', subtitulo: 'Autoconocimiento · Reflexión profunda', descripcion: 'Preguntas que actúan como espejos para revelar tu sabiduría interior.', ruta: '/mirror', etiqueta: 'DIARIO' },
     ]
@@ -70,55 +70,59 @@ export default function Tradiciones() {
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/75" />
+      <div className="absolute inset-0 bg-black/80" />
 
       <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-6 py-10 gap-8">
 
         <div className="flex items-center">
           <button onClick={() => window.location.href = '/universo'} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
-            <p className="text-white font-semibold text-sm">Explorar Tradiciones</p>
+            <p className="text-white font-bold text-base">Explorar Tradiciones</p>
+            <p className="text-white/50 text-xs">30+ sistemas de sabiduría del mundo</p>
           </div>
         </div>
 
-        <p className="text-white/50 text-sm text-center">Sistemas de sabiduría de diferentes culturas. Cada uno ofrece una perspectiva única.</p>
-
         {CATEGORIAS.map(cat => (
           <div key={cat.nombre} className="flex flex-col gap-3">
-            <p className="text-white/60 text-xs tracking-widest uppercase">{cat.nombre}</p>
+            <p className="text-purple-300 text-xs tracking-widest uppercase font-semibold">{cat.nombre}</p>
             {cat.tradiciones.map((t: any) => (
               <button
                 key={t.id}
                 onClick={() => window.location.href = t.ruta}
-                className={`w-full border rounded-3xl p-5 text-left backdrop-blur transition ${t.destacado ? 'bg-purple-600/20 border-purple-500/40 hover:bg-purple-600/30' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
+                className={`w-full border rounded-2xl p-4 text-left transition ${
+                  t.destacado
+                    ? 'bg-purple-600/30 border-purple-400/50 hover:bg-purple-600/40'
+                    : 'bg-white/12 border-white/25 hover:bg-white/20'
+                }`}
+                style={!t.destacado ? { backgroundColor: 'rgba(255,255,255,0.08)' } : {}}
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center justify-between gap-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <p className="text-white font-semibold">{t.nombre}</p>
+                      <p className="text-white font-semibold text-sm">{t.nombre}</p>
                       {t.etiqueta && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/30 text-purple-300">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/40 text-purple-200 font-medium">
                           {t.etiqueta}
                         </span>
                       )}
                     </div>
-                    <p className="text-purple-300/70 text-xs mb-1">{t.subtitulo}</p>
-                    <p className="text-white/50 text-xs leading-relaxed">{t.descripcion}</p>
+                    <p className="text-purple-300 text-xs mb-1">{t.subtitulo}</p>
+                    <p className="text-white/65 text-xs leading-relaxed">{t.descripcion}</p>
                   </div>
-                  <span className="text-purple-300/50 text-lg">›</span>
+                  <span className="text-purple-300 text-xl flex-shrink-0">›</span>
                 </div>
               </button>
             ))}
           </div>
         ))}
 
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur text-center">
-          <p className="text-white/30 text-xs">Exploramos, no apropiamos. Cada tradición se presenta con su contexto cultural original.</p>
+        <div className="bg-white/10 border border-white/20 rounded-2xl p-4 text-center">
+          <p className="text-white/50 text-xs">Exploramos, no apropiamos. Cada tradición se presenta con su contexto cultural original.</p>
         </div>
 
         <button
           onClick={() => window.location.href = '/disclaimer'}
-          className="text-white/20 text-xs text-center underline"
+          className="text-white/30 text-xs text-center underline"
         >
           Aviso Legal
         </button>
