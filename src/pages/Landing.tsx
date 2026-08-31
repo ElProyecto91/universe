@@ -40,13 +40,12 @@ export default function Landing() {
 
         <button
           onClick={() => window.location.href = '/onboarding'}
-          className="text-white/40 text-sm"
-          style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}
+          className="text-white/40 text-sm mb-10"
         >
           Continuar sin cuenta →
         </button>
 
-        <div className="mt-10 flex gap-8 text-2xl">
+        <div className="flex gap-8 text-2xl mb-10">
           <div className="flex flex-col items-center gap-1">
             <span>❤️</span>
             <span className="text-xs text-white" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>Amor</span>
@@ -60,6 +59,17 @@ export default function Landing() {
             <span className="text-xs text-white" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>Mi camino</span>
           </div>
         </div>
+
+        <p className="text-white/20 text-xs text-center max-w-xs leading-relaxed">
+          Solo para entretenimiento y reflexión personal. Las lecturas no constituyen asesoramiento profesional de ningún tipo.
+        </p>
+
+        <button
+          onClick={() => window.location.href = '/disclaimer'}
+          className="text-white/20 text-xs mt-2 underline"
+        >
+          Aviso Legal completo
+        </button>
 
       </div>
     </div>
