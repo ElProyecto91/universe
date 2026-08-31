@@ -13,7 +13,6 @@ export default function Runas() {
   const [runas, setRunas] = useState<any[]>([])
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando, setCargando] = useState(false)
-  const [tirada, setTirada] = useState('')
   const nombre = localStorage.getItem('nombre') || 'viajero'
 
   const bgStyle = {
@@ -25,7 +24,6 @@ export default function Runas() {
   const lanzar = async (t: typeof TIRADAS[0]) => {
     const runasSeleccionadas = sacarRunas(t.cantidad)
     setRunas(runasSeleccionadas)
-    setTirada(t.descripcion)
     setFase('resultado')
     setCargando(true)
 
@@ -40,9 +38,7 @@ Tirada: ${t.descripcion}
 Runas obtenidas:
 ${descripcionRunas}
 
-Escribe una interpretación rúnica de 3-4 párrafos. Primero describe la energía general de la tirada. Luego interpreta cada runa en su posición. Conecta los mensajes entre sí. Termina con una pregunta de reflexión. Habla directamente a ${nombre}. 
-
-Nota: Las runas son un sistema de escritura histórico germánico. Su uso moderno en adivinación es principalmente una reconstrucción contemporánea. Interpreta desde esa perspectiva simbólica.`
+Escribe una interpretación rúnica de 3-4 párrafos. Primero describe la energía general de la tirada. Luego interpreta cada runa en su posición. Conecta los mensajes entre sí. Termina con una pregunta de reflexión. Habla directamente a ${nombre}.`
 
     try {
       const res = await fetch(
@@ -56,9 +52,14 @@ Nota: Las runas son un sistema de escritura histórico germánico. Su uso modern
         }
       )
       const data = await res.json()
-      setInterpretacion(data.candidates?.[0]?.content?.parts?.[0]?.text || '')
-    } catch {
-      setInterpretacion('Las runas guardan silencio por un momento.')
+      const texto = data.candidates?.[0]?.content?.parts?.[0]?.text
+      if (texto) {
+        setInterpretacion(texto)
+      } else {
+        setInterpretacion('Error: ' + JSON.stringify(data).substring(0, 300))
+      }
+    } catch (err) {
+      setInterpretacion('Error de conexión: ' + String(err))
     }
     setCargando(false)
   }
@@ -138,7 +139,7 @@ Nota: Las runas son un sistema de escritura histórico germánico. Su uso modern
               )}
             </div>
 
-            {!cargando && interpretacion && (
+            {!cargando && interpretacion && !interpretacion.startsWith('Error') && (
               <Compartir
                 titulo={`Mi tirada de Runas: ${runas.map(r => r.simbolo).join(' ')}`}
                 texto={interpretacion}
