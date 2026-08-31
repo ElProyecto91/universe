@@ -89,12 +89,7 @@ export function SimboloZodiaco({ signo }: { signo: string }) {
       </svg>
     ),
   }
-
-  return (
-    <div className="text-white">
-      {paths[signo] || paths['Leo']}
-    </div>
-  )
+  return <div className="text-white">{paths[signo] || paths['Leo']}</div>
 }
 
 export function SimboloElemento({ elemento }: { elemento: string }) {
@@ -122,10 +117,50 @@ export function SimboloElemento({ elemento }: { elemento: string }) {
       </svg>
     ),
   }
+  return <div className="text-purple-300">{simbolos[elemento] || simbolos['Fuego']}</div>
+}
 
-  return (
-    <div className="text-purple-300">
-      {simbolos[elemento] || simbolos['Fuego']}
-    </div>
-  )
+export function SimboloPlaneta({ simbolo }: { simbolo: string }) {
+  const planetas: Record<string, JSX.Element> = {
+    sol: (
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+        <circle cx="20" cy="20" r="8" stroke="currentColor" strokeWidth="2.5"/>
+        <circle cx="20" cy="20" r="2" fill="currentColor"/>
+        <path d="M20 4 L20 8 M20 32 L20 36 M4 20 L8 20 M32 20 L36 20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+        <path d="M8.5 8.5 L11.5 11.5 M28.5 28.5 L31.5 31.5 M31.5 8.5 L28.5 11.5 M11.5 28.5 L8.5 31.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      </svg>
+    ),
+    luna: (
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+        <path d="M25 8 C15 10 8 17 8 26 C8 33 14 38 22 38 C30 38 36 33 36 26 C36 22 34 18 31 15 C29 20 25 24 20 24 C14 24 10 19 10 14 C10 11 12 8 15 7 C18 6 22 6 25 8 Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+      </svg>
+    ),
+    ascendente: (
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+        <path d="M20 34 L20 8 M12 16 L20 8 L28 16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M12 28 L28 28" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+      </svg>
+    ),
+    venus: (
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+        <circle cx="20" cy="16" r="10" stroke="currentColor" strokeWidth="2.5"/>
+        <path d="M20 26 L20 36 M14 31 L26 31" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+      </svg>
+    ),
+    marte: (
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+        <circle cx="18" cy="22" r="10" stroke="currentColor" strokeWidth="2.5"/>
+        <path d="M25 15 L34 6 M28 6 L34 6 L34 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+    saturno: (
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+        <path d="M22 6 L22 34" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+        <path d="M14 12 L22 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+        <path d="M14 20 L28 20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+        <path d="M22 34 C28 34 32 30 32 26 C32 22 28 20 22 20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+      </svg>
+    ),
+  }
+  return <div className="text-purple-300">{planetas[simbolo] || planetas['sol']}</div>
 }
