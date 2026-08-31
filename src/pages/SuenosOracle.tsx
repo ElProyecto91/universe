@@ -35,7 +35,7 @@ Nombre: ${nombre} (${signo})
 Sueño: "${sueno}"
 ${contextoSimbolos}
 
-Escribe una interpretación de sueños de 3-4 párrafos. Primero identifica los símbolos principales y su significado arquetípico. Luego explora el posible mensaje psicológico o espiritual. Menciona brevemente cómo diferentes tradiciones (junguiana, folklore, espiritual) interpretarían elementos clave. Termina con una pregunta de reflexión profunda. Habla directamente a ${nombre}. No afirmes que el sueño "predice" nada — explora su simbolismo.`
+Escribe una interpretación de sueños de 3-4 párrafos. Primero identifica los símbolos principales y su significado arquetípico. Luego explora el posible mensaje psicológico o espiritual. Menciona brevemente cómo diferentes tradiciones interpretarían elementos clave. Termina con una pregunta de reflexión profunda. Habla directamente a ${nombre}.`
 
     try {
       const res = await fetch(
@@ -49,9 +49,14 @@ Escribe una interpretación de sueños de 3-4 párrafos. Primero identifica los 
         }
       )
       const data = await res.json()
-      setInterpretacion(data.candidates?.[0]?.content?.parts?.[0]?.text || 'Los sueños guardan su misterio por un momento.')
-    } catch {
-      setInterpretacion('Los sueños guardan su misterio por un momento. Inténtalo de nuevo.')
+      const texto = data.candidates?.[0]?.content?.parts?.[0]?.text
+      if (texto) {
+        setInterpretacion(texto)
+      } else {
+        setInterpretacion('Error: ' + JSON.stringify(data).substring(0, 300))
+      }
+    } catch (err) {
+      setInterpretacion('Error de conexión: ' + String(err))
     }
     setCargando(false)
   }
@@ -75,7 +80,7 @@ Escribe una interpretación de sueños de 3-4 párrafos. Primero identifica los 
             <div className="text-center">
               <p className="text-6xl mb-4">🌙</p>
               <p className="text-white/60 text-sm leading-relaxed">
-                Los sueños son el lenguaje del inconsciente. Describe tu sueño con el mayor detalle posible — colores, emociones, personajes, lugares.
+                Los sueños son el lenguaje del inconsciente. Describe tu sueño con el mayor detalle posible.
               </p>
             </div>
 
@@ -121,11 +126,11 @@ Escribe una interpretación de sueños de 3-4 párrafos. Primero identifica los 
               )}
             </div>
 
-            {!cargando && interpretacion && (
+            {!cargando && interpretacion && !interpretacion.startsWith('Error') && (
               <Compartir
                 titulo="Mi interpretación de sueños"
                 texto={interpretacion}
-                hashtags={['Suenos', 'Universe', 'DreamOracle', 'Inconsciente']}
+                hashtags={['Suenos', 'Universe', 'DreamOracle']}
               />
             )}
 
