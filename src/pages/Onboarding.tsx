@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { supabase, guardarPerfil } from '../lib/supabase'
 
 const pasos = [
   { id: 1, pregunta: "¿Cómo te llamas?", placeholder: "Tu nombre", tipo: "text", campo: "nombre" },
@@ -40,6 +41,7 @@ export default function Onboarding() {
   const [paso, setPaso] = useState(1)
   const [valor, setValor] = useState('')
   const [data, setData] = useState<Record<string, string>>({})
+  const [guardando, setGuardando] = useState(false)
 
   const bgStyle = {
     backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
@@ -47,17 +49,28 @@ export default function Onboarding() {
     backgroundPosition: 'center',
   }
 
-  const guardarYseguir = (v?: string) => {
+  const guardarYseguir = async (v?: string) => {
     const val = v ?? valor
     const campo = paso <= pasos.length
       ? pasos[paso - 1].campo
       : preguntasEspeciales[paso - pasos.length - 1].campo
-    setData(d => ({ ...d, [campo]: val }))
+
+    const nuevaData = { ...data, [campo]: val }
+    setData(nuevaData)
     localStorage.setItem(campo, val)
+
     setValor('')
+
     if (paso < totalPasos) {
       setPaso(p => p + 1)
     } else {
+      // Último paso — guardar en Supabase si hay usuario
+      setGuardando(true)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await guardarPerfil(user.id, nuevaData)
+      }
+      setGuardando(false)
       window.location.href = '/universo'
     }
   }
@@ -102,9 +115,10 @@ export default function Onboarding() {
             />
             <button
               onClick={() => guardarYseguir()}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full text-lg hover:opacity-90 transition"
+              disabled={guardando}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full text-lg hover:opacity-90 transition disabled:opacity-40"
             >
-              Continuar
+              {guardando ? 'Guardando...' : 'Continuar'}
             </button>
             {pasoActual.tipo === 'time' && (
               <button
@@ -124,7 +138,8 @@ export default function Onboarding() {
               <button
                 key={op}
                 onClick={() => guardarYseguir(op)}
-                className="w-full bg-white/10 border border-white/30 backdrop-blur rounded-2xl px-4 py-3 text-left text-white hover:bg-purple-600/40 hover:border-purple-400 transition text-base tracking-wide"
+                disabled={guardando}
+                className="w-full bg-white/10 border border-white/30 backdrop-blur rounded-2xl px-4 py-3 text-left text-white hover:bg-purple-600/40 hover:border-purple-400 transition text-base tracking-wide disabled:opacity-40"
               >
                 {op}
               </button>
