@@ -113,7 +113,7 @@ export async function GET(request: Request) {
       resultados.push({ signo, ok: true, tokens })
 
       // Pausa de 500ms entre signo y signo (evitar rate limit de Gemini)
-      await sleep(500)
+      await sleep(15000)
 
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Error desconocido'
