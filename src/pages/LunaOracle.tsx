@@ -1,14 +1,18 @@
-import { getFaseLunar, getDiasHastaLunaLlena } from '../lib/motores/luna'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { getFaseLunar } from '../lib/motores/luna'
+import { getFaseLunarAPI } from '../lib/apis'
 import Compartir from '../components/Compartir'
 
 export default function LunaOracle() {
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando, setCargando] = useState(false)
   const [generado, setGenerado] = useState(false)
-  const fase = getFaseLunar()
-  const diasHastaLlena = getDiasHastaLunaLlena()
+  const [iluminacion, setIluminacion] = useState<number | null>(null)
+
   const nombre = localStorage.getItem('nombre') || 'viajero'
+  const signo = localStorage.getItem('signo') || 'Leo'
+  const faseLunar = getFaseLunar()
+  const hoy = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
 
   const bgStyle = {
     backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
@@ -16,18 +20,29 @@ export default function LunaOracle() {
     backgroundPosition: 'center',
   }
 
+  useEffect(() => {
+    getFaseLunarAPI().then(data => {
+      if (data?.illumination) setIluminacion(Math.round(data.illumination * 100))
+    })
+  }, [])
+
   const generarLectura = async () => {
     setCargando(true)
     setGenerado(true)
 
-    const prompt = `Eres una guía lunar sabia que combina astronomía real con simbolismo espiritual.
+    const prompt = `Eres una experta en astrología lunar y rituales de luna.
 
-Nombre: ${nombre}
-Fase lunar actual: ${fase.nombre} ${fase.simbolo}
-Energía: ${fase.energia}
-Días hasta luna llena: ${diasHastaLlena}
+Nombre: ${nombre} (${signo})
+Fase lunar: ${faseLunar.nombre} ${faseLunar.simbolo}
+Días para luna llena: ${faseLunar.diasHastaLunaLlena}
+Iluminación: ${iluminacion !== null ? iluminacion + '%' : 'aproximadamente el 50%'}
+Energía de la fase: ${faseLunar.energia}
+Fecha: ${hoy}
 
-Escribe una lectura lunar personal de 3 párrafos para ${nombre}. Conecta la fase lunar real con su situación personal. Habla de qué tipo de energía está disponible ahora, qué acciones son más alineadas con este momento del ciclo y qué debería soltar o potenciar. Termina con una pregunta de reflexión. Sé poético y preciso.`
+Escribe una guía lunar de 3 párrafos para ${nombre}.
+Primero describe la energía de esta fase lunar y qué significa cosmológicamente.
+Luego personaliza para ${nombre} como ${signo} — cómo esta fase amplifica o desafía su energía natural.
+Termina con 3 prácticas o rituales específicos para aprovechar esta fase lunar hoy.`
 
     try {
       const res = await fetch(
@@ -41,9 +56,9 @@ Escribe una lectura lunar personal de 3 párrafos para ${nombre}. Conecta la fas
         }
       )
       const data = await res.json()
-      setInterpretacion(data.candidates?.[0]?.content?.parts?.[0]?.text || fase.mensaje)
+      setInterpretacion(data.candidates?.[0]?.content?.parts?.[0]?.text || '')
     } catch {
-      setInterpretacion(fase.mensaje)
+      setInterpretacion('La luna guarda silencio. Inténtalo de nuevo.')
     }
     setCargando(false)
   }
@@ -58,43 +73,47 @@ Escribe una lectura lunar personal de 3 párrafos para ${nombre}. Conecta la fas
           <button onClick={() => window.location.href = '/tradiciones'} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
             <p className="text-white font-semibold text-sm">Oracle Lunar</p>
-            <p className="text-purple-300 text-xs">Fase lunar real · Hoy</p>
+            <p className="text-purple-300 text-xs capitalize">{hoy}</p>
           </div>
         </div>
 
-        {/* Fase actual */}
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur flex flex-col items-center gap-4">
-          <p className="text-8xl">{fase.simbolo}</p>
-          <p className="text-2xl font-bold text-center">{fase.nombre}</p>
-          <p className="text-purple-300 text-sm tracking-wide text-center">{fase.energia}</p>
-          <p className="text-white/50 text-xs text-center">{diasHastaLlena} días hasta la luna llena</p>
-        </div>
-
-        {/* Mensaje */}
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
-          <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Energía del ciclo</p>
-          <p className="text-white/90 text-sm leading-relaxed">{fase.mensaje}</p>
-        </div>
-
-        {/* Ritual */}
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
-          <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Práctica sugerida</p>
-          <p className="text-white/80 text-sm leading-relaxed">{fase.ritual}</p>
-        </div>
-
-        {/* Conexiones */}
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur">
-          <p className="text-purple-300 text-xs tracking-widest uppercase mb-4">Conexiones simbólicas</p>
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-between items-center">
-              <span className="text-white/40 text-xs uppercase">Tarot</span>
-              <span className="text-white/80 text-sm">{fase.tarot}</span>
+        {/* Luna principal */}
+        <div className="bg-white/8 border border-white/20 rounded-3xl p-8 backdrop-blur flex flex-col items-center gap-4"
+          style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+          <p className="text-8xl" style={{ filter: 'drop-shadow(0 0 20px rgba(255,255,200,0.5))' }}>
+            {faseLunar.simbolo}
+          </p>
+          <p className="text-2xl font-bold">{faseLunar.nombre}</p>
+          {iluminacion !== null && (
+            <div className="w-full">
+              <div className="flex justify-between text-xs text-white/40 mb-1">
+                <span>Iluminación</span>
+                <span>{iluminacion}%</span>
+              </div>
+              <div className="h-2 bg-white/10 rounded-full">
+                <div
+                  className="h-2 bg-gradient-to-r from-yellow-300 to-white rounded-full transition-all"
+                  style={{ width: `${iluminacion}%` }}
+                />
+              </div>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-white/40 text-xs uppercase">Runa</span>
-              <span className="text-white/80 text-sm">{fase.runa}</span>
-            </div>
-          </div>
+          )}
+          <p className="text-white/60 text-sm text-center">{faseLunar.energia}</p>
+          <p className="text-purple-300 text-xs">{faseLunar.diasHastaLunaLlena} días para luna llena</p>
+        </div>
+
+        {/* Mensaje de la fase */}
+        <div className="bg-white/8 border border-white/20 rounded-3xl p-5 backdrop-blur"
+          style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+          <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Energía de la fase</p>
+          <p className="text-white/80 text-sm leading-relaxed">{faseLunar.mensaje}</p>
+        </div>
+
+        {/* Práctica lunar */}
+        <div className="bg-white/8 border border-white/20 rounded-2xl p-4 backdrop-blur"
+          style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+          <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Práctica recomendada</p>
+          <p className="text-white/70 text-sm leading-relaxed">{faseLunar.practica}</p>
         </div>
 
         {!generado ? (
@@ -102,11 +121,12 @@ Escribe una lectura lunar personal de 3 párrafos para ${nombre}. Conecta la fas
             onClick={generarLectura}
             className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition"
           >
-            Generar mi lectura lunar
+            Mi guía lunar personalizada
           </button>
         ) : (
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
-            <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Tu lectura personal</p>
+          <div className="bg-white/8 border border-white/20 rounded-3xl p-6 backdrop-blur"
+            style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+            <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Tu guía lunar</p>
             {cargando ? (
               <div className="flex gap-2 py-2">
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -121,9 +141,9 @@ Escribe una lectura lunar personal de 3 párrafos para ${nombre}. Conecta la fas
 
         {!cargando && interpretacion && (
           <Compartir
-            titulo={`Mi lectura lunar: ${fase.nombre} ${fase.simbolo}`}
+            titulo={`Oracle Lunar: ${faseLunar.nombre}`}
             texto={interpretacion}
-            hashtags={['Luna', 'Universe', 'LunaLlena', 'LunarOracle']}
+            hashtags={['OracleLunar', 'Universe', faseLunar.nombre.replace(' ', ''), 'Luna']}
           />
         )}
 
