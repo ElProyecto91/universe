@@ -3,6 +3,7 @@ import { getFaseLunar } from '../lib/motores/luna'
 import { getSignoSolar } from '../lib/motores/horoscopo'
 import { getAfirmacionDelDia } from '../lib/motores/afirmaciones'
 import { getRetrogradosActivos } from '../lib/motores/transitos'
+import { getImagenCarta } from '../components/svg/TarotSVG'
 
 export default function Universo() {
   const nombre = localStorage.getItem('nombre') || 'Viajero'
@@ -12,6 +13,12 @@ export default function Universo() {
   const faseLunar = getFaseLunar()
   const afirmacion = getAfirmacionDelDia(signo)
   const retrogradosActivos = getRetrogradosActivos()
+
+  const SIMBOLOS_SIGNOS: Record<string, string> = {
+    Aries: '♈', Tauro: '♉', Géminis: '♊', Cáncer: '♋',
+    Leo: '♌', Virgo: '♍', Libra: '♎', Escorpio: '♏',
+    Sagitario: '♐', Capricornio: '♑', Acuario: '♒', Piscis: '♓',
+  }
 
   const hoy = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
 
@@ -72,7 +79,15 @@ export default function Universo() {
           <div className="flex items-center gap-4">
             <div className="w-12 h-20 rounded-lg overflow-hidden flex-shrink-0"
               style={{ boxShadow: '0 0 15px rgba(192,132,252,0.3)' }}>
-              <img src={`/tarot/${carta.imagen}`} alt={carta.nombre} className="w-full h-full object-cover" onError={(e) => { (e.target as any).style.display = 'none' }} />
+              <img
+                src={getImagenCarta(carta.nombre)}
+                alt={carta.nombre}
+                className="w-full h-full object-cover"
+                crossOrigin="anonymous"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'https://www.sacred-texts.com/tarot/pkt/img/ar01.jpg'
+                }}
+              />
             </div>
             <div>
               <p className="text-white font-bold text-lg">{carta.nombre}</p>
@@ -97,14 +112,20 @@ export default function Universo() {
           >
             <p className="text-3xl mb-1">{faseLunar.simbolo}</p>
             <p className="text-white font-semibold text-sm">{faseLunar.nombre}</p>
-            <p className="text-white/40 text-xs mt-0.5">{faseLunar.diasHastaLunaLlena}d para luna llena</p>
+            <p className="text-white/40 text-xs mt-0.5">
+              {faseLunar.diasHastaLunaLlena > 0
+                ? `${faseLunar.diasHastaLunaLlena}d para luna llena`
+                : '¡Luna llena hoy!'}
+            </p>
           </button>
           <button
             onClick={() => window.location.href = '/horoscopo'}
             className="bg-white/8 border border-white/20 rounded-2xl p-4 backdrop-blur text-center hover:bg-white/12 transition"
             style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
           >
-            <p className="text-3xl mb-1" style={{ fontFamily: 'serif' }}>♌</p>
+            <p className="text-3xl mb-1" style={{ fontFamily: 'serif' }}>
+              {SIMBOLOS_SIGNOS[signo] || '♌'}
+            </p>
             <p className="text-white font-semibold text-sm">{signo}</p>
             <p className="text-white/40 text-xs mt-0.5">Tu horóscopo →</p>
           </button>
@@ -134,8 +155,20 @@ export default function Universo() {
           className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-5 rounded-full hover:opacity-90 transition"
           style={{ boxShadow: '0 0 20px rgba(139,92,246,0.4)' }}
         >
-          Explorar 40+ tradiciones espirituales
+          Explorar 55+ tradiciones espirituales
         </button>
+
+        {/* Consulta un experto — próximamente */}
+        <div className="bg-white/8 border border-white/20 rounded-3xl p-5 backdrop-blur"
+          style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white font-semibold">Consulta con un Experto</p>
+              <p className="text-white/50 text-xs mt-1">Chat en tiempo real con expertos espirituales humanos</p>
+            </div>
+            <span className="text-xs bg-purple-500/30 text-purple-300 px-2 py-1 rounded-full flex-shrink-0 ml-3">Próximamente</span>
+          </div>
+        </div>
 
         {/* Footer */}
         <div className="flex justify-center gap-6 text-white/20 text-xs">
