@@ -2,7 +2,6 @@
 // ============================================================
 // UNIVERSE — Batch diario de horóscopos
 // Vercel Cron Job: se ejecuta cada día a las 06:00 UTC
-// Configurar en vercel.json (ver abajo)
 // ============================================================
 //
 // vercel.json:
@@ -27,7 +26,6 @@ const SIGNOS = [
   'libra', 'escorpio', 'sagitario', 'capricornio', 'acuario', 'piscis'
 ]
 
-// Pausa entre llamadas a Gemini para evitar rate limits
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 async function generarHoroscopo(signo: string): Promise<{ texto: string; tokens: number }> {
@@ -66,7 +64,6 @@ Máximo 200 palabras. Responde solo el texto del horóscopo, sin título ni enca
 }
 
 export async function GET(request: Request) {
-  // Verificar que la llamada viene de Vercel Cron o de nosotros
   const authHeader = request.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return new Response('Unauthorized', { status: 401 })
@@ -77,7 +74,7 @@ export async function GET(request: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
   )
 
-  const hoy = new Date().toISOString().split('T')[0] // 'YYYY-MM-DD'
+  const hoy = new Date().toISOString().split('T')[0]
   const resultados: Array<{ signo: string; ok: boolean; tokens?: number; error?: string }> = []
   let tokensTotal = 0
 
@@ -94,7 +91,7 @@ export async function GET(request: Request) {
 
       if (existe) {
         resultados.push({ signo, ok: true, tokens: 0 })
-        continue // ya generado, no gastar tokens
+        continue
       }
 
       // Generar con Gemini
@@ -112,7 +109,7 @@ export async function GET(request: Request) {
       tokensTotal += tokens
       resultados.push({ signo, ok: true, tokens })
 
-      // Pausa de 500ms entre signo y signo (evitar rate limit de Gemini)
+      // 15 segundos entre signos — respeta el límite de 5 req/min del plan gratuito
       await sleep(15000)
 
     } catch (error) {
