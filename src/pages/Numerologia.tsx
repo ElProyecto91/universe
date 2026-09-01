@@ -1,16 +1,17 @@
 import { useState } from 'react'
-import { calcularNumerologia, SIGNIFICADOS_NUMEROLOGICOS } from '../lib/motores/numerologia'
+import { calcularNumeroVida, NUMEROS_VIDA } from '../lib/motores/numerologiaVida'
 import Compartir from '../components/Compartir'
 
 export default function Numerologia() {
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando, setCargando] = useState(false)
   const [generado, setGenerado] = useState(false)
+  const [vistaActiva, setVistaActiva] = useState<'perfil' | 'relaciones' | 'carrera'>('perfil')
 
-  const nombre = localStorage.getItem('nombre') || 'Luna'
+  const nombre = localStorage.getItem('nombre') || 'viajero'
   const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
-  const { numeroVida, numeroNombre, numeroDestino } = calcularNumerologia(nombre, fechaNacimiento)
-  const significado = SIGNIFICADOS_NUMEROLOGICOS[numeroVida]
+  const numeroVida = calcularNumeroVida(fechaNacimiento)
+  const data = NUMEROS_VIDA[numeroVida] || NUMEROS_VIDA[1]
 
   const bgStyle = {
     backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
@@ -22,15 +23,20 @@ export default function Numerologia() {
     setCargando(true)
     setGenerado(true)
 
-    const prompt = `Eres una experta en numerología pitagórica y su conexión con la psicología profunda.
+    const prompt = `Eres una experta en numerología pitagórica con décadas de experiencia.
 
 Nombre: ${nombre}
-Fecha de nacimiento: ${fechaNacimiento}
-Número de Vida: ${numeroVida} (${significado?.titulo})
-Número del Nombre: ${numeroNombre}
-Número de Destino: ${numeroDestino}
+Número de Vida: ${numeroVida} — ${data.titulo}
+Propósito: ${data.proposito}
+Fortalezas: ${data.fortalezas.join(', ')}
+Desafíos: ${data.desafios.join(', ')}
 
-Escribe una lectura numerológica personal de 3-4 párrafos para ${nombre}. Comienza con el Número de Vida y lo que revela sobre su misión y energía esencial. Habla de la tensión o armonía entre los tres números. Menciona el período actual de vida. Termina con un mensaje de orientación. Habla directamente a ${nombre}. Sé poético pero preciso.`
+Escribe una lectura numerológica profunda y personal de 4 párrafos para ${nombre}.
+Primero describe la energía esencial del ${numeroVida} y cómo se manifiesta en alguien como ${nombre}.
+Luego explora sus fortalezas naturales — cómo puede potenciarlas.
+Después trabaja sus desafíos — no como defectos sino como áreas de crecimiento.
+Termina con el propósito de vida específico de ${nombre} como número ${numeroVida} — qué ha venido a hacer en este mundo.
+Sé profundo, poético y específico. No seas genérico.`
 
     try {
       const res = await fetch(
@@ -43,13 +49,15 @@ Escribe una lectura numerológica personal de 3-4 párrafos para ${nombre}. Comi
           }),
         }
       )
-      const data = await res.json()
-      setInterpretacion(data.candidates?.[0]?.content?.parts?.[0]?.text || significado?.descripcion || '')
+      const data2 = await res.json()
+      setInterpretacion(data2.candidates?.[0]?.content?.parts?.[0]?.text || '')
     } catch {
-      setInterpretacion(significado?.descripcion || '')
+      setInterpretacion('Los números guardan silencio. Inténtalo de nuevo.')
     }
     setCargando(false)
   }
+
+  const esNumerMaestro = [11, 22, 33].includes(numeroVida)
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
@@ -65,46 +73,108 @@ Escribe una lectura numerológica personal de 3-4 párrafos para ${nombre}. Comi
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        {/* Número de vida */}
+        <div className={`rounded-3xl p-8 backdrop-blur flex flex-col items-center gap-3 ${esNumerMaestro ? 'bg-gradient-to-br from-purple-600/30 to-pink-600/20 border border-purple-400/50' : 'bg-white/8 border border-white/20'}`}
+          style={!esNumerMaestro ? { backgroundColor: 'rgba(255,255,255,0.08)' } : {}}>
+          {esNumerMaestro && <p className="text-purple-300 text-xs tracking-widest uppercase">✦ Número Maestro ✦</p>}
+          <p className="text-9xl font-light" style={{ textShadow: '0 0 40px rgba(192,132,252,0.6)', color: '#c084fc' }}>
+            {numeroVida}
+          </p>
+          <p className="text-2xl font-bold text-center">{data.titulo}</p>
+          <p className="text-white/60 text-sm text-center">{data.fortalezas.join(' · ')}</p>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-1 bg-white/10 rounded-2xl p-1">
           {[
-            { label: 'Vida', numero: numeroVida, desc: 'Tu misión' },
-            { label: 'Nombre', numero: numeroNombre, desc: 'Tu expresión' },
-            { label: 'Destino', numero: numeroDestino, desc: 'Tu camino' },
-          ].map(item => (
-            <div key={item.label} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col items-center gap-1 backdrop-blur">
-              <p className="text-5xl font-light text-purple-300" style={{ textShadow: '0 0 20px rgba(192,132,252,0.5)' }}>{item.numero}</p>
-              <p className="text-white text-xs font-semibold">{item.label}</p>
-              <p className="text-white/30 text-xs">{item.desc}</p>
-            </div>
+            { id: 'perfil', label: 'Perfil' },
+            { id: 'relaciones', label: 'Relaciones' },
+            { id: 'carrera', label: 'Carrera' },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setVistaActiva(tab.id as any)}
+              className={`flex-1 py-2 rounded-xl text-xs font-semibold transition ${vistaActiva === tab.id ? 'bg-purple-600 text-white' : 'text-white/50'}`}
+            >
+              {tab.label}
+            </button>
           ))}
         </div>
 
-        {significado && (
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
-            <p className="text-purple-300 text-xs tracking-widest uppercase mb-1">Número {numeroVida}</p>
-            <p className="text-xl font-bold mb-3">{significado.titulo}</p>
-            <p className="text-white/70 text-sm leading-relaxed mb-4">{significado.descripcion}</p>
-            <div className="border-t border-white/10 pt-4">
-              <p className="text-purple-300 text-xs tracking-widest uppercase mb-1">Fortalezas</p>
-              <p className="text-white/60 text-sm">{significado.fortalezas}</p>
+        {vistaActiva === 'perfil' && (
+          <div className="flex flex-col gap-4">
+            <div className="bg-white/8 border border-white/20 rounded-3xl p-5 backdrop-blur"
+              style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+              <p className="text-white/80 text-sm leading-relaxed">{data.descripcion}</p>
             </div>
-            <div className="border-t border-white/10 pt-4 mt-4">
-              <p className="text-purple-300 text-xs tracking-widest uppercase mb-1">Sombra</p>
-              <p className="text-white/50 text-sm italic">{significado.sombra}</p>
+
+            <div className="grid grid-cols-1 gap-3">
+              <div className="bg-white/8 border border-white/20 rounded-2xl p-4 backdrop-blur"
+                style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                <p className="text-green-400 text-xs tracking-widest uppercase mb-2">Fortalezas</p>
+                <div className="flex flex-wrap gap-2">
+                  {data.fortalezas.map(f => (
+                    <span key={f} className="bg-green-500/20 text-green-300 text-xs px-2 py-1 rounded-full">{f}</span>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-white/8 border border-white/20 rounded-2xl p-4 backdrop-blur"
+                style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                <p className="text-amber-400 text-xs tracking-widest uppercase mb-2">Desafíos a trabajar</p>
+                <div className="flex flex-wrap gap-2">
+                  {data.desafios.map(d => (
+                    <span key={d} className="bg-amber-500/20 text-amber-300 text-xs px-2 py-1 rounded-full">{d}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-purple-600/20 border border-purple-400/30 rounded-2xl p-4 backdrop-blur">
+              <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Tu propósito de vida</p>
+              <p className="text-white text-sm leading-relaxed">{data.proposito}</p>
+            </div>
+
+            <div className="bg-white/8 border border-white/20 rounded-2xl p-4 backdrop-blur"
+              style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+              <p className="text-white/40 text-xs tracking-widest uppercase mb-2">Comparten tu número</p>
+              <p className="text-white/70 text-sm">{data.famosos.join(' · ')}</p>
             </div>
           </div>
         )}
+
+        {vistaActiva === 'relaciones' && (
+          <div className="bg-white/8 border border-white/20 rounded-3xl p-5 backdrop-blur"
+            style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+            <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">❤️ Amor y Relaciones</p>
+            <p className="text-white/80 text-sm leading-relaxed">{data.relaciones}</p>
+          </div>
+        )}
+
+        {vistaActiva === 'carrera' && (
+          <div className="bg-white/8 border border-white/20 rounded-3xl p-5 backdrop-blur"
+            style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+            <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">💼 Trabajo y Vocación</p>
+            <p className="text-white/80 text-sm leading-relaxed">{data.carrera}</p>
+          </div>
+        )}
+
+        {/* Afirmación */}
+        <div className="bg-purple-600/15 border border-purple-400/20 rounded-2xl p-4 backdrop-blur">
+          <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Tu afirmación</p>
+          <p className="text-white font-medium text-sm italic">"{data.afirmacion}"</p>
+        </div>
 
         {!generado ? (
           <button
             onClick={generarLectura}
             className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition"
           >
-            Generar mi lectura numerológica
+            Generar mi lectura completa con IA
           </button>
         ) : (
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
-            <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Tu lectura personal</p>
+          <div className="bg-white/8 border border-white/20 rounded-3xl p-6 backdrop-blur"
+            style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+            <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Tu lectura numerológica</p>
             {cargando ? (
               <div className="flex gap-2 py-2">
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -119,17 +189,15 @@ Escribe una lectura numerológica personal de 3-4 párrafos para ${nombre}. Comi
 
         {!cargando && interpretacion && (
           <Compartir
-            titulo={`Mi Número de Vida es ${numeroVida}: ${significado?.titulo}`}
+            titulo={`Mi Número de Vida: ${numeroVida} — ${data.titulo}`}
             texto={interpretacion}
-            hashtags={['Numerologia', 'Universe', 'NumeroDeLaVida']}
+            hashtags={['Numerologia', 'Universe', `Numero${numeroVida}`, 'NumerologiaVida']}
           />
         )}
 
-        {generado && !cargando && (
-          <button onClick={() => window.location.href = '/guia'} className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full">
-            Explorar con mi Guía IA
-          </button>
-        )}
+        <button onClick={() => window.location.href = '/guia'} className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full">
+          Explorar con mi Guía IA
+        </button>
 
       </div>
     </div>
