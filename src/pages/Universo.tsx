@@ -1,189 +1,147 @@
-import { SimboloZodiaco, SimboloElemento, SimboloPlaneta } from '../components/Simbolos'
-
-const signosZodiaco: Record<string, { nombre: string; elemento: string; modalidad: string; descripcion: string }> = {
-  'Aries':      { nombre: 'Aries',      elemento: 'Fuego', modalidad: 'Cardinal',  descripcion: 'Pionero, valiente, impulsivo. Energía que abre caminos.' },
-  'Tauro':      { nombre: 'Tauro',      elemento: 'Tierra', modalidad: 'Fijo',     descripcion: 'Paciente, sensual, persistente. Energía que construye.' },
-  'Géminis':    { nombre: 'Géminis',    elemento: 'Aire',  modalidad: 'Mutable',   descripcion: 'Curioso, versátil, comunicativo. Energía que conecta.' },
-  'Cáncer':     { nombre: 'Cáncer',     elemento: 'Agua',  modalidad: 'Cardinal',  descripcion: 'Intuitivo, protector, emocional. Energía que nutre.' },
-  'Leo':        { nombre: 'Leo',        elemento: 'Fuego', modalidad: 'Fijo',      descripcion: 'Creativo, generoso, magnético. Energía que ilumina.' },
-  'Virgo':      { nombre: 'Virgo',      elemento: 'Tierra', modalidad: 'Mutable',  descripcion: 'Analítico, preciso, servicial. Energía que perfecciona.' },
-  'Libra':      { nombre: 'Libra',      elemento: 'Aire',  modalidad: 'Cardinal',  descripcion: 'Armonioso, diplomático, estético. Energía que equilibra.' },
-  'Escorpio':   { nombre: 'Escorpio',   elemento: 'Agua',  modalidad: 'Fijo',      descripcion: 'Profundo, intenso, transformador. Energía que regenera.' },
-  'Sagitario':  { nombre: 'Sagitario',  elemento: 'Fuego', modalidad: 'Mutable',   descripcion: 'Libre, filosófico, aventurero. Energía que expande.' },
-  'Capricornio':{ nombre: 'Capricornio',elemento: 'Tierra', modalidad: 'Cardinal', descripcion: 'Ambicioso, disciplinado, sabio. Energía que persevera.' },
-  'Acuario':    { nombre: 'Acuario',    elemento: 'Aire',  modalidad: 'Fijo',      descripcion: 'Visionario, original, humanitario. Energía que innova.' },
-  'Piscis':     { nombre: 'Piscis',     elemento: 'Agua',  modalidad: 'Mutable',   descripcion: 'Sensible, compasivo, espiritual. Energía que trasciende.' },
-}
-
-function getSignoSolar(fechaNacimiento: string): string {
-  if (!fechaNacimiento) return 'Leo'
-  const fecha = new Date(fechaNacimiento)
-  const mes = fecha.getMonth() + 1
-  const dia = fecha.getDate()
-  if ((mes === 3 && dia >= 21) || (mes === 4 && dia <= 19)) return 'Aries'
-  if ((mes === 4 && dia >= 20) || (mes === 5 && dia <= 20)) return 'Tauro'
-  if ((mes === 5 && dia >= 21) || (mes === 6 && dia <= 20)) return 'Géminis'
-  if ((mes === 6 && dia >= 21) || (mes === 7 && dia <= 22)) return 'Cáncer'
-  if ((mes === 7 && dia >= 23) || (mes === 8 && dia <= 22)) return 'Leo'
-  if ((mes === 8 && dia >= 23) || (mes === 9 && dia <= 22)) return 'Virgo'
-  if ((mes === 9 && dia >= 23) || (mes === 10 && dia <= 22)) return 'Libra'
-  if ((mes === 10 && dia >= 23) || (mes === 11 && dia <= 21)) return 'Escorpio'
-  if ((mes === 11 && dia >= 22) || (mes === 12 && dia <= 21)) return 'Sagitario'
-  if ((mes === 12 && dia >= 22) || (mes === 1 && dia <= 19)) return 'Capricornio'
-  if ((mes === 1 && dia >= 20) || (mes === 2 && dia <= 18)) return 'Acuario'
-  return 'Piscis'
-}
-
-const PERFIL_PRUEBA = {
-  nombre: 'Luna',
-  fechaNacimiento: '1991-08-15',
-  ciudad: 'Madrid',
-  elemento: 'Fuego',
-  animal: 'Águila',
-  decision: 'Intuición',
-  intencion: 'Espiritualidad',
-}
-
-const interpretaciones: Record<string, string> = {
-  'Fuego': 'Tu energía es iniciadora y apasionada. Llevas dentro una llama que impulsa la acción y la transformación. Inspiras a quienes te rodean con tu vitalidad natural.',
-  'Tierra': 'Tu energía es sólida y constante. Tienes una conexión profunda con lo tangible y lo real. Eres el pilar que sostiene a quienes te rodean.',
-  'Aire': 'Tu energía es mental y comunicativa. Tu mente fluye entre ideas con una velocidad única. Percibes conexiones que otros no ven.',
-  'Agua': 'Tu energía es profunda e intuitiva. Sientes el mundo antes de comprenderlo. Tu sensibilidad es tu mayor fortaleza y tu guía más fiel.',
-}
+import { getCartaDiaria } from '../lib/motores/tarotDiario'
+import { getFaseLunar } from '../lib/motores/luna'
+import { getSignoSolar } from '../lib/motores/horoscopo'
+import { getAfirmacionDelDia } from '../lib/motores/afirmaciones'
+import { getRetrogradosActivos } from '../lib/motores/transitos'
 
 export default function Universo() {
+  const nombre = localStorage.getItem('nombre') || 'Viajero'
+  const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
+  const signo = localStorage.getItem('signo') || getSignoSolar(fechaNacimiento)
+  const carta = getCartaDiaria()
+  const faseLunar = getFaseLunar()
+  const afirmacion = getAfirmacionDelDia(signo)
+  const retrogradosActivos = getRetrogradosActivos()
+
+  const hoy = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
+
   const bgStyle = {
     backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
   }
 
-  const nombre = localStorage.getItem('nombre') || PERFIL_PRUEBA.nombre
-  const fechaNacimiento = localStorage.getItem('fechaNacimiento') || PERFIL_PRUEBA.fechaNacimiento
-  const signoNombre = getSignoSolar(fechaNacimiento)
-  const signo = signosZodiaco[signoNombre]
-
-  const planetas = [
-    { clave: 'sol', nombre: 'Sol', valor: signo.nombre },
-    { clave: 'luna', nombre: 'Luna', valor: '—' },
-    { clave: 'ascendente', nombre: 'Ascendente', valor: '—' },
-    { clave: 'venus', nombre: 'Venus', valor: '—' },
-    { clave: 'marte', nombre: 'Marte', valor: '—' },
-    { clave: 'saturno', nombre: 'Saturno', valor: '—' },
+  const ACCESOS_RAPIDOS = [
+    { icono: '🃏', label: 'Carta del Día', ruta: '/tarot-diario' },
+    { icono: '📊', label: 'Horóscopo', ruta: '/horoscopo' },
+    { icono: '🌙', label: 'Luna', ruta: '/luna' },
+    { icono: '🔮', label: 'Oracle Mix', ruta: '/oracle-mix' },
+    { icono: '✨', label: 'Afirmaciones', ruta: '/afirmaciones' },
+    { icono: '📖', label: 'Diario', ruta: '/diario' },
+    { icono: '🪐', label: 'Tránsitos', ruta: '/transitos' },
+    { icono: '💎', label: 'Cristales', ruta: '/cristales' },
   ]
 
   return (
-    <div className="min-h-screen text-white flex flex-col items-center px-6 relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/70" />
+    <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
+      <div className="absolute inset-0 bg-black/75" />
 
-      <div className="relative z-10 w-full max-w-sm flex flex-col gap-6 py-10">
+      <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-4 py-8 gap-6">
 
-        {/* Encabezado */}
-        <div className="text-center">
-          <p className="text-purple-300 text-xs tracking-widest uppercase mb-1">Tu Universo</p>
-          <h1 className="text-3xl font-bold" style={{ textShadow: '0 2px 12px rgba(192,132,252,0.8)' }}>
-            {nombre}
-          </h1>
-        </div>
-
-        {/* Signo solar */}
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 flex flex-col items-center gap-3 backdrop-blur">
-          <p className="text-purple-300 text-xs tracking-widest uppercase">Signo Solar</p>
-          <SimboloZodiaco signo={signo.nombre} />
-          <p className="text-2xl font-semibold tracking-wide">{signo.nombre}</p>
-          <div className="flex items-center gap-2 text-purple-300">
-            <SimboloElemento elemento={signo.elemento} />
-            <span className="text-sm tracking-wider uppercase">{signo.elemento}</span>
-            <span className="text-white/30 text-sm">·</span>
-            <span className="text-sm tracking-wider text-purple-300/70">{signo.modalidad}</span>
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-white/50 text-xs capitalize">{hoy}</p>
+            <p className="text-white text-xl font-bold">Hola, {nombre} ✨</p>
           </div>
-          <p className="text-white/60 text-xs text-center leading-relaxed mt-1">{signo.descripcion}</p>
+          <button
+            onClick={() => window.location.href = '/guia'}
+            className="bg-purple-600/40 border border-purple-400/50 rounded-full px-4 py-2 text-purple-300 text-xs font-semibold"
+          >
+            Guía IA
+          </button>
         </div>
 
-        {/* Tu energía */}
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
-          <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Tu Energía</p>
-          <p className="text-white/90 leading-relaxed text-sm">
-            {interpretaciones[signo.elemento]}
-          </p>
-        </div>
-
-        {/* Mapa planetario */}
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
-          <p className="text-purple-300 text-xs tracking-widest uppercase mb-5">Mapa Planetario</p>
-          <div className="grid grid-cols-3 gap-5">
-            {planetas.map(p => (
-              <div key={p.nombre} className="flex flex-col items-center gap-1">
-                <SimboloPlaneta simbolo={p.clave} />
-                <span className="text-white text-xs font-medium">{p.valor}</span>
-                <span className="text-white/40 text-xs">{p.nombre}</span>
-              </div>
-            ))}
+        {/* Alerta retrógrado */}
+        {retrogradosActivos.length > 0 && (
+          <div className="bg-amber-500/15 border border-amber-500/30 rounded-2xl p-3 backdrop-blur">
+            <p className="text-amber-300 text-xs font-semibold">
+              ⚠️ {retrogradosActivos.map(r => `${r.planeta} Retrógrado`).join(' · ')}
+            </p>
+            <p className="text-white/50 text-xs mt-0.5">{retrogradosActivos[0]?.consejo}</p>
           </div>
-          <p className="text-white/25 text-xs text-center mt-5">
-            Añade tu hora de nacimiento para completar tu carta natal
-          </p>
-        </div>
-
-        {/* Perfil espiritual */}
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
-          <p className="text-purple-300 text-xs tracking-widest uppercase mb-4">Perfil Espiritual</p>
-          <div className="flex flex-col gap-3">
-            {[
-              { etiqueta: 'Animal', valor: localStorage.getItem('animal') || PERFIL_PRUEBA.animal },
-              { etiqueta: 'Elemento', valor: localStorage.getItem('elemento')?.split('—')[0].trim() || PERFIL_PRUEBA.elemento },
-              { etiqueta: 'Decisiones', valor: localStorage.getItem('decision') || PERFIL_PRUEBA.decision },
-              { etiqueta: 'Intención', valor: localStorage.getItem('intencion') || PERFIL_PRUEBA.intencion },
-            ].map(item => (
-              <div key={item.etiqueta} className="flex justify-between items-center border-b border-white/5 pb-2">
-                <span className="text-white/40 text-xs tracking-wide uppercase">{item.etiqueta}</span>
-                <span className="text-white/80 text-sm">{item.valor}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        )}
 
         {/* Carta del día */}
         <button
           onClick={() => window.location.href = '/tarot-diario'}
-          className="w-full bg-white/5 border border-purple-500/30 rounded-3xl p-5 text-left backdrop-blur hover:bg-purple-600/20 transition"
+          className="bg-white/8 border border-white/20 rounded-3xl p-5 backdrop-blur text-left hover:bg-white/12 transition"
+          style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
         >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-purple-300 text-xs tracking-widest uppercase mb-1">Cada día</p>
-              <p className="text-white font-semibold">Carta del Día</p>
-              <p className="text-white/50 text-xs mt-1">Tu carta del Tarot de hoy te espera</p>
+          <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Carta del día</p>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-20 rounded-lg overflow-hidden flex-shrink-0"
+              style={{ boxShadow: '0 0 15px rgba(192,132,252,0.3)' }}>
+              <img src={`/tarot/${carta.imagen}`} alt={carta.nombre} className="w-full h-full object-cover" onError={(e) => { (e.target as any).style.display = 'none' }} />
             </div>
-            <span className="text-purple-300/50 text-2xl">›</span>
+            <div>
+              <p className="text-white font-bold text-lg">{carta.nombre}</p>
+              <p className="text-white/50 text-xs mt-1">{carta.keywords}</p>
+              <p className="text-purple-300 text-xs mt-2">Ver interpretación →</p>
+            </div>
           </div>
         </button>
 
-        {/* Botones principales */}
-        <div className="flex flex-col gap-3">
+        {/* Afirmación del día */}
+        <div className="bg-purple-600/20 border border-purple-400/30 rounded-2xl p-4 backdrop-blur">
+          <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Afirmación · {signo}</p>
+          <p className="text-white text-sm leading-relaxed italic">"{afirmacion}"</p>
+        </div>
+
+        {/* Luna y Signo */}
+        <div className="grid grid-cols-2 gap-3">
           <button
-            onClick={() => window.location.href = '/guia'}
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full text-base hover:opacity-90 transition"
+            onClick={() => window.location.href = '/luna'}
+            className="bg-white/8 border border-white/20 rounded-2xl p-4 backdrop-blur text-center hover:bg-white/12 transition"
+            style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
           >
-            Hablar con mi Guía IA
+            <p className="text-3xl mb-1">{faseLunar.simbolo}</p>
+            <p className="text-white font-semibold text-sm">{faseLunar.nombre}</p>
+            <p className="text-white/40 text-xs mt-0.5">{faseLunar.diasHastaLunaLlena}d para luna llena</p>
           </button>
           <button
-            onClick={() => window.location.href = '/tradiciones'}
-            className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full text-base hover:bg-white/20 transition backdrop-blur"
+            onClick={() => window.location.href = '/horoscopo'}
+            className="bg-white/8 border border-white/20 rounded-2xl p-4 backdrop-blur text-center hover:bg-white/12 transition"
+            style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
           >
-            Explorar Tradiciones del Mundo
+            <p className="text-3xl mb-1" style={{ fontFamily: 'serif' }}>♌</p>
+            <p className="text-white font-semibold text-sm">{signo}</p>
+            <p className="text-white/40 text-xs mt-0.5">Tu horóscopo →</p>
           </button>
-          <button
-            onClick={() => window.location.href = '/tarot'}
-            className="w-full bg-white/5 border border-white/10 text-white/70 font-semibold py-4 rounded-full text-base hover:bg-white/10 transition backdrop-blur"
-          >
-            Tirada de Tarot
-          </button>
-          <button
-            onClick={() => window.location.href = '/experto'}
-            className="w-full bg-white/5 border border-purple-500/30 text-purple-300 font-semibold py-4 rounded-full text-base hover:bg-purple-500/10 transition backdrop-blur"
-          >
-            Hablar con un Experto
-          </button>
+        </div>
+
+        {/* Accesos rápidos */}
+        <div>
+          <p className="text-white/60 text-xs tracking-widest uppercase mb-3">Accesos rápidos</p>
+          <div className="grid grid-cols-4 gap-2">
+            {ACCESOS_RAPIDOS.map(item => (
+              <button
+                key={item.ruta}
+                onClick={() => window.location.href = item.ruta}
+                className="bg-white/8 border border-white/20 rounded-2xl py-3 flex flex-col items-center gap-1 hover:bg-white/15 transition backdrop-blur"
+                style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+              >
+                <span className="text-xl">{item.icono}</span>
+                <span className="text-white/60 text-xs leading-tight text-center">{item.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Explorar */}
+        <button
+          onClick={() => window.location.href = '/tradiciones'}
+          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-5 rounded-full hover:opacity-90 transition"
+          style={{ boxShadow: '0 0 20px rgba(139,92,246,0.4)' }}
+        >
+          Explorar 40+ tradiciones espirituales
+        </button>
+
+        {/* Footer */}
+        <div className="flex justify-center gap-6 text-white/20 text-xs">
+          <button onClick={() => window.location.href = '/carta-natal'}>Carta natal</button>
+          <button onClick={() => window.location.href = '/diario'}>Diario</button>
+          <button onClick={() => window.location.href = '/disclaimer'}>Aviso Legal</button>
         </div>
 
       </div>
