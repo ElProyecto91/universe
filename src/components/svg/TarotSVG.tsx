@@ -1,47 +1,47 @@
 const W = 'https://upload.wikimedia.org/wikipedia/commons'
 
 const CARTA_IMAGENES: Record<string, string> = {
-  // Arcanos Mayores — locales (ya los tienes descargados)
-  'El Loco': '/tarot/fool.jpg',
-  'El Mago': '/tarot/magician.jpg',
-  'La Sacerdotisa': '/tarot/priestess.jpg',
-  'La Emperatriz': '/tarot/empress.jpg',
-  'El Emperador': '/tarot/emperor.jpg',
-  'El Sumo Sacerdote': '/tarot/hierophant.jpg',
-  'Los Amantes': '/tarot/lovers.jpg',
-  'El Carro': '/tarot/chariot.jpg',
-  'La Fuerza': '/tarot/strength.jpg',
-  'El Ermitaño': '/tarot/hermit.jpg',
-  'La Rueda de la Fortuna': '/tarot/wheel.jpg',
-  'La Justicia': '/tarot/justice.jpg',
-  'El Colgado': '/tarot/hanged.jpg',
-  'La Muerte': '/tarot/death.jpg',
-  'La Templanza': '/tarot/temperance.jpg',
-  'El Diablo': '/tarot/devil.jpg',
-  'La Torre': '/tarot/tower.jpg',
-  'La Estrella': '/tarot/star.jpg',
-  'La Luna': '/tarot/moon.jpg',
-  'El Sol': '/tarot/sun.jpg',
-  'El Juicio': '/tarot/judgement.jpg',
-  'El Mundo': '/tarot/world.jpg',
+  // ARCANOS MAYORES — RWS verificadas
+  'El Loco':               `${W}/9/90/RWS_Tarot_00_Fool.jpg`,
+  'El Mago':               `${W}/d/de/RWS_Tarot_01_Magician.jpg`,
+  'La Sacerdotisa':        `${W}/8/88/RWS_Tarot_02_High_Priestess.jpg`,
+  'La Emperatriz':         `${W}/d/d2/RWS_Tarot_03_Empress.jpg`,
+  'El Emperador':          `${W}/c/c3/RWS_Tarot_04_Emperor.jpg`,
+  'El Sumo Sacerdote':     `${W}/8/8d/RWS_Tarot_05_Hierophant.jpg`,
+  'Los Amantes':           `${W}/3/3a/TheLovers.jpg`,
+  'El Carro':              `${W}/9/9b/RWS_Tarot_07_Chariot.jpg`,
+  'La Fuerza':             `${W}/f/f5/RWS_Tarot_08_Strength.jpg`,
+  'El Ermitaño':           `${W}/4/4d/RWS_Tarot_09_Hermit.jpg`,
+  'La Rueda de la Fortuna':`${W}/3/3c/RWS_Tarot_10_Wheel_of_Fortune.jpg`,
+  'La Justicia':           `${W}/e/e0/RWS_Tarot_11_Justice.jpg`,
+  'El Colgado':            `${W}/2/2b/RWS_Tarot_12_Hanged_Man.jpg`,
+  'La Muerte':             `${W}/d/d7/RWS_Tarot_13_Death.jpg`,
+  'La Templanza':          `${W}/f/f8/RWS_Tarot_14_Temperance.jpg`,
+  'El Diablo':             `${W}/5/55/RWS_Tarot_15_Devil.jpg`,
+  'La Torre':              `${W}/5/53/RWS_Tarot_16_Tower.jpg`,
+  'La Estrella':           `${W}/d/db/RWS_Tarot_17_Star.jpg`,
+  'La Luna':               `${W}/7/7f/RWS_Tarot_18_Moon.jpg`,
+  'El Sol':                `${W}/1/17/RWS_Tarot_19_Sun.jpg`,
+  'El Juicio':             `${W}/d/dd/RWS_Tarot_20_Judgement.jpg`,
+  'El Mundo':              `${W}/f/ff/RWS_Tarot_21_World.jpg`,
 
-  // BASTOS (Wands) — URLs verificadas Wikimedia
+  // BASTOS — verificadas
   'As de Bastos':        `${W}/1/11/Wands01.jpg`,
-  'Dos de Bastos':       `${W}/0/0d/Wands02.jpg`,
+  'Dos de Bastos':       `${W}/0/0f/Wands02.jpg`,
   'Tres de Bastos':      `${W}/f/ff/Wands03.jpg`,
   'Cuatro de Bastos':    `${W}/a/a4/Wands04.jpg`,
   'Cinco de Bastos':     `${W}/9/9d/Wands05.jpg`,
   'Seis de Bastos':      `${W}/3/3b/Wands06.jpg`,
   'Siete de Bastos':     `${W}/e/e4/Wands07.jpg`,
   'Ocho de Bastos':      `${W}/6/6b/Wands08.jpg`,
-  'Nueve de Bastos':     `${W}/4/4d/Wands09.jpg`,
+  'Nueve de Bastos':     `${W}/4/4d/Tarot_Nine_of_Wands.jpg`,
   'Diez de Bastos':      `${W}/0/0b/Wands10.jpg`,
   'Sota de Bastos':      `${W}/6/6a/Wands11.jpg`,
   'Caballero de Bastos': `${W}/1/16/Wands12.jpg`,
   'Reina de Bastos':     `${W}/0/0d/Wands13.jpg`,
   'Rey de Bastos':       `${W}/c/ce/Wands14.jpg`,
 
-  // COPAS (Cups) — URLs verificadas Wikimedia
+  // COPAS — verificadas
   'As de Copas':        `${W}/3/36/Cups01.jpg`,
   'Dos de Copas':       `${W}/f/f8/Cups02.jpg`,
   'Tres de Copas':      `${W}/7/7a/Cups03.jpg`,
@@ -57,7 +57,7 @@ const CARTA_IMAGENES: Record<string, string> = {
   'Reina de Copas':     `${W}/6/62/Cups13.jpg`,
   'Rey de Copas':       `${W}/0/04/Cups14.jpg`,
 
-  // ESPADAS (Swords) — URLs verificadas Wikimedia
+  // ESPADAS — verificadas
   'As de Espadas':        `${W}/1/1a/Swords01.jpg`,
   'Dos de Espadas':       `${W}/9/9e/Swords02.jpg`,
   'Tres de Espadas':      `${W}/0/02/Swords03.jpg`,
@@ -73,7 +73,7 @@ const CARTA_IMAGENES: Record<string, string> = {
   'Reina de Espadas':     `${W}/d/d4/Swords13.jpg`,
   'Rey de Espadas':       `${W}/3/33/Swords14.jpg`,
 
-  // OROS (Pentacles) — URLs verificadas Wikimedia
+  // OROS — verificadas
   'As de Oros':        `${W}/f/fd/Pents01.jpg`,
   'Dos de Oros':       `${W}/9/9f/Pents02.jpg`,
   'Tres de Oros':      `${W}/4/42/Pents03.jpg`,
@@ -103,10 +103,9 @@ export function getCartaSVG(nombreCarta: string): JSX.Element {
           onError={(e) => {
             const target = e.target as HTMLImageElement
             target.onerror = null
-            target.style.display = 'none'
             if (target.parentElement) {
               target.parentElement.innerHTML = `
-                <div style="width:100%;height:100%;background:linear-gradient(135deg,#4c1d95,#1a0f2e);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px;">
+                <div style="width:100%;height:100%;background:linear-gradient(135deg,#4c1d95,#1a0f2e);border-radius:8px;display:flex;align-items:center;justify-content:center;padding:4px;">
                   <div style="color:#c084fc;font-size:7px;text-align:center;line-height:1.4;font-family:serif;">${nombreCarta}</div>
                 </div>
               `
@@ -131,5 +130,5 @@ export function getCartaSVG(nombreCarta: string): JSX.Element {
 }
 
 export function getImagenCarta(nombreCarta: string): string {
-  return CARTA_IMAGENES[nombreCarta] || '/tarot/magician.jpg'
+  return CARTA_IMAGENES[nombreCarta] || `${W}/d/de/RWS_Tarot_01_Magician.jpg`
 }
