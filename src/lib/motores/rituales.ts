@@ -1,0 +1,98 @@
+export const RITUALES = [
+  {
+    id: 'luna-nueva',
+    nombre: 'Ritual de Luna Nueva',
+    cuando: 'En luna nueva — comienzos',
+    duracion: '20-30 minutos',
+    materiales: ['Papel y bolígrafo', 'Una vela blanca o plateada', 'Opcional: incienso o salvia'],
+    intencion: 'Plantar intenciones para el nuevo ciclo lunar y los próximos 28 días.',
+    pasos: [
+      'Limpia tu espacio físico y mental. Siéntate en un lugar tranquilo.',
+      'Enciende la vela. Observa la llama durante un minuto en silencio.',
+      'Escribe 10 intenciones en presente positivo: "Tengo...", "Soy...", "Estoy...".',
+      'Lee cada intención en voz alta con convicción.',
+      'Dobla el papel hacia ti (para atraer). Guárdalo.',
+      'Apaga la vela con los dedos o un apagavelas — nunca soplando.',
+      'Revisa tus intenciones en la luna llena para celebrar lo que ha llegado.',
+    ],
+    tradicion: 'Wicca y paganismo moderno · Astrología · Tradición lunar universal',
+  },
+  {
+    id: 'luna-llena',
+    nombre: 'Ritual de Luna Llena',
+    cuando: 'En luna llena — culminación y liberación',
+    duracion: '30-40 minutos',
+    materiales: ['Papel y bolígrafo', 'Una vela roja o naranja', 'Un recipiente resistente al fuego', 'Sal o tierra'],
+    intencion: 'Soltar lo que ya no sirve y cargar tus herramientas espirituales.',
+    pasos: [
+      'Lleva tus cristales, tarots u objetos espirituales afuera o a una ventana que reciba la luna.',
+      'Escribe en el papel lo que quieres soltar: miedos, patrones, personas, creencias.',
+      'Lee lo que has escrito en voz alta, reconociéndolo.',
+      'Quema el papel de forma segura en el recipiente (o rómpelo en pedazos muy pequeños y entiérralo).',
+      'Mientras se consume, di: "Lo suelto con amor y gratitud. Ha cumplido su propósito."',
+      'Deja tus objetos bajo la luna toda la noche para cargarlos.',
+      'Por la mañana, recógelos con gratitud.',
+    ],
+    tradicion: 'Wicca · Astrología · Tradición lunar · Chamánica',
+  },
+  {
+    id: 'proteccion',
+    nombre: 'Ritual de Protección del Hogar',
+    cuando: 'Al mudarse · Después de conflictos · Estaciones',
+    duracion: '30-45 minutos',
+    materiales: ['Salvia blanca o palo santo', 'Sal marina', 'Agua', 'Campana o cuenco tibetano (opcional)'],
+    intencion: 'Limpiar y proteger energéticamente tu espacio vital.',
+    pasos: [
+      'Abre todas las ventanas y puertas para que la energía vieja pueda salir.',
+      'Enciende la salvia o el palo santo. Usa un plato para recoger las cenizas.',
+      'Empieza en la entrada. Mueve el humo en sentido contrario a las agujas del reloj (para limpiar).',
+      'Recorre cada habitación empezando por las esquinas, que acumulan más energía estancada.',
+      'Di en cada habitación: "Este espacio es sagrado, seguro y lleno de amor."',
+      'Pon una línea de sal en cada entrada y en los umbrales de las ventanas.',
+      'Cierra el ritual en el centro de tu hogar agradeciendo al espacio.',
+    ],
+    tradicion: 'Tradición nativa americana · Wicca · Feng Shui · Limpieza energética universal',
+  },
+  {
+    id: 'manifestacion-369',
+    nombre: 'Ritual 3-6-9 de Manifestación',
+    cuando: 'Durante 33 días consecutivos',
+    duracion: '10 minutos al día',
+    materiales: ['Diario específico para esto', 'Bolígrafo de tu color de intención'],
+    intencion: 'Programar el subconsciente para manifestar una meta específica.',
+    pasos: [
+      'Elige UNA intención específica. No cambies durante los 33 días.',
+      'Por la mañana: escribe la afirmación 3 veces con gratitud.',
+      'Al mediodía: escríbela 6 veces mientras visualizas que ya es real.',
+      'Por la noche: escríbela 9 veces sintiéndote como si ya la tuvieras.',
+      'No falles ningún día — si fallas, vuelves a empezar desde el día 1.',
+      'Al día 33, celebra todo lo que se ha movido, aunque la meta no esté completamente manifestada.',
+    ],
+    tradicion: 'Numerología de Tesla · Ley de Atracción · Psicología positiva',
+  },
+  {
+    id: 'bano-limpieza',
+    nombre: 'Baño de Limpieza Energética',
+    cuando: 'Después de días difíciles · Cambios de ciclo · Cuando te sientes "pesado"',
+    duracion: '30-60 minutos',
+    materiales: ['Sal marina o del Himalaya', 'Aceite esencial de lavanda o romero', 'Velas', 'Música de cuencos tibetanos (opcional)'],
+    intencion: 'Limpiar el campo energético y renovar la energía personal.',
+    pasos: [
+      'Prepara el espacio: velas, música suave, ambiente íntimo.',
+      'Llena la bañera con agua tibia. Añade 2 tazas de sal marina y 10 gotas de aceite esencial.',
+      'Antes de entrar, di: "Este baño limpia todo lo que no me pertenece."',
+      'Sumérgete y permite que el agua llegue a tus hombros si es posible.',
+      'Visualiza el agua disolviendo la energía densa — imagínala oscura al principio y luego clara.',
+      'Pasa al menos 20 minutos en el agua. No uses el móvil.',
+      'Cuando salgas, di: "Salgo renovado. Mi campo energético está limpio y lleno de luz."',
+      'No te duches inmediatamente después — deja que la sal haga efecto.',
+    ],
+    tradicion: 'Tradición judía (mikve) · Hinduismo · Wicca · Limpieza energética universal',
+  },
+]
+
+export function getRitualRecomendado(faseLunar: string): typeof RITUALES[0] {
+  if (faseLunar.includes('Nueva')) return RITUALES[0]
+  if (faseLunar.includes('Llena')) return RITUALES[1]
+  return RITUALES[Math.floor(Math.random() * RITUALES.length)]
+}
