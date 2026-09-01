@@ -1,115 +1,99 @@
 export type FaseLunar = {
   nombre: string
   simbolo: string
-  angulo: number
   energia: string
   mensaje: string
-  ritual: string
-  tarot: string
-  runa: string
+  practica: string
+  diasHastaLunaLlena: number
+  porcentajeIluminacion: number
 }
 
 export function getFaseLunar(): FaseLunar {
-  const fecha = new Date()
-  const lunaReferencia = new Date(2000, 0, 6, 18, 14)
-  const cicloDias = 29.53058867
-  const diff = (fecha.getTime() - lunaReferencia.getTime()) / (1000 * 60 * 60 * 24)
-  const cicloActual = ((diff % cicloDias) + cicloDias) % cicloDias
-  const angulo = (cicloActual / cicloDias) * 360
+  const hoy = new Date()
+  // Referencia: luna nueva el 6 de enero de 2000
+  const lunaReferencia = new Date('2000-01-06')
+  const diasDesdeReferencia = Math.floor((hoy.getTime() - lunaReferencia.getTime()) / (1000 * 60 * 60 * 24))
+  const cicloDias = 29.53059
+  const diaEnCiclo = diasDesdeReferencia % cicloDias
+  const porcentaje = diaEnCiclo / cicloDias
 
-  const fases: FaseLunar[] = [
-    {
-      nombre: 'Luna Nueva',
-      simbolo: '🌑',
-      angulo: 0,
-      energia: 'Inicio · Intención · Semilla',
-      mensaje: 'Es el momento perfecto para plantar nuevas intenciones. La oscuridad no es ausencia de luz — es el espacio donde todo comienza.',
-      ritual: 'Escribe tres intenciones para este ciclo lunar. Medita en silencio. Comienza algo que llevas tiempo posponiendo.',
-      tarot: 'El Loco · El Mago',
-      runa: 'ᛜ Ingwaz — potencial puro',
-    },
-    {
-      nombre: 'Luna Creciente',
-      simbolo: '🌒',
-      angulo: 45,
-      energia: 'Acción · Construcción · Movimiento',
-      mensaje: 'Lo que sembraste en la luna nueva comienza a moverse. Es tiempo de actuar, de dar los primeros pasos concretos hacia tus intenciones.',
-      ritual: 'Da un paso concreto hacia tu intención. Elimina un obstáculo. Haz una llamada pendiente.',
-      tarot: 'El Carro · La Emperatriz',
-      runa: 'ᚱ Raidho — movimiento con propósito',
-    },
-    {
-      nombre: 'Cuarto Creciente',
-      simbolo: '🌓',
-      angulo: 90,
-      energia: 'Decisión · Compromiso · Claridad',
-      mensaje: 'Estás en el punto de decisión. Lo que no funciona se hace visible. Es tiempo de comprometerte o de soltar con gracia.',
-      ritual: 'Toma una decisión que has estado evitando. Revisa tus intenciones y ajusta el rumbo si es necesario.',
-      tarot: 'La Justicia · El Carro',
-      runa: 'ᛏ Tiwaz — decisión honesta',
-    },
-    {
-      nombre: 'Luna Gibosa Creciente',
-      simbolo: '🌔',
-      angulo: 135,
-      energia: 'Refinamiento · Paciencia · Ajuste',
-      mensaje: 'Casi llegamos. Este es el momento de refinar, de ajustar los detalles y de confiar en el proceso sin forzar el resultado.',
-      ritual: 'Revisa lo que has construido. Ajusta lo que no funciona. Confía en el proceso.',
-      tarot: 'La Templanza · El Ermitaño',
-      runa: 'ᛃ Jera — el ciclo completa su ritmo',
-    },
-    {
-      nombre: 'Luna Llena',
-      simbolo: '🌕',
-      angulo: 180,
-      energia: 'Plenitud · Culminación · Revelación',
-      mensaje: 'La luna llena ilumina todo lo que estaba oculto. Es el momento de mayor energía y visibilidad. Lo que sembraste se muestra en su plenitud.',
-      ritual: 'Celebra lo que has logrado. Libera lo que ya no sirve. Escribe lo que quieres soltar. Medita bajo la luna.',
-      tarot: 'El Sol · El Mundo',
-      runa: 'ᛋ Sowilo — luz plena',
-    },
-    {
-      nombre: 'Luna Gibosa Menguante',
-      simbolo: '🌖',
-      angulo: 225,
-      energia: 'Gratitud · Compartir · Integración',
-      mensaje: 'La energía comienza a retirarse. Es tiempo de agradecer, de compartir lo aprendido y de integrar la sabiduría de este ciclo.',
-      ritual: 'Expresa gratitud. Comparte algo que has aprendido. Dona o regala algo que ya no necesitas.',
-      tarot: 'La Estrella · La Sacerdotisa',
-      runa: 'ᚷ Gebo — dar y recibir',
-    },
-    {
-      nombre: 'Cuarto Menguante',
-      simbolo: '🌗',
-      angulo: 270,
-      energia: 'Liberación · Perdón · Soltar',
-      mensaje: 'Es el momento de soltar lo que ya no sirve. El perdón — de otros y de uno mismo — es la puerta hacia el próximo ciclo.',
-      ritual: 'Escribe lo que quieres soltar y quémalo o rómpelo. Practica el perdón. Simplifica tu espacio.',
-      tarot: 'El Colgado · La Muerte',
-      runa: 'ᛚ Laguz — fluir sin resistencia',
-    },
-    {
-      nombre: 'Luna Menguante',
-      simbolo: '🌘',
-      angulo: 315,
-      energia: 'Descanso · Reflexión · Preparación',
-      mensaje: 'El ciclo se acerca a su fin. Es tiempo de descansar, reflexionar sobre lo vivido y preparar el espacio interior para el nuevo comienzo.',
-      ritual: 'Descansa. Medita. Escribe en tu diario. Prepara tus intenciones para la próxima luna nueva.',
-      tarot: 'El Ermitaño · La Luna',
-      runa: 'ᛁ Isa — quietud necesaria',
-    },
-  ]
+  let nombre: string
+  let simbolo: string
+  let energia: string
+  let mensaje: string
+  let practica: string
+  let diasHastaLunaLlena: number
+  let porcentajeIluminacion: number
 
-  const idx = Math.floor((angulo / 360) * 8)
-  return { ...fases[Math.min(idx, 7)], angulo }
+  if (diaEnCiclo < 1.85) {
+    nombre = 'Luna Nueva'
+    simbolo = '🌑'
+    energia = 'Nuevos comienzos · Intenciones · Semillas'
+    mensaje = 'El cielo está oscuro pero lleno de potencial. Este es el momento más poderoso para plantar intenciones. Lo que inicias ahora tiene el impulso de todo el ciclo detrás.'
+    practica = 'Escribe 10 intenciones en presente positivo. Enciende una vela blanca. Lee tus intenciones en voz alta.'
+    diasHastaLunaLlena = Math.round(14.75 - diaEnCiclo)
+    porcentajeIluminacion = 0
+  } else if (diaEnCiclo < 7.38) {
+    nombre = 'Luna Creciente'
+    simbolo = '🌒'
+    energia = 'Momentum · Acción · Construcción'
+    mensaje = 'La luna crece y contigo crece la energía de lo que iniciaste. Es momento de tomar acción concreta hacia tus intenciones. El impulso está a tu favor.'
+    practica = 'Da un paso concreto hacia tu intención de luna nueva. Actúa, no solo planees.'
+    diasHastaLunaLlena = Math.round(14.75 - diaEnCiclo)
+    porcentajeIluminacion = Math.round((diaEnCiclo / 14.75) * 100)
+  } else if (diaEnCiclo < 9.22) {
+    nombre = 'Cuarto Creciente'
+    simbolo = '🌓'
+    energia = 'Decisión · Compromiso · Superación de obstáculos'
+    mensaje = 'El primer obstáculo real aparece. El cuarto creciente pide que te comprometas completamente con lo que empezaste. Este es el momento de decisión.'
+    practica = 'Identifica el mayor obstáculo actual. Elige una acción para superarlo hoy.'
+    diasHastaLunaLlena = Math.round(14.75 - diaEnCiclo)
+    porcentajeIluminacion = 50
+  } else if (diaEnCiclo < 14.77) {
+    nombre = 'Luna Gibosa Creciente'
+    simbolo = '🌔'
+    energia = 'Refinamiento · Perfeccionamiento · Preparación'
+    mensaje = 'Casi en la cima. La luna gibosa pide refinamiento — ajusta, mejora, prepárate para la culminación. Lo que cultivaste está a punto de florecer.'
+    practica = 'Revisa tus intenciones. Ajusta lo que necesita ser ajustado. Prepárate para recibir.'
+    diasHastaLunaLlena = Math.round(14.75 - diaEnCiclo)
+    porcentajeIluminacion = Math.round((diaEnCiclo / 14.75) * 100)
+  } else if (diaEnCiclo < 16.61) {
+    nombre = 'Luna Llena'
+    simbolo = '🌕'
+    energia = 'Culminación · Gratitud · Liberación · Manifestación'
+    mensaje = 'La luna llena es el momento de mayor poder del ciclo. Lo que plantaste en luna nueva llega a su plenitud. También es el momento de soltar lo que ya no sirve.'
+    practica = 'Celebra lo que has logrado. Escribe lo que quieres soltar. Quema o entierra el papel.'
+    diasHastaLunaLlena = 0
+    porcentajeIluminacion = 100
+  } else if (diaEnCiclo < 22.15) {
+    nombre = 'Luna Gibosa Menguante'
+    simbolo = '🌖'
+    energia = 'Gratitud · Compartir · Integración'
+    mensaje = 'La luna empieza a menguar. Es momento de compartir lo que has aprendido, de dar gracias y de integrar las lecciones del ciclo.'
+    practica = 'Comparte algo valioso con alguien. Agradece. Integra lo aprendido.'
+    diasHastaLunaLlena = Math.round(29.53 - diaEnCiclo + 14.75)
+    porcentajeIluminacion = Math.round(((29.53 - diaEnCiclo) / 14.75) * 100)
+  } else if (diaEnCiclo < 23.99) {
+    nombre = 'Cuarto Menguante'
+    simbolo = '🌗'
+    energia = 'Liberación · Perdón · Transformación'
+    mensaje = 'El cuarto menguante pide que sueltes lo que ya no sirve. Es un momento de perdón — hacia otros y hacia ti mismo.'
+    practica = 'Escribe lo que quieres soltar. Practica el perdón activo. Limpia tu espacio.'
+    diasHastaLunaLlena = Math.round(29.53 - diaEnCiclo + 14.75)
+    porcentajeIluminacion = 50
+  } else {
+    nombre = 'Luna Balsámica'
+    simbolo = '🌘'
+    energia = 'Descanso · Introspección · Preparación para el nuevo ciclo'
+    mensaje = 'La luna casi desaparece. Es el momento más sagrado de descanso y reflexión. Prepárate para el nuevo ciclo que llega. Deja ir todo lo del ciclo anterior.'
+    practica = 'Descansa profundamente. Medita. Prepara espacio para lo que viene.'
+    diasHastaLunaLlena = Math.round(29.53 - diaEnCiclo + 14.75)
+    porcentajeIluminacion = Math.round(((29.53 - diaEnCiclo) / 14.75) * 100)
+  }
+
+  return { nombre, simbolo, energia, mensaje, practica, diasHastaLunaLlena: Math.max(0, diasHastaLunaLlena), porcentajeIluminacion }
 }
 
 export function getDiasHastaLunaLlena(): number {
-  const fecha = new Date()
-  const lunaReferencia = new Date(2000, 0, 6, 18, 14)
-  const cicloDias = 29.53058867
-  const diff = (fecha.getTime() - lunaReferencia.getTime()) / (1000 * 60 * 60 * 24)
-  const cicloActual = ((diff % cicloDias) + cicloDias) % cicloDias
-  const diasHastaLlena = cicloDias / 2 - cicloActual
-  return diasHastaLlena > 0 ? Math.ceil(diasHastaLlena) : Math.ceil(diasHastaLlena + cicloDias)
+  return getFaseLunar().diasHastaLunaLlena
 }
