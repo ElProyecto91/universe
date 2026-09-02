@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Compartir from '../components/Compartir'
+import { llamarGemini } from '../lib/gemini'
 
 const CAMINOS = [
   {
@@ -8,9 +9,8 @@ const CAMINOS = [
     subtitulo: '✦ Norse / Heathen',
     descripcion: 'Mitología y simbolismo nórdico: Odin, Thor, las Nornas, los Nueve Mundos.',
     etiqueta: '🏛️ HISTÓRICO',
-    prompt: (nombre: string, pregunta: string) => `Eres un guía experto en mitología y simbolismo nórdico/germánico. Responde desde el conocimiento de las sagas, la Edda Poética y la Edda en Prosa, los nueve mundos, los dioses (Aesir y Vanir) y los conceptos de Wyrd y Orlog.
+    prompt: (pregunta: string) => `Eres un guía experto en mitología y simbolismo nórdico/germánico. Responde desde el conocimiento de las sagas, la Edda Poética y la Edda en Prosa, los nueve mundos, los dioses (Aesir y Vanir) y los conceptos de Wyrd y Orlog.
 
-Nombre: ${nombre}
 Pregunta o situación: "${pregunta}"
 
 Explora esta pregunta desde la perspectiva de la tradición nórdica. Qué divinidad o arquetipo nórdico resuena con esta situación. Qué enseñanza de las sagas podría ser relevante. Habla de Wyrd (el destino tejido) y de cómo las acciones presentes influyen en él. Sé poético y profundo. 3 párrafos máximo.`,
@@ -21,9 +21,8 @@ Explora esta pregunta desde la perspectiva de la tradición nórdica. Qué divin
     subtitulo: '✦ Greco-romana',
     descripcion: 'Dioses olímpicos, mitos griegos y romanos, arquetipos y oráculos.',
     etiqueta: '🏛️ HISTÓRICO',
-    prompt: (nombre: string, pregunta: string) => `Eres un guía experto en mitología y filosofía griega y romana. Conoces profundamente los dioses olímpicos, los mitos, el oráculo de Delfos, los estoicos y los epicúreos.
+    prompt: (pregunta: string) => `Eres un guía experto en mitología y filosofía griega y romana. Conoces profundamente los dioses olímpicos, los mitos, el oráculo de Delfos, los estoicos y los epicúreos.
 
-Nombre: ${nombre}
 Pregunta o situación: "${pregunta}"
 
 Explora esta pregunta desde la perspectiva helénica. Qué dios o diosa griega resuena con esta situación y por qué. Qué mito clásico habla de algo similar. Qué diría el oráculo de Delfos. Usa el famoso "Conócete a ti mismo" como hilo conductor si es relevante. 3 párrafos. Sé erudito pero accesible.`,
@@ -34,9 +33,8 @@ Explora esta pregunta desde la perspectiva helénica. Qué dios o diosa griega r
     subtitulo: '✦ Kemet',
     descripcion: 'Dioses del antiguo Egipto, Ma\'at, el Libro de los Muertos, los arquetipos.',
     etiqueta: '🏛️ HISTÓRICO',
-    prompt: (nombre: string, pregunta: string) => `Eres un guía experto en religión y mitología del antiguo Egipto. Conoces profundamente los dioses (Ra, Isis, Osiris, Anubis, Thoth, Sekhmet, Hathor...), el concepto de Ma'at (verdad/equilibrio), el Libro de los Muertos y la cosmología egipcia.
+    prompt: (pregunta: string) => `Eres un guía experto en religión y mitología del antiguo Egipto. Conoces profundamente los dioses (Ra, Isis, Osiris, Anubis, Thoth, Sekhmet, Hathor...), el concepto de Ma'at (verdad/equilibrio), el Libro de los Muertos y la cosmología egipcia.
 
-Nombre: ${nombre}
 Pregunta o situación: "${pregunta}"
 
 Explora esta pregunta desde la perspectiva egipcia antigua. Qué divinidad egipcia y su arquetipo resuenan con esta situación. Cómo se relaciona con Ma'at (el equilibrio cósmico). Qué sabiduría del Libro de los Muertos o de los textos sagrados podría ser relevante. 3 párrafos.`,
@@ -47,12 +45,11 @@ Explora esta pregunta desde la perspectiva egipcia antigua. Qué divinidad egipc
     subtitulo: '✦ Inspiración celta',
     descripcion: 'Folklore celta, ciclos estacionales, el Otro Mundo, los Tuatha Dé Danann.',
     etiqueta: '✨ MODERNO',
-    prompt: (nombre: string, pregunta: string) => `Eres un guía experto en folklore celta, mitología irlandesa y galesa, y las tradiciones de los pueblos celtas históricos.
+    prompt: (pregunta: string) => `Eres un guía experto en folklore celta, mitología irlandesa y galesa, y las tradiciones de los pueblos celtas históricos.
 
-Nombre: ${nombre}
 Pregunta o situación: "${pregunta}"
 
-Explora esta pregunta desde la perspectiva celta. Qué figura del folklore celta (Tuatha Dé Danann, figuras artúricas, el Morrigan, Brigid, Cernunnos...) resuena aquí. Cómo se relaciona con el ciclo estacional. Habla del concepto del Otro Mundo y los umbrales. Nota: gran parte del neopaganismo celta moderno es una reconstrucción inspirada, no una continuación directa. 3 párrafos.`,
+Explora esta pregunta desde la perspectiva celta. Qué figura del folklore celta resuena aquí. Cómo se relaciona con el ciclo estacional. Habla del concepto del Otro Mundo y los umbrales. Nota: gran parte del neopaganismo celta moderno es una reconstrucción inspirada. 3 párrafos.`,
   },
   {
     id: 'slavic',
@@ -60,12 +57,11 @@ Explora esta pregunta desde la perspectiva celta. Qué figura del folklore celta
     subtitulo: '✦ Folklore eslavo',
     descripcion: 'Deidades eslavas, Baba Yaga, espíritus de la naturaleza, folklore de Europa del Este.',
     etiqueta: '🌿 VIVO',
-    prompt: (nombre: string, pregunta: string) => `Eres un guía experto en mitología y folklore eslavo: Perun, Veles, Mokosh, Baba Yaga, los domovoi, las rusalki y otros seres del folklore eslavo oriental y occidental.
+    prompt: (pregunta: string) => `Eres un guía experto en mitología y folklore eslavo: Perun, Veles, Mokosh, Baba Yaga, los domovoi, las rusalki y otros seres del folklore eslavo oriental y occidental.
 
-Nombre: ${nombre}
 Pregunta o situación: "${pregunta}"
 
-Explora esta pregunta desde la perspectiva del folklore eslavo. Qué deidad o espíritu eslavo resuena con esta situación. Qué enseñanza del folklore de Europa del Este podría ser relevante. Habla de la relación entre el mundo humano y los espíritus de la naturaleza en la tradición eslava. 3 párrafos.`,
+Explora esta pregunta desde la perspectiva del folklore eslavo. Qué deidad o espíritu eslavo resuena con esta situación. Qué enseñanza del folklore de Europa del Este podría ser relevante. Habla de la relación entre el mundo humano y los espíritus de la naturaleza. 3 párrafos.`,
   },
   {
     id: 'wicca',
@@ -73,12 +69,11 @@ Explora esta pregunta desde la perspectiva del folklore eslavo. Qué deidad o es
     subtitulo: '✦ Paganismo moderno',
     descripcion: 'El ciclo de las estaciones, la Triple Diosa, el Dios Cornudo, los sabbats.',
     etiqueta: '✨ MODERNO',
-    prompt: (nombre: string, pregunta: string) => `Eres una guía experta en Wicca y brujería moderna contemporánea. Conoces la Rueda del Año, la Triple Diosa (Doncella, Madre, Anciana), el Dios Cornudo, los sabbats y los esbats, la magia con hierbas, cristales y elementos.
+    prompt: (pregunta: string) => `Eres una guía experta en Wicca y brujería moderna contemporánea. Conoces la Rueda del Año, la Triple Diosa, el Dios Cornudo, los sabbats y los esbats, la magia con hierbas, cristales y elementos.
 
-Nombre: ${nombre}
 Pregunta o situación: "${pregunta}"
 
-Explora esta pregunta desde la perspectiva Wicca/brujería moderna. En qué fase del ciclo de la Rueda del Año estamos y cómo afecta esto. Qué aspecto de la Diosa o el Dios resuena con esta situación. Qué práctica de brujería moderna podría ser útil (sin instrucciones peligrosas). Nota: Wicca es una religión moderna fundada en el siglo XX. 3 párrafos.`,
+Explora esta pregunta desde la perspectiva Wicca/brujería moderna. En qué fase del ciclo estamos y cómo afecta esto. Qué aspecto de la Diosa o el Dios resuena con esta situación. Qué práctica podría ser útil. Nota: Wicca es una religión moderna fundada en el siglo XX. 3 párrafos.`,
   },
 ]
 
@@ -88,7 +83,10 @@ export default function PaganPaths() {
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando, setCargando] = useState(false)
   const [fase, setFase] = useState<'elegir' | 'preguntar' | 'resultado'>('elegir')
+  const [errorMsg, setErrorMsg] = useState('')
+
   const nombre = localStorage.getItem('nombre') || 'viajero'
+  const userId = null // TODO: sustituir por el ID real del usuario cuando tengas auth
 
   const bgStyle = {
     backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
@@ -100,22 +98,21 @@ export default function PaganPaths() {
     if (!pregunta.trim() || !caminoSeleccionado) return
     setFase('resultado')
     setCargando(true)
+    setErrorMsg('')
 
-    try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: caminoSeleccionado.prompt(nombre, pregunta) }] }],
-          }),
-        }
-      )
-      const data = await res.json()
-      setInterpretacion(data.candidates?.[0]?.content?.parts?.[0]?.text || '')
-    } catch {
-      setInterpretacion('La tradición guarda silencio. Inténtalo de nuevo.')
+    const result = await llamarGemini({
+      herramienta: `pagan-${caminoSeleccionado.id}`,
+      prompt: caminoSeleccionado.prompt(pregunta),
+      userId,
+      cacheable: false, // pregunta libre — no cacheable
+      maxTokens: 400,
+    })
+
+    if (result.error) {
+      setErrorMsg(result.error)
+      setInterpretacion('')
+    } else {
+      setInterpretacion(result.texto)
     }
     setCargando(false)
   }
@@ -208,7 +205,6 @@ export default function PaganPaths() {
 
         {fase === 'resultado' && (
           <div className="flex flex-col gap-5">
-
             <div className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 backdrop-blur">
               <p className="text-white/40 text-xs">{caminoSeleccionado?.nombre} · <span className="italic">"{pregunta}"</span></p>
             </div>
@@ -221,6 +217,8 @@ export default function PaganPaths() {
                   <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                   <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
+              ) : errorMsg ? (
+                <p className="text-red-400 text-sm">{errorMsg}</p>
               ) : (
                 <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>
               )}
@@ -238,7 +236,7 @@ export default function PaganPaths() {
               <button onClick={() => window.location.href = '/guia'} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full">
                 Explorar con mi Guía IA
               </button>
-              <button onClick={() => { setFase('elegir'); setPregunta(''); setInterpretacion('') }} className="w-full text-purple-300/60 text-sm py-2">
+              <button onClick={() => { setFase('elegir'); setPregunta(''); setInterpretacion(''); setErrorMsg('') }} className="w-full text-purple-300/60 text-sm py-2">
                 Explorar otra tradición
               </button>
             </div>
