@@ -2,17 +2,24 @@ import { useState, useEffect } from 'react'
 import { getFaseLunar } from '../lib/motores/luna'
 import { getFaseLunarAPI } from '../lib/apis'
 import Compartir from '../components/Compartir'
+import { supabase } from '../lib/supabase'
 
 export default function LunaOracle() {
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando, setCargando] = useState(false)
   const [generado, setGenerado] = useState(false)
+  const [fromCache, setFromCache] = useState(false)
   const [iluminacion, setIluminacion] = useState<number | null>(null)
 
   const nombre = localStorage.getItem('nombre') || 'viajero'
   const signo = localStorage.getItem('signo') || 'Leo'
   const faseLunar = getFaseLunar()
   const hoy = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
+  const fechaHoy = new Date().toISOString().split('T')[0]
+
+  // Clave de caché: fase lunar + signo (válida toda la duración de la fase ~7 días)
+  // Usamos la fecha de hoy como referencia — el caché expira cuando la fase cambia
+  const cacheKey = `luna-${faseLunar.nombre.toLowerCase().replace(/ /g, '-')}-${signo.toLowerCase()}`
 
   const bgStyle = {
     backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
@@ -30,19 +37,40 @@ export default function LunaOracle() {
     setCargando(true)
     setGenerado(true)
 
+    // ── 1. Buscar en caché (ai_cache genérico) ────────────
+    try {
+      const { data: cached } = await supabase
+        .from('ai_cache')
+        .select('respuesta')
+        .eq('cache_key', cacheKey)
+        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+        .maybeSingle()
+
+      if (cached?.respuesta) {
+        setInterpretacion(`${nombre}, ${cached.respuesta}`)
+        setFromCache(true)
+        setCargando(false)
+        return
+      }
+    } catch (err) {
+      console.warn('[LunaOracle] Error leyendo caché:', err)
+    }
+
+    // ── 2. Fallback: Gemini ────────────────────────────────
     const prompt = `Eres una experta en astrología lunar y rituales de luna.
 
-Nombre: ${nombre} (${signo})
+Signo: ${signo}
 Fase lunar: ${faseLunar.nombre} ${faseLunar.simbolo}
 Días para luna llena: ${faseLunar.diasHastaLunaLlena}
 Iluminación: ${iluminacion !== null ? iluminacion + '%' : 'aproximadamente el 50%'}
 Energía de la fase: ${faseLunar.energia}
-Fecha: ${hoy}
 
-Escribe una guía lunar de 3 párrafos para ${nombre}.
+Escribe una guía lunar de 3 párrafos para ${signo} en fase ${faseLunar.nombre}.
 Primero describe la energía de esta fase lunar y qué significa cosmológicamente.
-Luego personaliza para ${nombre} como ${signo} — cómo esta fase amplifica o desafía su energía natural.
-Termina con 3 prácticas o rituales específicos para aprovechar esta fase lunar hoy.`
+Luego personaliza para ${signo} — cómo esta fase amplifica o desafía su energía natural.
+Termina con 3 prácticas o rituales específicos para aprovechar esta fase lunar.
+Tono: reflexivo, simbólico, nunca predictivo ni alarmante.
+Máximo 220 palabras. Solo el texto, sin título ni encabezado.`
 
     try {
       const res = await fetch(
@@ -56,7 +84,25 @@ Termina con 3 prácticas o rituales específicos para aprovechar esta fase lunar
         }
       )
       const data = await res.json()
-      setInterpretacion(data.candidates?.[0]?.content?.parts?.[0]?.text || '')
+      const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+      const tokens = data.usageMetadata?.totalTokenCount ?? 0
+
+      setInterpretacion(`${nombre}, ${texto}`)
+      setFromCache(false)
+
+      // Guardar en caché con expiración de 7 días (fire & forget)
+      const expira = new Date()
+      expira.setDate(expira.getDate() + 7)
+
+      supabase.from('ai_cache').insert({
+        cache_key: cacheKey,
+        herramienta: 'luna-oracle',
+        prompt_hash: cacheKey,
+        respuesta: texto,
+        tokens_used: tokens,
+        expires_at: expira.toISOString(),
+      }).then(() => {})
+
     } catch {
       setInterpretacion('La luna guarda silencio. Inténtalo de nuevo.')
     }
@@ -77,7 +123,6 @@ Termina con 3 prácticas o rituales específicos para aprovechar esta fase lunar
           </div>
         </div>
 
-        {/* Luna principal */}
         <div className="bg-white/8 border border-white/20 rounded-3xl p-8 backdrop-blur flex flex-col items-center gap-4"
           style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
           <p className="text-8xl" style={{ filter: 'drop-shadow(0 0 20px rgba(255,255,200,0.5))' }}>
@@ -102,14 +147,12 @@ Termina con 3 prácticas o rituales específicos para aprovechar esta fase lunar
           <p className="text-purple-300 text-xs">{faseLunar.diasHastaLunaLlena} días para luna llena</p>
         </div>
 
-        {/* Mensaje de la fase */}
         <div className="bg-white/8 border border-white/20 rounded-3xl p-5 backdrop-blur"
           style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Energía de la fase</p>
           <p className="text-white/80 text-sm leading-relaxed">{faseLunar.mensaje}</p>
         </div>
 
-        {/* Práctica lunar */}
         <div className="bg-white/8 border border-white/20 rounded-2xl p-4 backdrop-blur"
           style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Práctica recomendada</p>
@@ -126,7 +169,10 @@ Termina con 3 prácticas o rituales específicos para aprovechar esta fase lunar
         ) : (
           <div className="bg-white/8 border border-white/20 rounded-3xl p-6 backdrop-blur"
             style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
-            <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Tu guía lunar</p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-purple-300 text-xs tracking-widest uppercase">Tu guía lunar</p>
+              {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
+            </div>
             {cargando ? (
               <div className="flex gap-2 py-2">
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
