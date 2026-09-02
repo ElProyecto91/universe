@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { AFIRMACIONES, AFIRMACIONES_TEMATICAS, getAfirmacionDelDia, getAfirmacionTematica } from '../lib/motores/afirmaciones'
+import { AFIRMACIONES_TEMATICAS, getAfirmacionDelDia, getAfirmacionTematica } from '../lib/motores/afirmaciones'
 import { getSignoSolar } from '../lib/motores/horoscopo'
 import Compartir from '../components/Compartir'
+import { supabase } from '../lib/supabase'
 
 const TEMAS = [
   { id: 'amor', label: 'Amor', icono: '❤️' },
@@ -18,6 +19,7 @@ export default function Afirmaciones() {
   const [repeticiones, setRepeticiones] = useState(0)
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando, setCargando] = useState(false)
+  const [fromCache, setFromCache] = useState(false)
 
   const nombre = localStorage.getItem('nombre') || 'viajero'
   const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
@@ -25,6 +27,7 @@ export default function Afirmaciones() {
   const afirmacionDiaria = getAfirmacionDelDia(signo)
   const afirmacionTema = getAfirmacionTematica(temaActivo)
   const hoy = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
+  const fechaHoy = new Date().toISOString().split('T')[0]
 
   const bgStyle = {
     backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
@@ -35,16 +38,36 @@ export default function Afirmaciones() {
   const generarAfirmacion = async () => {
     setCargando(true)
 
+    // ── 1. Buscar en caché ─────────────────────────────────
+    try {
+      const { data: cached } = await supabase
+        .from('horoscopo_cache')
+        .select('contenido')
+        .eq('signo', signo.toLowerCase())
+        .eq('fecha', fechaHoy)
+        .eq('tipo', 'afirmaciones')
+        .maybeSingle()
+
+      if (cached?.contenido) {
+        setInterpretacion(cached.contenido)
+        setFromCache(true)
+        setCargando(false)
+        return
+      }
+    } catch (err) {
+      console.warn('[Afirmaciones] Error leyendo caché:', err)
+    }
+
+    // ── 2. Fallback: Gemini ────────────────────────────────
     const prompt = `Eres un experto en psicología positiva y afirmaciones transformadoras.
 
-Nombre: ${nombre}
 Signo: ${signo}
 Afirmación del día: "${afirmacionDiaria}"
 
-Crea 3 afirmaciones adicionales ultra-personalizadas para ${nombre} como ${signo} para hoy.
-Cada una debe ser específica, poderosa y en primera persona presente.
-Deben resonar con la energía de ${signo} y el momento actual.
-Formato: una por línea, sin numeración ni guiones.`
+Crea 3 afirmaciones adicionales poderosas para ${signo} para hoy.
+Cada una debe ser específica, en primera persona presente, que resuene con la energía de ${signo}.
+Formato: una por línea, sin numeración ni guiones.
+Máximo 3 líneas.`
 
     try {
       const res = await fetch(
@@ -58,7 +81,21 @@ Formato: una por línea, sin numeración ni guiones.`
         }
       )
       const data = await res.json()
-      setInterpretacion(data.candidates?.[0]?.content?.parts?.[0]?.text || '')
+      const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+      const tokens = data.usageMetadata?.totalTokenCount ?? 0
+
+      setInterpretacion(texto)
+      setFromCache(false)
+
+      // Guardar en caché (fire & forget)
+      supabase.from('horoscopo_cache').insert({
+        signo: signo.toLowerCase(),
+        fecha: fechaHoy,
+        tipo: 'afirmaciones',
+        contenido: texto,
+        tokens_used: tokens,
+      }).then(() => {})
+
     } catch {
       setInterpretacion('El universo guarda silencio. Inténtalo de nuevo.')
     }
@@ -79,7 +116,6 @@ Formato: una por línea, sin numeración ni guiones.`
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="flex gap-1 bg-white/10 rounded-2xl p-1">
           {[
             { id: 'diaria', label: 'Diaria' },
@@ -98,16 +134,11 @@ Formato: una por línea, sin numeración ni guiones.`
 
         {vista === 'diaria' && (
           <div className="flex flex-col gap-5">
-
-            {/* Afirmación principal del día */}
             <div className="bg-purple-600/25 border border-purple-400/40 rounded-3xl p-8 backdrop-blur text-center">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-4">Tu afirmación de hoy · {signo}</p>
-              <p className="text-white text-xl leading-relaxed font-medium">
-                "{afirmacionDiaria}"
-              </p>
+              <p className="text-white text-xl leading-relaxed font-medium">"{afirmacionDiaria}"</p>
             </div>
 
-            {/* Instrucción de práctica */}
             <div className="bg-white/8 border border-white/20 rounded-2xl p-4 backdrop-blur"
               style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
               <p className="text-white/60 text-xs leading-relaxed text-center">
@@ -115,7 +146,6 @@ Formato: una por línea, sin numeración ni guiones.`
               </p>
             </div>
 
-            {/* Botón de práctica */}
             <button
               onClick={() => setVista('practica')}
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition"
@@ -123,7 +153,6 @@ Formato: una por línea, sin numeración ni guiones.`
               Practicar esta afirmación
             </button>
 
-            {/* Generar más */}
             {!interpretacion ? (
               <button
                 onClick={generarAfirmacion}
@@ -135,7 +164,10 @@ Formato: una por línea, sin numeración ni guiones.`
             ) : (
               <div className="bg-white/8 border border-white/20 rounded-3xl p-6 backdrop-blur"
                 style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
-                <p className="text-purple-300 text-xs tracking-widest uppercase mb-4">Tus afirmaciones personalizadas</p>
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-purple-300 text-xs tracking-widest uppercase">Tus afirmaciones personalizadas</p>
+                  {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
+                </div>
                 {interpretacion.split('\n').filter(l => l.trim()).map((linea, i) => (
                   <div key={i} className="bg-purple-600/15 border border-purple-400/20 rounded-2xl p-4 mb-3">
                     <p className="text-white text-sm leading-relaxed italic">"{linea.trim()}"</p>
@@ -156,8 +188,6 @@ Formato: una por línea, sin numeración ni guiones.`
 
         {vista === 'tematica' && (
           <div className="flex flex-col gap-5">
-
-            {/* Selector de tema */}
             <div className="grid grid-cols-3 gap-2">
               {TEMAS.map(tema => (
                 <button
@@ -172,17 +202,13 @@ Formato: una por línea, sin numeración ni guiones.`
               ))}
             </div>
 
-            {/* Afirmación temática */}
             <div className="bg-purple-600/25 border border-purple-400/40 rounded-3xl p-8 backdrop-blur text-center">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-4">
                 {TEMAS.find(t => t.id === temaActivo)?.icono} {TEMAS.find(t => t.id === temaActivo)?.label}
               </p>
-              <p className="text-white text-xl leading-relaxed font-medium">
-                "{afirmacionTema}"
-              </p>
+              <p className="text-white text-xl leading-relaxed font-medium">"{afirmacionTema}"</p>
             </div>
 
-            {/* Todas las afirmaciones del tema */}
             <p className="text-white/60 text-xs tracking-widest uppercase">Todas las afirmaciones</p>
             {AFIRMACIONES_TEMATICAS[temaActivo].map((af, i) => (
               <div key={i} className="bg-white/8 border border-white/20 rounded-2xl p-4 backdrop-blur"
@@ -195,7 +221,6 @@ Formato: una por línea, sin numeración ni guiones.`
 
         {vista === 'practica' && (
           <div className="flex flex-col gap-6 items-center">
-
             <div className="text-center">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-4">Modo práctica</p>
               <p className="text-white/60 text-sm">Lee la afirmación en voz alta. Toca el botón cada vez que la repitas.</p>
@@ -207,16 +232,11 @@ Formato: una por línea, sin numeración ni guiones.`
               </p>
             </div>
 
-            {/* Contador */}
             <div className="text-center">
               <p className="text-8xl font-bold text-purple-300">{repeticiones}</p>
               <p className="text-white/40 text-sm">repeticiones</p>
-              {repeticiones >= 3 && (
-                <p className="text-green-400 text-sm mt-2">✓ Práctica completada</p>
-              )}
-              {repeticiones >= 7 && (
-                <p className="text-purple-300 text-sm">✦ Nivel profundo</p>
-              )}
+              {repeticiones >= 3 && <p className="text-green-400 text-sm mt-2">✓ Práctica completada</p>}
+              {repeticiones >= 7 && <p className="text-purple-300 text-sm">✦ Nivel profundo</p>}
             </div>
 
             <button
@@ -228,21 +248,14 @@ Formato: una por línea, sin numeración ni guiones.`
             </button>
 
             <div className="flex gap-3 w-full">
-              <button
-                onClick={() => setRepeticiones(0)}
-                className="flex-1 bg-white/10 border border-white/20 text-white/60 text-sm py-3 rounded-full"
-              >
+              <button onClick={() => setRepeticiones(0)} className="flex-1 bg-white/10 border border-white/20 text-white/60 text-sm py-3 rounded-full">
                 Reiniciar
               </button>
-              <button
-                onClick={() => { setVista('diaria'); setRepeticiones(0) }}
-                className="flex-1 bg-white/10 border border-white/20 text-white/60 text-sm py-3 rounded-full"
-              >
+              <button onClick={() => { setVista('diaria'); setRepeticiones(0) }} className="flex-1 bg-white/10 border border-white/20 text-white/60 text-sm py-3 rounded-full">
                 Volver
               </button>
             </div>
 
-            {/* Escribe tu propia */}
             <div className="w-full bg-white/8 border border-white/20 rounded-3xl p-5 backdrop-blur"
               style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Escribe tu propia</p>
@@ -254,7 +267,6 @@ Formato: una por línea, sin numeración ni guiones.`
                 className="w-full bg-transparent text-white text-sm resize-none outline-none placeholder-white/30"
               />
             </div>
-
           </div>
         )}
 
