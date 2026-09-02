@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { getHoroscopoDiario, getSignoSolar } from '../lib/motores/horoscopo'
 import Compartir from '../components/Compartir'
+import { supabase } from '../lib/supabase'
 
 const TODOS_LOS_SIGNOS = [
   'Aries', 'Tauro', 'Géminis', 'Cáncer', 'Leo', 'Virgo',
@@ -13,6 +14,9 @@ const SIMBOLOS_SIGNOS: Record<string, string> = {
   Sagitario: '♐', Capricornio: '♑', Acuario: '♒', Piscis: '♓',
 }
 
+// Coste por token (para fallback con Gemini directo)
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`
+
 export default function Horoscopo() {
   const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
   const miSigno = getSignoSolar(fechaNacimiento)
@@ -21,10 +25,12 @@ export default function Horoscopo() {
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando, setCargando] = useState(false)
   const [generado, setGenerado] = useState(false)
+  const [fromCache, setFromCache] = useState(false)
 
   const horoscopo = getHoroscopoDiario(signoSeleccionado)
   const hoy = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
   const nombre = localStorage.getItem('nombre') || 'viajero'
+  const fechaHoy = new Date().toISOString().split('T')[0] // YYYY-MM-DD
 
   const bgStyle = {
     backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
@@ -32,38 +38,78 @@ export default function Horoscopo() {
     backgroundPosition: 'center',
   }
 
+  // Resetear al cambiar signo
+  useEffect(() => {
+    setGenerado(false)
+    setInterpretacion('')
+    setFromCache(false)
+  }, [signoSeleccionado])
+
   const generarLectura = async () => {
     setCargando(true)
     setGenerado(true)
 
-    const prompt = `Eres un astrólogo experto con profundo conocimiento de la astrología occidental.
+    // ── 1. Buscar en caché de Supabase ─────────────────────
+    try {
+      const { data: cached } = await supabase
+        .from('horoscopo_cache')
+        .select('contenido')
+        .eq('signo', signoSeleccionado.toLowerCase())
+        .eq('fecha', fechaHoy)
+        .eq('tipo', 'diario')
+        .maybeSingle()
 
-Nombre: ${nombre}
-Signo solar: ${signoSeleccionado}
-Fecha: ${hoy}
+      if (cached?.contenido) {
+        // ✅ Cache hit — 0 tokens gastados
+        // Personalizamos el saludo en el frontend, sin IA
+        const textoPersonalizado = `${nombre}, ${cached.contenido}`
+        setInterpretacion(textoPersonalizado)
+        setFromCache(true)
+        setCargando(false)
+        return
+      }
+    } catch (err) {
+      console.warn('[Horoscopo] Error leyendo caché, usando Gemini:', err)
+    }
 
-Escribe un horóscopo diario personal de 3 párrafos para ${nombre} como ${signoSeleccionado}.
-Primero habla de la energía general del día para este signo — qué planetas están activos y cómo afectan.
-Luego da guidance específica sobre amor/relaciones y trabajo/proyectos.
-Termina con una afirmación poderosa y una acción concreta que puede tomar hoy.
-Sé específico, poético y útil. Evita las generalidades típicas del horóscopo de periódico.`
+    // ── 2. Fallback: llamar a Gemini si no hay caché ───────
+    // (Solo ocurre si el cron no se ejecutó aún hoy)
+    const prompt = `Eres un astrólogo simbólico. Genera el horóscopo diario para ${signoSeleccionado} de hoy.
+
+Escribe 3-4 párrafos cortos sobre: energía general del día, amor/relaciones, trabajo/creatividad, y un mensaje de cierre.
+
+Tono: reflexivo, simbólico, nunca predictivo ni alarmante. Invita a la introspección.
+Evita frases como "hoy te pasará X" o predicciones absolutas.
+Máximo 200 palabras. Responde solo el texto del horóscopo, sin título ni encabezado.`
 
     try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          }),
-        }
-      )
+      const res = await fetch(GEMINI_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        }),
+      })
       const data = await res.json()
-      setInterpretacion(data.candidates?.[0]?.content?.parts?.[0]?.text || '')
+      const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+      const tokens = data.usageMetadata?.totalTokenCount ?? 0
+
+      setInterpretacion(`${nombre}, ${texto}`)
+      setFromCache(false)
+
+      // Guardar en caché para los siguientes usuarios (fire & forget)
+      supabase.from('horoscopo_cache').insert({
+        signo: signoSeleccionado.toLowerCase(),
+        fecha: fechaHoy,
+        tipo: 'diario',
+        contenido: texto,
+        tokens_used: tokens,
+      }).then(() => {})
+
     } catch {
       setInterpretacion('Las estrellas guardan silencio. Inténtalo de nuevo.')
     }
+
     setCargando(false)
   }
 
@@ -102,7 +148,7 @@ Sé específico, poético y útil. Evita las generalidades típicas del horósco
             {TODOS_LOS_SIGNOS.map(s => (
               <button
                 key={s}
-                onClick={() => { setSignoSeleccionado(s); setVista('diario'); setGenerado(false); setInterpretacion('') }}
+                onClick={() => { setSignoSeleccionado(s); setVista('diario') }}
                 className={`rounded-2xl p-3 flex flex-col items-center gap-1 transition border ${s === signoSeleccionado ? 'bg-purple-600/40 border-purple-400' : 'bg-white/8 border-white/20 hover:bg-white/15'}`}
                 style={{ backgroundColor: s === signoSeleccionado ? undefined : 'rgba(255,255,255,0.08)' }}
               >
@@ -125,7 +171,7 @@ Sé específico, poético y útil. Evita las generalidades típicas del horósco
               <p className="text-2xl font-bold">{signoSeleccionado}</p>
               {signoSeleccionado !== miSigno && (
                 <button
-                  onClick={() => { setSignoSeleccionado(miSigno); setGenerado(false); setInterpretacion('') }}
+                  onClick={() => setSignoSeleccionado(miSigno)}
                   className="text-purple-300 text-xs"
                 >
                   ← Volver a mi signo ({miSigno})
@@ -177,7 +223,12 @@ Sé específico, poético y útil. Evita las generalidades típicas del horósco
             ) : (
               <div className="bg-white/8 border border-white/20 rounded-3xl p-6 backdrop-blur"
                 style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
-                <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Tu horóscopo completo</p>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-purple-300 text-xs tracking-widest uppercase">Tu horóscopo completo</p>
+                  {fromCache && (
+                    <span className="text-green-400 text-xs">⚡ Instantáneo</span>
+                  )}
+                </div>
                 {cargando ? (
                   <div className="flex gap-2 py-2">
                     <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
