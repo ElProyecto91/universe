@@ -1,17 +1,20 @@
 import { useState } from 'react'
 import { getMensajeDiario, getSignoSolar } from '../lib/motores/astroDaily'
 import Compartir from '../components/Compartir'
+import { supabase } from '../lib/supabase'
 
 export default function AstroDaily() {
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando, setCargando] = useState(false)
   const [generado, setGenerado] = useState(false)
+  const [fromCache, setFromCache] = useState(false)
 
   const nombre = localStorage.getItem('nombre') || 'viajero'
   const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
   const signo = getSignoSolar(fechaNacimiento)
   const mensajes = getMensajeDiario(signo)
   const hoy = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
+  const fechaHoy = new Date().toISOString().split('T')[0]
 
   const bgStyle = {
     backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
@@ -23,18 +26,39 @@ export default function AstroDaily() {
     setCargando(true)
     setGenerado(true)
 
-    const prompt = `Eres un astrólogo experto que combina astrología occidental tradicional con psicología moderna.
+    // ── 1. Buscar en caché ─────────────────────────────────
+    try {
+      const { data: cached } = await supabase
+        .from('horoscopo_cache')
+        .select('contenido')
+        .eq('signo', signo.toLowerCase())
+        .eq('fecha', fechaHoy)
+        .eq('tipo', 'astro-daily')
+        .maybeSingle()
 
-Nombre: ${nombre}
+      if (cached?.contenido) {
+        setInterpretacion(`${nombre}, ${cached.contenido}`)
+        setFromCache(true)
+        setCargando(false)
+        return
+      }
+    } catch (err) {
+      console.warn('[AstroDaily] Error leyendo caché:', err)
+    }
+
+    // ── 2. Fallback: Gemini ────────────────────────────────
+    const prompt = `Eres un astrólogo simbólico que combina astrología occidental con psicología moderna.
+
 Signo solar: ${signo}
 Fecha: ${hoy}
 Energía del día: ${mensajes.energia}
 
-Escribe una guía astrológica diaria personal de 3 párrafos para ${nombre}. 
-Primero habla de la energía general que ${signo} experimenta hoy y cómo se manifiesta en el día a día.
-Luego da un consejo concreto para el amor/relaciones y otro para el trabajo/proyectos.
-Termina con una afirmación poderosa personalizada para ${nombre} como ${signo}.
-Sé específico, poético y útil. No generalices.`
+Escribe una guía astrológica diaria de 3 párrafos para ${signo}.
+Primero habla de la energía general que ${signo} experimenta hoy.
+Luego da un consejo para amor/relaciones y otro para trabajo/proyectos.
+Termina con una afirmación poderosa para ${signo}.
+Tono: reflexivo, simbólico, nunca predictivo ni alarmante.
+Máximo 200 palabras. Solo el texto, sin título ni encabezado.`
 
     try {
       const res = await fetch(
@@ -48,7 +72,21 @@ Sé específico, poético y útil. No generalices.`
         }
       )
       const data = await res.json()
-      setInterpretacion(data.candidates?.[0]?.content?.parts?.[0]?.text || '')
+      const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+      const tokens = data.usageMetadata?.totalTokenCount ?? 0
+
+      setInterpretacion(`${nombre}, ${texto}`)
+      setFromCache(false)
+
+      // Guardar en caché (fire & forget)
+      supabase.from('horoscopo_cache').insert({
+        signo: signo.toLowerCase(),
+        fecha: fechaHoy,
+        tipo: 'astro-daily',
+        contenido: texto,
+        tokens_used: tokens,
+      }).then(() => {})
+
     } catch {
       setInterpretacion('Las estrellas guardan silencio hoy. Inténtalo de nuevo.')
     }
@@ -69,14 +107,12 @@ Sé específico, poético y útil. No generalices.`
           </div>
         </div>
 
-        {/* Signo y energía */}
         <div className="bg-white/5 border border-purple-500/30 rounded-3xl p-6 backdrop-blur text-center">
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Tu energía hoy</p>
           <p className="text-3xl font-bold mb-1">{signo}</p>
           <p className="text-purple-300 text-sm">{mensajes.energia}</p>
         </div>
 
-        {/* Mensajes del día */}
         <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Mensaje del día</p>
           <p className="text-white/90 text-sm leading-relaxed">{mensajes.mensaje}</p>
@@ -102,7 +138,10 @@ Sé específico, poético y útil. No generalices.`
           </button>
         ) : (
           <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
-            <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Tu guía completa</p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-purple-300 text-xs tracking-widest uppercase">Tu guía completa</p>
+              {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
+            </div>
             {cargando ? (
               <div className="flex gap-2 py-2">
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
