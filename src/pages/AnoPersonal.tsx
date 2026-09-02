@@ -1,17 +1,22 @@
 import { useState } from 'react'
 import { calcularAnoPersonal, AÑOS_PERSONALES } from '../lib/motores/anoPersonal'
 import Compartir from '../components/Compartir'
+import { supabase } from '../lib/supabase'
 
 export default function AnoPersonal() {
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando, setCargando] = useState(false)
   const [generado, setGenerado] = useState(false)
+  const [fromCache, setFromCache] = useState(false)
 
   const nombre = localStorage.getItem('nombre') || 'viajero'
   const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
   const numeroAno = calcularAnoPersonal(fechaNacimiento)
   const anoData = AÑOS_PERSONALES[numeroAno]
   const añoActual = new Date().getFullYear()
+
+  // 9 combinaciones posibles, válida todo el año calendario
+  const cacheKey = `ano-personal-${numeroAno}-${añoActual}`
 
   const bgStyle = {
     backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
@@ -23,9 +28,27 @@ export default function AnoPersonal() {
     setCargando(true)
     setGenerado(true)
 
+    // ── 1. Buscar en caché permanente ──────────────────────
+    try {
+      const { data: cached } = await supabase
+        .from('ai_cache')
+        .select('respuesta')
+        .eq('cache_key', cacheKey)
+        .maybeSingle()
+
+      if (cached?.respuesta) {
+        setInterpretacion(`${nombre}, ${cached.respuesta}`)
+        setFromCache(true)
+        setCargando(false)
+        return
+      }
+    } catch (err) {
+      console.warn('[AnoPersonal] Error leyendo caché:', err)
+    }
+
+    // ── 2. Fallback: Gemini ────────────────────────────────
     const prompt = `Eres una experta en numerología personal y ciclos de vida.
 
-Nombre: ${nombre}
 Año actual: ${añoActual}
 Año Personal: ${numeroAno} — ${anoData.titulo}
 Descripción: ${anoData.descripcion}
@@ -33,11 +56,12 @@ Temas: ${anoData.temas.join(', ')}
 Oportunidad: ${anoData.oportunidad}
 Desafío: ${anoData.desafio}
 
-Escribe una lectura de Año Personal de 3-4 párrafos para ${nombre}. 
-Primero describe la energía general de este Año Personal ${numeroAno} y qué ciclo representa.
-Luego conecta los temas con la vida actual de ${nombre} — qué oportunidades específicas están disponibles y qué desafíos es probable que encuentre.
-Menciona brevemente dónde viene (Año Personal ${numeroAno - 1 === 0 ? 9 : numeroAno - 1}) y hacia dónde va (Año Personal ${numeroAno + 1 > 9 ? 1 : numeroAno + 1}).
-Termina con un consejo específico para aprovechar al máximo este año.`
+Escribe una lectura del Año Personal ${numeroAno} de 3-4 párrafos.
+Primero describe la energía general de este Año Personal y qué ciclo representa.
+Luego explica qué oportunidades específicas están disponibles y qué desafíos es probable que aparezcan.
+Menciona brevemente el año anterior (Año Personal ${numeroAno - 1 === 0 ? 9 : numeroAno - 1}) y el siguiente (Año Personal ${numeroAno + 1 > 9 ? 1 : numeroAno + 1}).
+Termina con un consejo específico para aprovechar al máximo este año.
+Tono: reflexivo, simbólico, nunca predictivo ni alarmante. Máximo 250 palabras. Solo el texto, sin título.`
 
     try {
       const res = await fetch(
@@ -51,7 +75,22 @@ Termina con un consejo específico para aprovechar al máximo este año.`
         }
       )
       const data = await res.json()
-      setInterpretacion(data.candidates?.[0]?.content?.parts?.[0]?.text || '')
+      const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+      const tokens = data.usageMetadata?.totalTokenCount ?? 0
+
+      setInterpretacion(`${nombre}, ${texto}`)
+      setFromCache(false)
+
+      // Caché permanente por año calendario (se renueva solo el 1 de enero)
+      supabase.from('ai_cache').insert({
+        cache_key: cacheKey,
+        herramienta: 'ano-personal',
+        prompt_hash: cacheKey,
+        respuesta: texto,
+        tokens_used: tokens,
+        expires_at: null,
+      }).then(() => {})
+
     } catch {
       setInterpretacion('Los números guardan silencio. Inténtalo de nuevo.')
     }
@@ -72,7 +111,6 @@ Termina con un consejo específico para aprovechar al máximo este año.`
           </div>
         </div>
 
-        {/* Número del año */}
         <div className="bg-white/5 border border-purple-500/30 rounded-3xl p-6 backdrop-blur flex flex-col items-center gap-3">
           <p className="text-purple-300 text-xs tracking-widest uppercase">Tu Año Personal</p>
           <p className="text-8xl font-light text-purple-300" style={{ textShadow: '0 0 30px rgba(192,132,252,0.5)' }}>
@@ -81,19 +119,16 @@ Termina con un consejo específico para aprovechar al máximo este año.`
           <p className="text-xl font-bold text-center">{anoData.titulo}</p>
         </div>
 
-        {/* Descripción */}
         <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
           <p className="text-white/80 text-sm leading-relaxed">{anoData.descripcion}</p>
         </div>
 
-        {/* Temas */}
         <div className="flex gap-2 flex-wrap">
           {anoData.temas.map(t => (
             <span key={t} className="bg-purple-500/20 text-purple-300 text-xs px-3 py-1 rounded-full">{t}</span>
           ))}
         </div>
 
-        {/* Oportunidad y Desafío */}
         <div className="grid grid-cols-1 gap-3">
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur">
             <p className="text-green-400 text-xs tracking-widest uppercase mb-2">Oportunidad</p>
@@ -109,7 +144,6 @@ Termina con un consejo específico para aprovechar al máximo este año.`
           </div>
         </div>
 
-        {/* Ciclo */}
         <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur">
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-4">Tu ciclo de 9 años</p>
           <div className="flex gap-2 flex-wrap justify-center">
@@ -133,7 +167,10 @@ Termina con un consejo específico para aprovechar al máximo este año.`
           </button>
         ) : (
           <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
-            <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Tu lectura completa</p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-purple-300 text-xs tracking-widest uppercase">Tu lectura completa</p>
+              {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
+            </div>
             {cargando ? (
               <div className="flex gap-2 py-2">
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
