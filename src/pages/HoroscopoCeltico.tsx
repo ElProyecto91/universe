@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Compartir from '../components/Compartir'
+import { supabase } from '../lib/supabase'
 
 const ARBOLES_CELTICOS = [
   { nombre: 'Abedul', fechas: 'Dec 24 – Ene 20', simbolo: '🌲', keywords: 'Pionero · Tolerante · Ambicioso · Decidido', descripcion: 'El árbol del comienzo. Las personas Abedul son pioneras naturales — tolerantes, decididas y capaces de adaptarse a cualquier condición. Como el primer árbol en crecer tras el invierno, marcan el inicio de nuevos ciclos.' },
@@ -22,9 +23,7 @@ function getArbolCeltico(fecha: string): typeof ARBOLES_CELTICOS[0] | null {
   const f = new Date(fecha)
   const mes = f.getMonth() + 1
   const dia = f.getDate()
-
   const diaDentroDelAno = mes * 100 + dia
-
   if (diaDentroDelAno >= 1224 || diaDentroDelAno <= 120) return ARBOLES_CELTICOS[0]
   if (diaDentroDelAno >= 121 && diaDentroDelAno <= 217) return ARBOLES_CELTICOS[1]
   if (diaDentroDelAno >= 218 && diaDentroDelAno <= 317) return ARBOLES_CELTICOS[2]
@@ -44,10 +43,14 @@ export default function HoroscopoCeltico() {
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando, setCargando] = useState(false)
   const [generado, setGenerado] = useState(false)
+  const [fromCache, setFromCache] = useState(false)
 
   const nombre = localStorage.getItem('nombre') || 'viajero'
   const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
   const arbol = getArbolCeltico(fechaNacimiento)
+
+  // Clave permanente por árbol — no cambia nunca, no tiene fecha
+  const cacheKey = `celtico-${arbol?.nombre.toLowerCase().replace(/ /g, '-')}`
 
   const bgStyle = {
     backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
@@ -60,20 +63,38 @@ export default function HoroscopoCeltico() {
     setCargando(true)
     setGenerado(true)
 
-    const prompt = `Eres un experto en el horóscopo celta de los árboles — un sistema moderno de astrología inspirado en las tradiciones celtas y el Ogham.
+    // ── 1. Buscar en caché (ai_cache, sin expiración) ─────
+    try {
+      const { data: cached } = await supabase
+        .from('ai_cache')
+        .select('respuesta')
+        .eq('cache_key', cacheKey)
+        .maybeSingle()
 
-Nota importante: El horóscopo celta de los árboles es principalmente una reconstrucción moderna del siglo XX inspirada en la cultura celta histórica, no un sistema antiguo documentado. Lo presentas como lo que es: una interpretación moderna inspirada en tradición.
+      if (cached?.respuesta) {
+        setInterpretacion(`${nombre}, ${cached.respuesta}`)
+        setFromCache(true)
+        setCargando(false)
+        return
+      }
+    } catch (err) {
+      console.warn('[HoroscopoCeltico] Error leyendo caché:', err)
+    }
 
-Nombre: ${nombre}
+    // ── 2. Fallback: Gemini ────────────────────────────────
+    const prompt = `Eres un experto en el horóscopo celta de los árboles — un sistema moderno inspirado en las tradiciones celtas y el Ogham.
+
 Árbol: ${arbol.nombre}
 Fechas: ${arbol.fechas}
 Keywords: ${arbol.keywords}
 Descripción: ${arbol.descripcion}
 
-Escribe una lectura de 3 párrafos para ${nombre}. 
+Escribe una lectura de 3 párrafos para las personas del árbol ${arbol.nombre}.
 Primero describe la energía y personalidad asociada al ${arbol.nombre} según esta tradición moderna.
-Luego conecta con la vida actual de ${nombre} — fortalezas que puede aprovechar y desafíos que puede trabajar.
-Termina con un consejo específico para ${nombre} basado en la sabiduría de su árbol.`
+Luego explica fortalezas que pueden aprovechar y desafíos que pueden trabajar.
+Termina con un consejo específico basado en la sabiduría de este árbol.
+Tono: reflexivo, simbólico, nunca predictivo ni alarmante.
+Máximo 220 palabras. Solo el texto, sin título ni encabezado.`
 
     try {
       const res = await fetch(
@@ -87,7 +108,22 @@ Termina con un consejo específico para ${nombre} basado en la sabiduría de su 
         }
       )
       const data = await res.json()
-      setInterpretacion(data.candidates?.[0]?.content?.parts?.[0]?.text || '')
+      const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+      const tokens = data.usageMetadata?.totalTokenCount ?? 0
+
+      setInterpretacion(`${nombre}, ${texto}`)
+      setFromCache(false)
+
+      // Guardar en caché permanente (sin expiración — el árbol no cambia)
+      supabase.from('ai_cache').insert({
+        cache_key: cacheKey,
+        herramienta: 'horoscopo-celtico',
+        prompt_hash: cacheKey,
+        respuesta: texto,
+        tokens_used: tokens,
+        expires_at: null,
+      }).then(() => {})
+
     } catch {
       setInterpretacion('El árbol guarda silencio. Inténtalo de nuevo.')
     }
@@ -134,7 +170,10 @@ Termina con un consejo específico para ${nombre} basado en la sabiduría de su 
           </button>
         ) : (
           <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
-            <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Tu lectura</p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-purple-300 text-xs tracking-widest uppercase">Tu lectura</p>
+              {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
+            </div>
             {cargando ? (
               <div className="flex gap-2 py-2">
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
