@@ -1,13 +1,19 @@
 import { getSabbatActual, SABBATS } from '../lib/motores/ruedaDelAno'
 import { useState } from 'react'
 import Compartir from '../components/Compartir'
+import { supabase } from '../lib/supabase'
 
 export default function WheelOfYear() {
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando, setCargando] = useState(false)
   const [generado, setGenerado] = useState(false)
+  const [fromCache, setFromCache] = useState(false)
+
   const sabbatActual = getSabbatActual()
   const nombre = localStorage.getItem('nombre') || 'viajero'
+
+  // 8 Sabbats al año — caché permanente por nombre del Sabbat
+  const cacheKey = `sabbat-${sabbatActual.nombre.toLowerCase().replace(/ /g, '-')}`
 
   const bgStyle = {
     backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
@@ -19,15 +25,37 @@ export default function WheelOfYear() {
     setCargando(true)
     setGenerado(true)
 
+    // ── 1. Buscar en caché permanente ──────────────────────
+    try {
+      const { data: cached } = await supabase
+        .from('ai_cache')
+        .select('respuesta')
+        .eq('cache_key', cacheKey)
+        .maybeSingle()
+
+      if (cached?.respuesta) {
+        setInterpretacion(`${nombre}, ${cached.respuesta}`)
+        setFromCache(true)
+        setCargando(false)
+        return
+      }
+    } catch (err) {
+      console.warn('[WheelOfYear] Error leyendo caché:', err)
+    }
+
+    // ── 2. Fallback: Gemini ────────────────────────────────
     const prompt = `Eres una guía experta en la Rueda del Año y las tradiciones paganas estacionales.
 
-Nombre: ${nombre}
-Próximo Sabbat: ${sabbatActual.nombre} (en ${sabbatActual.diasHasta} días)
+Sabbat: ${sabbatActual.nombre}
 Fecha: ${sabbatActual.fecha}
 Descripción: ${sabbatActual.descripcion}
 Temas: ${sabbatActual.temas.join(', ')}
 
-Escribe una guía estacional personal de 3 párrafos para ${nombre}. Primero describe la energía de este momento del año y qué significa. Luego conecta los temas del Sabbat con la vida de ${nombre} — qué está siendo llamado a honrar, soltar o celebrar. Termina con dos acciones concretas que ${nombre} podría hacer en los próximos días para alinearse con esta energía estacional.`
+Escribe una guía estacional de 3 párrafos para este Sabbat.
+Primero describe la energía de este momento del año y qué significa cosmológicamente.
+Luego explica qué están siendo llamadas a honrar, soltar o celebrar las personas en esta época.
+Termina con dos acciones concretas que cualquiera podría hacer para alinearse con esta energía estacional.
+Tono: reflexivo, simbólico, nunca predictivo ni alarmante. Máximo 220 palabras. Solo el texto, sin título.`
 
     try {
       const res = await fetch(
@@ -41,7 +69,22 @@ Escribe una guía estacional personal de 3 párrafos para ${nombre}. Primero des
         }
       )
       const data = await res.json()
-      setInterpretacion(data.candidates?.[0]?.content?.parts?.[0]?.text || '')
+      const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+      const tokens = data.usageMetadata?.totalTokenCount ?? 0
+
+      setInterpretacion(`${nombre}, ${texto}`)
+      setFromCache(false)
+
+      // Caché permanente — el Sabbat es el mismo para todos cada año
+      supabase.from('ai_cache').insert({
+        cache_key: cacheKey,
+        herramienta: 'wheel-of-year',
+        prompt_hash: cacheKey,
+        respuesta: texto,
+        tokens_used: tokens,
+        expires_at: null,
+      }).then(() => {})
+
     } catch {
       setInterpretacion('La rueda guarda silencio. Inténtalo de nuevo.')
     }
@@ -62,7 +105,6 @@ Escribe una guía estacional personal de 3 párrafos para ${nombre}. Primero des
           </div>
         </div>
 
-        {/* Próximo Sabbat */}
         <div className="bg-white/5 border border-purple-500/30 rounded-3xl p-6 backdrop-blur">
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Próximo Sabbat</p>
           <div className="flex items-center justify-between mb-3">
@@ -73,14 +115,12 @@ Escribe una guía estacional personal de 3 párrafos para ${nombre}. Primero des
           <p className="text-white/70 text-sm leading-relaxed">{sabbatActual.descripcion}</p>
         </div>
 
-        {/* Temas */}
         <div className="flex gap-2 flex-wrap">
           {sabbatActual.temas.map(t => (
             <span key={t} className="bg-purple-500/20 text-purple-300 text-xs px-3 py-1 rounded-full">{t}</span>
           ))}
         </div>
 
-        {/* Conexiones */}
         <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur">
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-4">Conexiones simbólicas</p>
           <div className="flex flex-col gap-2">
@@ -95,13 +135,11 @@ Escribe una guía estacional personal de 3 párrafos para ${nombre}. Primero des
           </div>
         </div>
 
-        {/* Práctica */}
         <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur">
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Práctica estacional</p>
           <p className="text-white/80 text-sm leading-relaxed">{sabbatActual.practica}</p>
         </div>
 
-        {/* Todos los Sabbats */}
         <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur">
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-4">La Rueda completa</p>
           <div className="flex flex-col gap-2">
@@ -123,7 +161,10 @@ Escribe una guía estacional personal de 3 párrafos para ${nombre}. Primero des
           </button>
         ) : (
           <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
-            <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Tu guía personal</p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-purple-300 text-xs tracking-widest uppercase">Tu guía personal</p>
+              {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
+            </div>
             {cargando ? (
               <div className="flex gap-2 py-2">
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
