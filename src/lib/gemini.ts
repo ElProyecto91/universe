@@ -2,34 +2,57 @@
 // ============================================================
 // UNIVERSE — Helper centralizado de Gemini
 // Incluye: kill switch · rate limiting · caché · registro de uso
+//          · selección automática Flash vs Flash-Lite
 //
 // USO en cualquier página:
 //   import { llamarGemini } from '@/lib/gemini'
-//   const { texto, error } = await llamarGemini({ herramienta: 'tarot', prompt, userId })
+//   const { texto, error } = await llamarGemini({
+//     herramienta: 'tarot',
+//     prompt,
+//     userId,
+//     usarLite: false  // true para respuestas cortas y simples
+//   })
+//
+// CUÁNDO USAR LITE (7x más barato):
+//   - Afirmaciones, mensajes cortos, descripciones de cristales
+//   - TarotDiario (mensaje de 3 frases)
+//   - ColorOracle, DiceOracle, CoinOracle, Sincronicidad
+//   - Cualquier respuesta < 100 palabras
+//
+// CUÁNDO USAR FLASH (calidad máxima):
+//   - Tarot completo, Runas, IChing (lecturas profundas)
+//   - CartaNatal, Tránsitos, Compatibilidad
+//   - Guía IA, PaganPaths, Scrying
+//   - Cualquier respuesta > 150 palabras
 // ============================================================
 
 import { supabase } from './supabase'
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${GEMINI_API_KEY}`
 
-// Coste por token (tarifa actual Gemini 3.5 Flash, USD)
-const COSTE_INPUT_POR_TOKEN  = 0.00000075  // $0.75 / 1M tokens
-const COSTE_OUTPUT_POR_TOKEN = 0.0000045   // $4.50 / 1M tokens
+const GEMINI_FLASH_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${GEMINI_API_KEY}`
+const GEMINI_LITE_URL  = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_API_KEY}`
+
+// Costes por token (USD)
+const COSTE_FLASH_INPUT  = 0.00000075   // $0.75 / 1M tokens
+const COSTE_FLASH_OUTPUT = 0.0000045    // $4.50 / 1M tokens
+const COSTE_LITE_INPUT   = 0.000000010  // $0.10 / 1M tokens  (7.5x más barato)
+const COSTE_LITE_OUTPUT  = 0.000000040  // $0.40 / 1M tokens  (11x más barato)
 
 // ============================================================
 // Tipos
 // ============================================================
 
 export interface LlamarGeminiParams {
-  herramienta: string       // 'tarot', 'horoscopo', 'runas', etc.
-  prompt: string            // el prompt completo
-  userId?: string | null    // null = usuario anónimo
-  esPremium?: boolean       // plan del usuario
-  cacheable?: boolean       // ¿se puede cachear esta respuesta?
-  cacheExpiraHoras?: number // cuántas horas es válida la caché (default: 24)
-  maxTokens?: number        // límite de tokens output (default: 500)
-  temperatura?: number      // creatividad 0-1 (default: 0.8)
+  herramienta: string        // 'tarot', 'horoscopo', 'runas', etc.
+  prompt: string             // el prompt completo
+  userId?: string | null     // null = usuario anónimo
+  esPremium?: boolean        // plan del usuario
+  usarLite?: boolean         // true = Flash-Lite (más barato, respuestas cortas)
+  cacheable?: boolean        // ¿se puede cachear esta respuesta?
+  cacheExpiraHoras?: number  // horas de validez del caché (default: 24)
+  maxTokens?: number         // límite tokens output (default: 500 Flash, 200 Lite)
+  temperatura?: number       // creatividad 0-1 (default: 0.8)
 }
 
 export interface LlamarGeminiResult {
@@ -37,6 +60,7 @@ export interface LlamarGeminiResult {
   fromCache: boolean
   tokensUsados: number
   costeUsd: number
+  modelo: 'flash' | 'lite' | 'cache'
   error?: string
 }
 
@@ -50,11 +74,17 @@ export async function llamarGemini(params: LlamarGeminiParams): Promise<LlamarGe
     prompt,
     userId = null,
     esPremium = false,
+    usarLite = false,
     cacheable = false,
     cacheExpiraHoras = 24,
-    maxTokens = 500,
+    maxTokens = usarLite ? 200 : 500,
     temperatura = 0.8,
   } = params
+
+  const modeloUrl   = usarLite ? GEMINI_LITE_URL  : GEMINI_FLASH_URL
+  const costoInput  = usarLite ? COSTE_LITE_INPUT  : COSTE_FLASH_INPUT
+  const costoOutput = usarLite ? COSTE_LITE_OUTPUT : COSTE_FLASH_OUTPUT
+  const modeloNombre: 'flash' | 'lite' = usarLite ? 'lite' : 'flash'
 
   // ── 1. KILL SWITCH GLOBAL ──────────────────────────────────
   const config = await obtenerConfig()
@@ -104,7 +134,6 @@ export async function llamarGemini(params: LlamarGeminiParams): Promise<LlamarGe
     const cached = await buscarEnCache(cacheKey)
 
     if (cached) {
-      // Incrementar contador de hits (fire & forget)
       supabase
         .from('ai_cache')
         .update({ hits: cached.hits + 1 })
@@ -116,6 +145,7 @@ export async function llamarGemini(params: LlamarGeminiParams): Promise<LlamarGe
         fromCache: true,
         tokensUsados: cached.tokens_used,
         costeUsd: 0,
+        modelo: 'cache',
       }
     }
   }
@@ -126,7 +156,7 @@ export async function llamarGemini(params: LlamarGeminiParams): Promise<LlamarGe
   let tokensOutput = 0
 
   try {
-    const response = await fetch(GEMINI_URL, {
+    const response = await fetch(modeloUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -140,8 +170,7 @@ export async function llamarGemini(params: LlamarGeminiParams): Promise<LlamarGe
 
     if (!response.ok) {
       const errBody = await response.text()
-      console.error('[gemini] Error API:', response.status, errBody)
-
+      console.error(`[gemini/${modeloNombre}] Error API:`, response.status, errBody)
       if (response.status === 429) {
         return error('Demasiadas consultas al mismo tiempo. Inténtalo en unos segundos.')
       }
@@ -149,16 +178,16 @@ export async function llamarGemini(params: LlamarGeminiParams): Promise<LlamarGe
     }
 
     const data = await response.json()
-    texto = data.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
+    texto        = data.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
     tokensInput  = data.usageMetadata?.promptTokenCount ?? 0
     tokensOutput = data.usageMetadata?.candidatesTokenCount ?? 0
 
   } catch (err) {
-    console.error('[gemini] Error de red:', err)
+    console.error(`[gemini/${modeloNombre}] Error de red:`, err)
     return error('Error de conexión. Comprueba tu internet e inténtalo de nuevo.')
   }
 
-  const costeUsd = (tokensInput * COSTE_INPUT_POR_TOKEN) + (tokensOutput * COSTE_OUTPUT_POR_TOKEN)
+  const costeUsd   = (tokensInput * costoInput) + (tokensOutput * costoOutput)
   const tokensTotal = tokensInput + tokensOutput
 
   // ── 6. GUARDAR EN CACHÉ (si aplica) ───────────────────────
@@ -177,14 +206,14 @@ export async function llamarGemini(params: LlamarGeminiParams): Promise<LlamarGe
     }).then(() => {})
   }
 
-  // ── 7. REGISTRAR USO (fire & forget) ──────────────────────
+  // ── 7. REGISTRAR USO ──────────────────────────────────────
   if (userId) {
     supabase.from('ai_usage').insert({
-      user_id:      userId,
-      herramienta,
+      user_id:       userId,
+      herramienta:   `${herramienta}/${modeloNombre}`,
       tokens_input:  tokensInput,
       tokens_output: tokensOutput,
-      coste_usd:    costeUsd,
+      coste_usd:     costeUsd,
     }).then(() => {})
   }
 
@@ -193,6 +222,7 @@ export async function llamarGemini(params: LlamarGeminiParams): Promise<LlamarGe
     fromCache: false,
     tokensUsados: tokensTotal,
     costeUsd,
+    modelo: modeloNombre,
   }
 }
 
@@ -201,7 +231,7 @@ export async function llamarGemini(params: LlamarGeminiParams): Promise<LlamarGe
 // ============================================================
 
 function error(mensaje: string): LlamarGeminiResult {
-  return { texto: '', fromCache: false, tokensUsados: 0, costeUsd: 0, error: mensaje }
+  return { texto: '', fromCache: false, tokensUsados: 0, costeUsd: 0, modelo: 'flash', error: mensaje }
 }
 
 async function obtenerConfig() {
@@ -261,13 +291,11 @@ async function contarCallsUsuario(userId: string, periodo: 'hora' | 'dia'): Prom
     } else {
       desde.setHours(0, 0, 0, 0)
     }
-
     const { count } = await supabase
       .from('ai_usage')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
       .gte('created_at', desde.toISOString())
-
     return count ?? 0
   } catch {
     return 0
