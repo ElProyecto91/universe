@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { getCartaSVG } from '../components/svg/TarotSVG'
 import Compartir from '../components/Compartir'
+import { llamarGemini } from '../lib/gemini'
 
 const ARCANOS_MAYORES = [
   { nombre: 'El Mago', numero: 'I', keywords: 'Voluntad · Poder · Acción' },
@@ -46,6 +47,7 @@ export default function Tarot() {
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando, setCargando] = useState(false)
   const [fase, setFase] = useState<'elegir' | 'revelar' | 'interpretar'>('elegir')
+  const [errorMsg, setErrorMsg] = useState('')
 
   const bgStyle = {
     backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
@@ -55,42 +57,40 @@ export default function Tarot() {
 
   const nombre = localStorage.getItem('nombre') || 'Luna'
   const signo = localStorage.getItem('signo') || 'Leo'
+  const userId = null // TODO: sustituir por ID real del usuario cuando tengas auth
 
   const iniciarTirada = (tirada: typeof TIRADAS[0]) => {
     setTiradaSeleccionada(tirada.id)
     const nuevasCartas = Array.from({ length: tirada.cantidad }, cartaAleatoria)
     setCartas(nuevasCartas)
     setFase('revelar')
+    setErrorMsg('')
   }
 
   const interpretarCartas = async () => {
     setCargando(true)
     setFase('interpretar')
+    setErrorMsg('')
 
-    const nombresCartas = cartas.map(c => `${c.nombre} ${c.invertida ? '(invertida)' : ''}`).join(', ')
+    const nombresCartas = cartas.map(c => `${c.nombre}${c.invertida ? ' (invertida)' : ''}`).join(', ')
     const tirada = TIRADAS.find(t => t.id === tiradaSeleccionada)
 
-    const prompt = `Eres una tarotista sabia y poética. Interpreta estas cartas para ${nombre}, signo ${signo}.
+    const result = await llamarGemini({
+      herramienta: 'tarot',
+      prompt: `Eres una tarotista sabia y poética. Interpreta estas cartas para ${nombre}, signo ${signo}.
 Tirada: ${tirada?.descripcion}
 Cartas: ${nombresCartas}
 
-Da una interpretación profunda, poética y personal. Conecta las cartas entre sí. No seas genérica. Habla directamente a ${nombre}. Máximo 200 palabras. Termina con una pregunta de reflexión.`
+Da una interpretación profunda, poética y personal. Conecta las cartas entre sí. No seas genérica. Habla directamente a ${nombre}. Máximo 200 palabras. Termina con una pregunta de reflexión.`,
+      userId,
+      cacheable: false,
+      maxTokens: 400,
+    })
 
-    try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          }),
-        }
-      )
-      const data = await res.json()
-      setInterpretacion(data.candidates?.[0]?.content?.parts?.[0]?.text || 'Las cartas guardan silencio por un momento.')
-    } catch {
-      setInterpretacion('Las cartas guardan silencio por un momento. Inténtalo de nuevo.')
+    if (result.error) {
+      setErrorMsg(result.error)
+    } else {
+      setInterpretacion(result.texto)
     }
     setCargando(false)
   }
@@ -193,6 +193,8 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
                   <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                   <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
+              ) : errorMsg ? (
+                <p className="text-red-400 text-sm text-center">{errorMsg}</p>
               ) : (
                 <p className="text-white/90 text-sm leading-relaxed">{interpretacion}</p>
               )}
@@ -223,7 +225,7 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
                   Hablar con un Experto
                 </button>
                 <button
-                  onClick={() => { setFase('elegir'); setCartas([]); setInterpretacion('') }}
+                  onClick={() => { setFase('elegir'); setCartas([]); setInterpretacion(''); setErrorMsg('') }}
                   className="w-full text-purple-300/60 text-sm py-2"
                 >
                   Nueva tirada
