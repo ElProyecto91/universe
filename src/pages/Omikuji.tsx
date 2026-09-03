@@ -1,99 +1,90 @@
 import { useState } from 'react'
-import { generarOmikuji, NIVELES_SUERTE } from '../lib/motores/omikuji'
+import Compartir from '../components/Compartir'
+import { supabase } from '../lib/supabase'
+import { llamarGemini } from '../lib/gemini'
 
 export default function Omikuji() {
-  const [revelado, setRevelado] = useState(false)
-  const omikuji = generarOmikuji(localStorage.getItem('nombre') || undefined)
-  const nivel = NIVELES_SUERTE[omikuji.nivel]
+  const [interpretacion, setInterpretacion] = useState('')
+  const [cargando, setCargando] = useState(false)
+  const [generado, setGenerado] = useState(false)
+  const [fromCache, setFromCache] = useState(false)
 
-  const bgStyle = {
-    backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
+  const nombre = localStorage.getItem('nombre') || 'viajero'
+  const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
+  const signo = localStorage.getItem('signo') || 'Leo'
+  const añoActual = new Date().getFullYear()
+  const cacheKey = `omikuji-${fechaNacimiento}-${añoActual}`
+  const userId = null
+
+  const bgStyle = { backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }
+
+  const generarLectura = async () => {
+    setCargando(true)
+    setGenerado(true)
+
+    try {
+      const { data: cached } = await supabase.from('ai_cache').select('respuesta').eq('cache_key', cacheKey).maybeSingle()
+      if (cached?.respuesta) {
+        setInterpretacion(`${nombre}, ${cached.respuesta}`)
+        setFromCache(true)
+        setCargando(false)
+        return
+      }
+    } catch (err) { console.warn('[Omikuji] Error caché:', err) }
+
+    const result = await llamarGemini({
+      herramienta: 'omikuji',
+      prompt: `Eres experto en Omikuji. Nombre: ${nombre}, Signo: ${signo}, Fecha de nacimiento: ${fechaNacimiento}. Genera una lectura profunda y personalizada de 3-4 párrafos. Reflexivo, simbólico, poético. Sin predicciones absolutas.`,
+      userId, usarLite: true, cacheable: false, maxTokens: 200,
+    })
+
+    if (!result.error && result.texto) {
+      setInterpretacion(`${nombre}, ${result.texto}`)
+      setFromCache(false)
+      supabase.from('ai_cache').insert({
+        cache_key: cacheKey, herramienta: 'omikuji', prompt_hash: cacheKey,
+        respuesta: result.texto, tokens_used: result.tokensUsados, expires_at: null
+      }).then(() => {})
+    } else {
+      setInterpretacion('El universo guarda silencio. Inténtalo de nuevo.')
+    }
+    setCargando(false)
   }
-
-  const hoy = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
       <div className="absolute inset-0 bg-black/75" />
-
-      <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col items-center px-6 py-10 gap-6">
-
-        {/* Header */}
-        <div className="w-full flex items-center">
+      <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-6 py-10 gap-6">
+        <div className="flex items-center">
           <button onClick={() => window.location.href = '/tradiciones'} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
-            <p className="text-white font-semibold text-sm">Omikuji · おみくじ</p>
-            <p className="text-purple-300 text-xs">Fortuna del día · Tradición japonesa</p>
+            <p className="text-white font-semibold text-sm">Omikuji</p>
+            <p className="text-purple-300 text-xs">Oráculo japonés</p>
           </div>
         </div>
-
-        <p className="text-white/40 text-xs tracking-wide capitalize">{hoy}</p>
-
-        {!revelado ? (
-          <div className="flex flex-col items-center gap-8">
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur text-center">
-              <p className="text-white/60 text-sm leading-relaxed">
-                En los santuarios y templos japoneses, el Omikuji es una fortuna que se extrae al azar. Cada día trae un mensaje diferente del universo.
-              </p>
-            </div>
-
-            <div
-              className="w-20 h-48 bg-gradient-to-b from-amber-100/20 to-amber-50/10 border border-amber-300/30 rounded-lg flex items-center justify-center cursor-pointer hover:border-amber-300/60 transition backdrop-blur"
-              onClick={() => setRevelado(true)}
-            >
-              <div className="flex flex-col items-center gap-2">
-                <p className="text-amber-300 text-xl" style={{ writingMode: 'vertical-rl', fontFamily: 'serif', letterSpacing: '0.3em' }}>おみくじ</p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setRevelado(true)}
-              className="bg-gradient-to-r from-amber-600 to-orange-600 text-white font-semibold py-4 px-10 rounded-full hover:opacity-90 transition"
-            >
-              Extraer mi fortuna
-            </button>
-          </div>
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur text-center">
+          <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Omikuji</p>
+          <p className="text-white/60 text-sm">Nacimiento: {fechaNacimiento} · Signo: {signo}</p>
+        </div>
+        {!generado ? (
+          <button onClick={generarLectura} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition">Generar mi lectura</button>
         ) : (
-          <div className="flex flex-col items-center gap-5 w-full">
-
-            {/* Nivel de fortuna */}
-            <div className="text-center">
-              <p className="text-white/40 text-xs tracking-widest uppercase mb-2">{omikuji.nivel}</p>
-              <h2 className="text-3xl font-bold mb-1" style={{ color: nivel.color, textShadow: `0 0 20px ${nivel.color}60` }}>
-                {nivel.español}
-              </h2>
-              <p className="text-white/60 text-sm">{nivel.descripcion}</p>
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-purple-300 text-xs tracking-widest uppercase">Tu lectura</p>
+              {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
             </div>
-
-            {/* Fortuna detallada */}
-            <div className="w-full bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur flex flex-col gap-4">
-              {[
-                { label: 'Amor', icono: '縁', valor: omikuji.amor },
-                { label: 'Trabajo', icono: '仕', valor: omikuji.trabajo },
-                { label: 'Salud', icono: '健', valor: omikuji.salud },
-                { label: 'Consejo', icono: '道', valor: omikuji.consejo },
-              ].map(item => (
-                <div key={item.label} className="border-b border-white/5 pb-4 last:border-0 last:pb-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-purple-300 text-sm" style={{ fontFamily: 'serif' }}>{item.icono}</span>
-                    <p className="text-purple-300 text-xs tracking-widest uppercase">{item.label}</p>
-                  </div>
-                  <p className="text-white/80 text-sm leading-relaxed">{item.valor}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur w-full text-center">
-              <p className="text-white/30 text-xs">Tu Omikuji cambia cada día. Vuelve mañana para un nuevo mensaje.</p>
-            </div>
-
-            <button onClick={() => window.location.href = '/guia'} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full">
-              Explorar con mi Guía IA
-            </button>
+            {cargando ? (
+              <div className="flex gap-2 py-2">
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+            ) : <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>}
           </div>
         )}
+        {!cargando && interpretacion && <Compartir titulo="Omikuji" texto={interpretacion} hashtags={['Universe', 'Omikuji']} />}
+        {generado && !cargando && <button onClick={() => window.location.href = '/guia'} className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full">Explorar con mi Guía IA</button>}
       </div>
     </div>
   )
