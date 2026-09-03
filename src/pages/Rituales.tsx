@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { calcularRituales } from '../lib/motores/rituales'
 import Compartir from '../components/Compartir'
 import { supabase } from '../lib/supabase'
 import { llamarGemini } from '../lib/gemini'
@@ -14,7 +13,6 @@ export default function Rituales() {
   const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
   const signo = localStorage.getItem('signo') || 'Leo'
   const añoActual = new Date().getFullYear()
-  const mesActual = new Date().getMonth() + 1
   const cacheKey = `rituales-${fechaNacimiento}-${añoActual}`
   const userId = null
 
@@ -36,14 +34,17 @@ export default function Rituales() {
 
     const result = await llamarGemini({
       herramienta: 'rituales',
-      prompt: `Experto en Rituales Estacionales. Nombre: ${nombre}, Signo: ${signo}, Nacimiento: ${fechaNacimiento}. Genera una lectura profunda de 3-4 párrafos. Reflexivo, simbólico. Sin predicciones absolutas. Máximo 200 palabras.`,
+      prompt: `Eres experto en Rituales Estacionales. Nombre: ${nombre}, Signo: ${signo}, Fecha de nacimiento: ${fechaNacimiento}. Genera una lectura profunda y personalizada de 3-4 párrafos. Reflexivo, simbólico, poético. Sin predicciones absolutas.`,
       userId, usarLite: true, cacheable: false, maxTokens: 200,
     })
 
     if (!result.error && result.texto) {
       setInterpretacion(`${nombre}, ${result.texto}`)
       setFromCache(false)
-      supabase.from('ai_cache').insert({ cache_key: cacheKey, herramienta: 'rituales', prompt_hash: cacheKey, respuesta: result.texto, tokens_used: result.tokensUsados, expires_at: null }).then(() => {})
+      supabase.from('ai_cache').insert({
+        cache_key: cacheKey, herramienta: 'rituales', prompt_hash: cacheKey,
+        respuesta: result.texto, tokens_used: result.tokensUsados, expires_at: null
+      }).then(() => {})
     } else {
       setInterpretacion('El universo guarda silencio. Inténtalo de nuevo.')
     }
@@ -61,9 +62,9 @@ export default function Rituales() {
             <p className="text-purple-300 text-xs">Ciclos de la naturaleza</p>
           </div>
         </div>
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur text-center">
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur text-center">
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Rituales Estacionales</p>
-          <p className="text-white/70 text-sm leading-relaxed">Nacimiento: {fechaNacimiento} · Signo: {signo}</p>
+          <p className="text-white/60 text-sm">Nacimiento: {fechaNacimiento} · Signo: {signo}</p>
         </div>
         {!generado ? (
           <button onClick={generarLectura} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition">Generar mi lectura</button>
