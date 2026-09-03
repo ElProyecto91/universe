@@ -1,232 +1,121 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { MEDITACIONES, getMeditacionDelDia } from '../lib/motores/meditacion'
+import { getSignoSolar } from '../lib/motores/horoscopo'
+import { getFaseLunar } from '../lib/motores/luna'
+import Compartir from '../components/Compartir'
+import { supabase } from '../lib/supabase'
+import { llamarGemini } from '../lib/gemini'
 
 export default function Meditacion() {
-  const [meditacionActual, setMeditacionActual] = useState<typeof MEDITACIONES[0] | null>(null)
-  const [fase, setFase] = useState<'lista' | 'activa' | 'completada'>('lista')
-  const [pasoActual, setPasoActual] = useState(0)
-  const [segundos, setSegundos] = useState(0)
-  const [activo, setActivo] = useState(false)
-  const intervalRef = useRef<any>(null)
-  const meditacionDelDia = getMeditacionDelDia()
+  const [meditacionActiva, setMeditacionActiva] = useState<any>(null)
+  const [guia, setGuia] = useState('')
+  const [cargando, setCargando] = useState(false)
+  const [fromCache, setFromCache] = useState(false)
+  const [fase, setFase] = useState<'elegir' | 'meditando'>('elegir')
 
-  const bgStyle = {
-    backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-  }
+  const nombre = localStorage.getItem('nombre') || 'viajero'
+  const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
+  const signo = getSignoSolar(fechaNacimiento)
+  const faseLunar = getFaseLunar()
+  const meditacionDelDia = getMeditacionDelDia(signo)
+  const fechaHoy = new Date().toISOString().split('T')[0]
+  const userId = null
 
-  useEffect(() => {
-    if (activo && meditacionActual) {
-      intervalRef.current = setInterval(() => {
-        setSegundos(s => {
-          const duracionPaso = meditacionActual.pasos[pasoActual]?.duracion || 30
-          if (s >= duracionPaso - 1) {
-            if (pasoActual < meditacionActual.pasos.length - 1) {
-              setPasoActual(p => p + 1)
-              return 0
-            } else {
-              setActivo(false)
-              setFase('completada')
-              return 0
-            }
-          }
-          return s + 1
-        })
-      }, 1000)
+  const bgStyle = { backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }
+
+  const iniciar = async (meditacion: any) => {
+    setMeditacionActiva(meditacion)
+    setFase('meditando')
+    setCargando(true)
+    setFromCache(false)
+
+    const cacheKey = `meditacion-${meditacion.id}-${signo.toLowerCase()}-${fechaHoy}`
+
+    try {
+      const { data: cached } = await supabase.from('horoscopo_cache').select('contenido').eq('signo', `med-${meditacion.id}-${signo.toLowerCase()}`).eq('fecha', fechaHoy).eq('tipo', 'meditacion').maybeSingle()
+      if (cached?.contenido) {
+        setGuia(cached.contenido)
+        setFromCache(true)
+        setCargando(false)
+        return
+      }
+    } catch (err) { console.warn('[Meditacion] Error caché:', err) }
+
+    const result = await llamarGemini({
+      herramienta: 'meditacion',
+      prompt: `Guía de meditación experto.
+
+Nombre: ${nombre} · Signo: ${signo} · Luna: ${faseLunar.nombre}
+Meditación: ${meditacion.nombre} (${meditacion.duracion} min)
+Tema: ${meditacion.descripcion}
+
+Guía de meditación de 3-4 pasos breves y concretos. Tono suave, en segunda persona, presente. Sin música sugerida. Sin apps.`,
+      userId, usarLite: true, cacheable: false, maxTokens: 200,
+    })
+
+    if (!result.error && result.texto) {
+      setGuia(result.texto)
+      supabase.from('horoscopo_cache').insert({ signo: `med-${meditacion.id}-${signo.toLowerCase()}`, fecha: fechaHoy, tipo: 'meditacion', contenido: result.texto, tokens_used: result.tokensUsados }).then(() => {})
     }
-    return () => clearInterval(intervalRef.current)
-  }, [activo, pasoActual, meditacionActual])
-
-  const iniciar = (med: typeof MEDITACIONES[0]) => {
-    setMeditacionActual(med)
-    setPasoActual(0)
-    setSegundos(0)
-    setActivo(true)
-    setFase('activa')
-  }
-
-  const pausar = () => setActivo(!activo)
-
-  const duracionTotal = meditacionActual?.pasos.reduce((sum, p) => sum + p.duracion, 0) || 0
-  const progresoPasos = meditacionActual ? ((pasoActual) / meditacionActual.pasos.length) * 100 : 0
-
-  const CATEGORIAS_COLOR: Record<string, string> = {
-    'Calma': '#3b82f6',
-    'Conexión': '#8b5cf6',
-    'Espiritual': '#c084fc',
-    'Energía': '#f59e0b',
-    'Bienestar': '#22c55e',
+    setCargando(false)
   }
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
       <div className="absolute inset-0 bg-black/80" />
-
       <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-6 py-10 gap-6">
-
         <div className="flex items-center">
-          <button onClick={() => {
-            if (fase !== 'lista') { setActivo(false); setFase('lista') }
-            else window.location.href = '/universo'
-          }} className="text-purple-300 text-sm">← Volver</button>
+          <button onClick={() => { if (fase === 'meditando') setFase('elegir'); else window.location.href = '/universo' }} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
             <p className="text-white font-semibold text-sm">Meditación</p>
-            <p className="text-purple-300 text-xs">Guiada · IA · Espiritual</p>
+            <p className="text-purple-300 text-xs">{signo} · {faseLunar.nombre}</p>
           </div>
         </div>
-
-        {fase === 'lista' && (
-          <div className="flex flex-col gap-5">
-
-            {/* Meditación del día */}
-            <button
-              onClick={() => iniciar(meditacionDelDia)}
-              className="bg-purple-600/30 border border-purple-400/50 rounded-3xl p-5 backdrop-blur text-left hover:bg-purple-600/40 transition"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-purple-300 text-xs tracking-widest uppercase">Meditación del día</p>
-                <span className="text-purple-300 text-xs">{meditacionDelDia.duracion}</span>
-              </div>
-              <p className="text-white font-bold text-lg">{meditacionDelDia.nombre}</p>
-              <p className="text-white/60 text-xs mt-1">{meditacionDelDia.descripcion}</p>
-              <p className="text-purple-300 text-xs mt-2">▶ Comenzar</p>
-            </button>
-
-            {/* Lista completa */}
-            <p className="text-white/60 text-xs tracking-widest uppercase">Todas las meditaciones</p>
-            {MEDITACIONES.map(med => (
-              <button
-                key={med.id}
-                onClick={() => iniciar(med)}
-                className="bg-white/8 border border-white/20 rounded-2xl p-4 text-left hover:bg-white/15 transition backdrop-blur"
-                style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-white font-semibold">{med.nombre}</p>
-                  <span
-                    className="text-xs px-2 py-0.5 rounded-full"
-                    style={{ backgroundColor: (CATEGORIAS_COLOR[med.categoria] || '#8b5cf6') + '30', color: CATEGORIAS_COLOR[med.categoria] || '#c084fc' }}
-                  >
-                    {med.categoria}
-                  </span>
+        {fase === 'elegir' && (
+          <div className="flex flex-col gap-4">
+            <div className="bg-purple-600/20 border border-purple-400/30 rounded-3xl p-5 backdrop-blur">
+              <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Recomendada para ti hoy</p>
+              <p className="text-white font-bold">{meditacionDelDia.nombre}</p>
+              <p className="text-white/60 text-xs mt-1">{meditacionDelDia.duracion} min · {meditacionDelDia.descripcion}</p>
+              <button onClick={() => iniciar(meditacionDelDia)} className="mt-3 w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-3 rounded-full text-sm">Iniciar</button>
+            </div>
+            {MEDITACIONES.map(m => (
+              <button key={m.id} onClick={() => iniciar(m)} className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-left hover:bg-white/10 transition backdrop-blur">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-white font-semibold text-sm">{m.nombre}</p>
+                    <p className="text-white/50 text-xs mt-1">{m.descripcion}</p>
+                  </div>
+                  <span className="text-purple-300 text-xs ml-3">{m.duracion} min</span>
                 </div>
-                <div className="flex gap-3 text-white/40 text-xs">
-                  <span>{med.duracion}</span>
-                  <span>·</span>
-                  <span>{med.nivel}</span>
-                  <span>·</span>
-                  <span>{med.chakra}</span>
-                </div>
-                <p className="text-white/60 text-xs mt-2 leading-relaxed">{med.descripcion}</p>
               </button>
             ))}
           </div>
         )}
-
-        {fase === 'activa' && meditacionActual && (
-          <div className="flex flex-col gap-6 items-center">
-
-            {/* Título */}
-            <div className="text-center">
-              <p className="text-purple-300 text-xs tracking-widest uppercase mb-1">{meditacionActual.nombre}</p>
-              <p className="text-white/40 text-xs">{meditacionActual.duracion}</p>
+        {fase === 'meditando' && meditacionActiva && (
+          <div className="flex flex-col gap-5">
+            <div className="text-center py-4">
+              <p className="text-6xl mb-3">{meditacionActiva.icono || '🧘'}</p>
+              <p className="text-2xl font-bold mb-1">{meditacionActiva.nombre}</p>
+              <p className="text-purple-300 text-sm">{meditacionActiva.duracion} minutos</p>
             </div>
-
-            {/* Progreso circular */}
-            <div className="relative w-48 h-48">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="3"/>
-                <circle
-                  cx="50" cy="50" r="45" fill="none"
-                  stroke="#c084fc" strokeWidth="3"
-                  strokeDasharray={`${2 * Math.PI * 45}`}
-                  strokeDashoffset={`${2 * Math.PI * 45 * (1 - progresoPasos / 100)}`}
-                  strokeLinecap="round"
-                  className="transition-all duration-1000"
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <p className="text-4xl font-light text-white">{meditacionActual.pasos[pasoActual]?.duracion - segundos}</p>
-                <p className="text-white/40 text-xs">segundos</p>
-                <p className="text-purple-300 text-xs mt-1">{pasoActual + 1}/{meditacionActual.pasos.length}</p>
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-purple-300 text-xs tracking-widest uppercase">Tu guía</p>
+                {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
               </div>
+              {cargando ? (
+                <div className="flex gap-2 py-2">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              ) : <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{guia}</p>}
             </div>
-
-            {/* Instrucción actual */}
-            <div className="bg-white/8 border border-purple-500/20 rounded-3xl p-6 backdrop-blur text-center"
-              style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
-              <p className="text-white text-base leading-relaxed">
-                {meditacionActual.pasos[pasoActual]?.texto}
-              </p>
-            </div>
-
-            {/* Próximo paso */}
-            {pasoActual < meditacionActual.pasos.length - 1 && (
-              <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-center">
-                <p className="text-white/30 text-xs">Próximo: {meditacionActual.pasos[pasoActual + 1]?.texto.substring(0, 50)}...</p>
-              </div>
-            )}
-
-            {/* Controles */}
-            <div className="flex gap-4">
-              <button
-                onClick={pausar}
-                className="w-16 h-16 bg-white/10 border border-white/20 rounded-full flex items-center justify-center text-2xl"
-              >
-                {activo ? '⏸' : '▶'}
-              </button>
-              <button
-                onClick={() => { setActivo(false); setFase('lista') }}
-                className="w-16 h-16 bg-white/10 border border-white/20 rounded-full flex items-center justify-center text-2xl"
-              >
-                ⏹
-              </button>
-            </div>
-
+            {!cargando && guia && <Compartir titulo={`Meditación: ${meditacionActiva.nombre}`} texto={guia} hashtags={['Meditacion', 'Universe', 'Mindfulness']} />}
+            <button onClick={() => window.location.href = '/guia'} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full">Explorar con mi Guía IA</button>
           </div>
         )}
-
-        {fase === 'completada' && meditacionActual && (
-          <div className="flex flex-col gap-6 items-center text-center">
-
-            <div className="text-8xl">✨</div>
-
-            <div>
-              <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Meditación completada</p>
-              <p className="text-2xl font-bold">{meditacionActual.nombre}</p>
-            </div>
-
-            <div className="bg-purple-600/20 border border-purple-400/30 rounded-3xl p-6 backdrop-blur w-full">
-              <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Beneficios que acabas de activar</p>
-              {meditacionActual.beneficios.map((b, i) => (
-                <p key={i} className="text-white/80 text-sm mb-1">✓ {b}</p>
-              ))}
-            </div>
-
-            <div className="flex flex-col gap-3 w-full">
-              <button
-                onClick={() => iniciar(meditacionActual)}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full"
-              >
-                Repetir esta meditación
-              </button>
-              <button
-                onClick={() => setFase('lista')}
-                className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full"
-              >
-                Ver otras meditaciones
-              </button>
-              <button
-                onClick={() => window.location.href = '/guia'}
-                className="w-full text-purple-300/60 text-sm py-2"
-              >
-                Explorar con mi Guía IA
-              </button>
-            </div>
-          </div>
-        )}
-
       </div>
     </div>
   )
