@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Compartir from '../components/Compartir'
 import { llamarGemini } from '../lib/gemini'
 
-export default function Tarot78() {
+export default function SuenosOracle() {
   const [pregunta, setPregunta] = useState('')
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando, setCargando] = useState(false)
@@ -19,8 +19,8 @@ export default function Tarot78() {
     setCargando(true)
     setErrorMsg('')
     const result = await llamarGemini({
-      herramienta: 'tarot78',
-      prompt: `Experto en Tarot 78 Cartas. Nombre: ${nombre}, Signo: ${signo}. Situación o pregunta: "${pregunta}". 3 párrafos reflexivos y simbólicos. Sin predicciones absolutas.`,
+      herramienta: 'suenos-oracle',
+      prompt: `Experto en Oracle de Sueños. Nombre: ${nombre}, Signo: ${signo}. Situación o pregunta: "${pregunta}". 3 párrafos reflexivos y simbólicos. Sin predicciones absolutas.`,
       userId, usarLite: false, cacheable: false, maxTokens: 400,
     })
     if (result.error) setErrorMsg(result.error)
@@ -35,8 +35,8 @@ export default function Tarot78() {
         <div className="flex items-center">
           <button onClick={() => { if (fase === 'resultado') setFase('preguntar'); else window.location.href = '/tradiciones' }} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
-            <p className="text-white font-semibold text-sm">Tarot 78 Cartas</p>
-            <p className="text-purple-300 text-xs">Arcanos mayores y menores</p>
+            <p className="text-white font-semibold text-sm">Oracle de Sueños</p>
+            <p className="text-purple-300 text-xs">Interpretación onírica</p>
           </div>
         </div>
         {fase === 'preguntar' && (
@@ -62,7 +62,7 @@ export default function Tarot78() {
               ) : errorMsg ? <p className="text-red-400 text-sm">{errorMsg}</p>
               : <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>}
             </div>
-            {!cargando && interpretacion && <Compartir titulo="Tarot 78 Cartas" texto={interpretacion} hashtags={['Universe', 'Tarot78']} />}
+            {!cargando && interpretacion && <Compartir titulo="Oracle de Sueños" texto={interpretacion} hashtags={['Universe', 'SuenosOracle']} />}
             <div className="flex flex-col gap-3">
               <button onClick={() => window.location.href = '/guia'} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full">Explorar con mi Guía IA</button>
               <button onClick={() => { setFase('preguntar'); setInterpretacion(''); setErrorMsg('') }} className="w-full text-purple-300/60 text-sm py-2">Nueva consulta</button>
