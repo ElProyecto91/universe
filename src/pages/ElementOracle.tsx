@@ -1,148 +1,117 @@
-import { useState } from 'react'
-import { ELEMENTOS, getElementoDelDia } from '../lib/motores/elementos'
+import { useState, useEffect } from 'react'
 import Compartir from '../components/Compartir'
-import { supabase } from '../lib/supabase'
+import CtaUpsell from '../components/CtaUpsell'
+import Valoracion from '../components/Valoracion'
+import DisclaimerIA from '../components/DisclaimerIA'
 import { llamarGemini } from '../lib/gemini'
-
-type ElementoKey = keyof typeof ELEMENTOS
+import { useUserPlan } from '../hooks/useUserPlan'
+import { useAnalytics } from '../hooks/useAnalytics'
+import { supabase } from '../lib/supabase'
 
 export default function ElementOracle() {
-  const [elementoKey, setElementoKey] = useState<ElementoKey | null>(null)
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando, setCargando] = useState(false)
-  const [fase, setFase] = useState<'elegir' | 'resultado'>('elegir')
-  const [pregunta, setPregunta] = useState('')
+  const [generado, setGenerado] = useState(false)
   const [fromCache, setFromCache] = useState(false)
+  const [tiempoInicio, setTiempoInicio] = useState(0)
+
   const nombre = localStorage.getItem('nombre') || 'viajero'
-  const elementoDelDia = getElementoDelDia()
-  const userId = null
+  const signo = localStorage.getItem('signo') || 'Leo'
+  const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
+  const fechaHoy = new Date().toISOString().split('T')[0]
+  const { esPremium, userId, consultasRestantes } = useUserPlan()
+  const { registrarApertura, registrarLectura, registrarValoracion } = useAnalytics('element-oracle', esPremium)
 
-  const bgStyle = { backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }
+  useEffect(() => { registrarApertura() }, [])
 
-  const consultar = async (key: ElementoKey) => {
-    setElementoKey(key)
-    setFase('resultado')
+  const generarLectura = async () => {
     setCargando(true)
-    setFromCache(false)
-    const elemento = ELEMENTOS[key]
-    // Solo 5 elementos — cacheable permanente
-    const cacheKey = `elemento-oracle-${key}`
+    setGenerado(true)
+    setTiempoInicio(Date.now())
 
     try {
-      const { data: cached } = await supabase.from('ai_cache').select('respuesta').eq('cache_key', cacheKey).maybeSingle()
-      if (cached?.respuesta) {
-        setInterpretacion(`${nombre}, ${cached.respuesta}`)
+      const { data: cached } = await supabase.from('horoscopo_cache')
+        .select('contenido')
+        .eq('signo', signo.toLowerCase())
+        .eq('fecha', fechaHoy)
+        .eq('tipo', 'element-oracle')
+        .maybeSingle()
+      if (cached?.contenido) {
+        setInterpretacion(`${nombre}, ${cached.contenido}`)
         setFromCache(true)
         setCargando(false)
+        registrarLectura({ desdCache: true, tiempoMs: Date.now() - tiempoInicio, modeloIa: 'cache' })
         return
       }
-    } catch (err) { console.warn('[ElementOracle] Error caché:', err) }
+    } catch (err) { console.warn('[ElementOracle]', err) }
 
-    const tradicionesTexto = elemento.tradiciones.map(t => `${t.nombre}: ${t.texto}`).join('\n')
     const result = await llamarGemini({
       herramienta: 'element-oracle',
-      prompt: `Guía experto en simbolismo elemental y su presencia en tradiciones espirituales del mundo.
-
-Elemento: ${elemento.nombre} ${elemento.simbolo}
-Keywords: ${elemento.keywords}
-Luz: ${elemento.luz} · Sombra: ${elemento.sombra}
-Tradiciones:
-${tradicionesTexto}
-
-3 párrafos: energía del elemento y qué significa cuando aparece, aspecto del elemento presente ahora (luz o sombra), práctica sugerida. Poético y concreto.`,
-      userId, usarLite: false, cacheable: false, maxTokens: 350,
+      prompt: `Experto en simbolismo elemental. Nombre: ${nombre}, Signo: ${signo}. Elemento del día y su energía en tradiciones espirituales. 3 párrafos.`,
+      userId, usarLite: true, cacheable: false, maxTokens: 300,
     })
+
+    const tiempoMs = Date.now() - tiempoInicio
 
     if (!result.error && result.texto) {
       setInterpretacion(`${nombre}, ${result.texto}`)
-      supabase.from('ai_cache').insert({ cache_key: cacheKey, herramienta: 'element-oracle', prompt_hash: cacheKey, respuesta: result.texto, tokens_used: result.tokensUsados, expires_at: null }).then(() => {})
-    } else setInterpretacion('El elemento guarda silencio. Inténtalo de nuevo.')
+      setFromCache(false)
+      registrarLectura({ desdCache: false, tiempoMs, modeloIa: result.modelo })
+      supabase.from('horoscopo_cache').insert({
+        signo: signo.toLowerCase(), fecha: fechaHoy, tipo: 'element-oracle',
+        contenido: result.texto, tokens_used: result.tokensUsados
+      }).then(() => {})
+    } else {
+      setInterpretacion('El universo guarda silencio. Inténtalo de nuevo.')
+    }
     setCargando(false)
   }
+
+  const bgStyle = { backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)', backgroundSize: 'cover' as const, backgroundPosition: 'center' as const }
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
       <div className="absolute inset-0 bg-black/75" />
       <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-6 py-10 gap-6">
         <div className="flex items-center">
-          <button onClick={() => { if (fase === 'resultado') setFase('elegir'); else window.location.href = '/tradiciones' }} className="text-purple-300 text-sm">← Volver</button>
+          <button onClick={() => window.location.href = '/tradiciones'} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
             <p className="text-white font-semibold text-sm">Oracle Elemental</p>
-            <p className="text-purple-300 text-xs">Los cinco elementos · Tradiciones del mundo</p>
+            <p className="text-purple-300 text-xs">Los cinco elementos</p>
           </div>
         </div>
-        {fase === 'elegir' && (
-          <div className="flex flex-col gap-5">
-            <div className="bg-white/5 border border-purple-500/20 rounded-3xl p-4 backdrop-blur">
-              <p className="text-purple-300 text-xs tracking-widest uppercase mb-1">Elemento del día</p>
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">{ELEMENTOS[elementoDelDia].simbolo}</span>
-                <div>
-                  <p className="text-white font-semibold">{ELEMENTOS[elementoDelDia].nombre}</p>
-                  <p className="text-white/50 text-xs">{ELEMENTOS[elementoDelDia].keywords}</p>
-                </div>
-                <button onClick={() => consultar(elementoDelDia)} className="ml-auto text-purple-300 text-xs border border-purple-500/30 rounded-full px-3 py-1">Explorar</button>
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur text-center">
+          <p className="text-purple-300 text-xs tracking-widest uppercase mb-1">Oracle Elemental</p>
+          <p className="text-white/60 text-sm">{signo} · {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+        </div>
+        {!generado ? (
+          <div className="flex flex-col gap-3">
+            <DisclaimerIA compact />
+            <button onClick={generarLectura} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition">Generar mi lectura</button>
+          </div>
+        ) : (
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-purple-300 text-xs tracking-widest uppercase">Tu lectura</p>
+              {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
+            </div>
+            {cargando ? (
+              <div className="flex gap-2 py-2">
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
-            </div>
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur">
-              <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Tu situación (opcional)</p>
-              <textarea value={pregunta} onChange={e => setPregunta(e.target.value)} placeholder="¿Qué quieres explorar desde la energía elemental?" rows={2} className="w-full bg-transparent text-white text-sm resize-none outline-none placeholder-white/30" />
-            </div>
-            <div className="flex flex-col gap-3">
-              {(Object.keys(ELEMENTOS) as ElementoKey[]).map(key => (
-                <button key={key} onClick={() => consultar(key)} className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-left hover:bg-white/10 transition backdrop-blur flex items-center gap-4">
-                  <span className="text-3xl">{ELEMENTOS[key].simbolo}</span>
-                  <div>
-                    <p className="text-white font-semibold">{ELEMENTOS[key].nombre}</p>
-                    <p className="text-white/40 text-xs">{ELEMENTOS[key].keywords}</p>
-                  </div>
-                  <span className="ml-auto text-purple-300/50">›</span>
-                </button>
-              ))}
-            </div>
+            ) : <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>}
           </div>
         )}
-        {fase === 'resultado' && elementoKey && (
-          <div className="flex flex-col gap-5">
-            <div className="bg-white/5 border rounded-3xl p-6 backdrop-blur flex flex-col items-center gap-3" style={{ borderColor: ELEMENTOS[elementoKey].color + '40' }}>
-              <span className="text-6xl">{ELEMENTOS[elementoKey].simbolo}</span>
-              <p className="text-2xl font-bold">{ELEMENTOS[elementoKey].nombre}</p>
-              <p className="text-sm text-center" style={{ color: ELEMENTOS[elementoKey].color }}>{ELEMENTOS[elementoKey].keywords}</p>
-              <p className="text-white/60 text-xs text-center leading-relaxed">{ELEMENTOS[elementoKey].descripcion}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur">
-                <p className="text-green-400 text-xs tracking-widest uppercase mb-2">Luz</p>
-                <p className="text-white/70 text-xs leading-relaxed">{ELEMENTOS[elementoKey].luz}</p>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur">
-                <p className="text-red-400 text-xs tracking-widest uppercase mb-2">Sombra</p>
-                <p className="text-white/70 text-xs leading-relaxed">{ELEMENTOS[elementoKey].sombra}</p>
-              </div>
-            </div>
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-purple-300 text-xs tracking-widest uppercase">Tu lectura elemental</p>
-                {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
-              </div>
-              {cargando ? (
-                <div className="flex gap-2 py-2">
-                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
-              ) : <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>}
-            </div>
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur">
-              <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Práctica sugerida</p>
-              <p className="text-white/70 text-sm leading-relaxed">{ELEMENTOS[elementoKey].practica}</p>
-            </div>
-            {!cargando && interpretacion && <Compartir titulo={`Oracle Elemental: ${ELEMENTOS[elementoKey].nombre} ${ELEMENTOS[elementoKey].simbolo}`} texto={interpretacion} hashtags={['ElementOracle', 'Universe', ELEMENTOS[elementoKey].nombre, 'Elementos']} />}
-            <div className="flex flex-col gap-3">
-              <button onClick={() => window.location.href = '/guia'} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full">Explorar con mi Guía IA</button>
-              <button onClick={() => { setFase('elegir'); setInterpretacion(''); setFromCache(false) }} className="w-full text-purple-300/60 text-sm py-2">Explorar otro elemento</button>
-            </div>
-          </div>
+        {!cargando && interpretacion && (
+          <>
+            <DisclaimerIA />
+            <Valoracion onValorar={registrarValoracion} />
+            <Compartir titulo="Oracle Elemental" texto={interpretacion} hashtags={['Universe', 'ElementOracle']} />
+            <CtaUpsell consultasRestantes={consultasRestantes} />
+            <button onClick={() => window.location.href = '/guia'} className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full">Explorar con mi Guía IA</button>
+          </>
         )}
       </div>
     </div>
