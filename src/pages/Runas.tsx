@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import { sacarRunas, RUNAS } from '../lib/motores/runas'
 import Compartir from '../components/Compartir'
+import Paywall from '../components/Paywall'
+import Valoracion from '../components/Valoracion'
+import DisclaimerIA from '../components/DisclaimerIA'
+import { useUserPlan, useAnalytics, registrarEvento } from '../lib/paginaHelper'
 
 const TIRADAS = [
-  { id: 'una', nombre: '1 Runa', descripcion: 'Mensaje del día', cantidad: 1 },
-  { id: 'tres', nombre: '3 Runas', descripcion: 'Pasado · Presente · Futuro', cantidad: 3 },
-  { id: 'cinco', nombre: '5 Runas', descripcion: 'Lectura profunda', cantidad: 5 },
+  { id: 'una', nombre: '1 Runa', descripcion: 'Mensaje del día', cantidad: 1, premium: false },
+  { id: 'tres', nombre: '3 Runas', descripcion: 'Pasado · Presente · Futuro', cantidad: 3, premium: true },
+  { id: 'cinco', nombre: '5 Runas', descripcion: 'Lectura profunda', cantidad: 5, premium: true },
 ]
 
 export default function Runas() {
@@ -13,7 +17,11 @@ export default function Runas() {
   const [runas, setRunas] = useState<any[]>([])
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando, setCargando] = useState(false)
+  const [mostrarPaywall, setMostrarPaywall] = useState(false)
   const nombre = localStorage.getItem('nombre') || 'viajero'
+
+  const { esPremium, userId } = useUserPlan()
+  useAnalytics('runas')
 
   const bgStyle = {
     backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
@@ -22,10 +30,18 @@ export default function Runas() {
   }
 
   const lanzar = async (t: typeof TIRADAS[0]) => {
+    if (t.premium && !esPremium) {
+      setMostrarPaywall(true)
+      registrarEvento({ herramienta: 'runas', accion: 'paywall_mostrado', user_id: userId })
+      return
+    }
+
+    const t0 = Date.now()
     const runasSeleccionadas = sacarRunas(t.cantidad)
     setRunas(runasSeleccionadas)
     setFase('resultado')
     setCargando(true)
+    registrarEvento({ herramienta: 'runas', accion: 'tirada_iniciada', user_id: userId })
 
     const descripcionRunas = runasSeleccionadas.map(r =>
       `${r.simbolo} ${r.nombre} ${r.estaInvertida ? '(invertida)' : ''}: ${r.keywords}`
@@ -46,20 +62,15 @@ Escribe una interpretación rúnica de 3-4 párrafos. Primero describe la energ�
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          }),
+          body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] }),
         }
       )
       const data = await res.json()
       const texto = data.candidates?.[0]?.content?.parts?.[0]?.text
-      if (texto) {
-        setInterpretacion(texto)
-      } else {
-        setInterpretacion('Error: ' + JSON.stringify(data).substring(0, 300))
-      }
+      setInterpretacion(texto || 'Error al interpretar las runas.')
+      registrarEvento({ herramienta: 'runas', accion: 'lectura_ia', tiempo_respuesta_ms: Date.now() - t0, user_id: userId })
     } catch (err) {
-      setInterpretacion('Error de conexión: ' + String(err))
+      setInterpretacion('Error de conexión. Inténtalo de nuevo.')
     }
     setCargando(false)
   }
@@ -67,6 +78,14 @@ Escribe una interpretación rúnica de 3-4 párrafos. Primero describe la energ�
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
       <div className="absolute inset-0 bg-black/75" />
+
+      {mostrarPaywall && (
+        <Paywall
+          motivo="herramienta"
+          herramienta="Tiradas de Runas completas"
+          onCerrar={() => setMostrarPaywall(false)}
+        />
+      )}
 
       <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-6 py-10 gap-6">
 
@@ -99,8 +118,15 @@ Escribe una interpretación rúnica de 3-4 párrafos. Primero describe la energ�
                   onClick={() => lanzar(t)}
                   className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-left hover:bg-purple-600/20 hover:border-purple-500/40 transition backdrop-blur"
                 >
-                  <p className="text-white font-semibold">{t.nombre}</p>
-                  <p className="text-purple-300/70 text-xs mt-1">{t.descripcion}</p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-white font-semibold">{t.nombre}</p>
+                      <p className="text-purple-300/70 text-xs mt-1">{t.descripcion}</p>
+                    </div>
+                    {t.premium && !esPremium && (
+                      <span className="text-xs bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full">✨ Premium</span>
+                    )}
+                  </div>
                 </button>
               ))}
             </div>
@@ -109,7 +135,6 @@ Escribe una interpretación rúnica de 3-4 párrafos. Primero describe la energ�
 
         {fase === 'resultado' && (
           <div className="flex flex-col gap-5">
-
             <div className="flex gap-3 flex-wrap justify-center py-4">
               {runas.map((r, i) => (
                 <div key={i} className="flex flex-col items-center gap-2">
@@ -140,11 +165,15 @@ Escribe una interpretación rúnica de 3-4 párrafos. Primero describe la energ�
             </div>
 
             {!cargando && interpretacion && !interpretacion.startsWith('Error') && (
-              <Compartir
-                titulo={`Mi tirada de Runas: ${runas.map(r => r.simbolo).join(' ')}`}
-                texto={interpretacion}
-                hashtags={['Runas', 'Universe', 'Norse', 'Runes']}
-              />
+              <>
+                <DisclaimerIA />
+                <Valoracion herramienta="runas" userId={userId} />
+                <Compartir
+                  titulo={`Mi tirada de Runas: ${runas.map(r => r.simbolo).join(' ')}`}
+                  texto={interpretacion}
+                  hashtags={['Runas', 'Universe', 'Norse', 'Runes']}
+                />
+              </>
             )}
 
             <div className="flex flex-col gap-3">
