@@ -1,115 +1,98 @@
-import { useState } from 'react'
-import { calcularBiorritmos, getBiorritmoDia } from '../lib/motores/biorhythm'
+import { useState, useEffect } from 'react'
 import Compartir from '../components/Compartir'
-import { supabase } from '../lib/supabase'
+import CtaUpsell from '../components/CtaUpsell'
+import Valoracion from '../components/Valoracion'
+import DisclaimerIA from '../components/DisclaimerIA'
 import { llamarGemini } from '../lib/gemini'
+import { useUserPlan } from '../hooks/useUserPlan'
+import { useAnalytics } from '../hooks/useAnalytics'
+import { supabase } from '../lib/supabase'
 
 export default function Biorritmos() {
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando, setCargando] = useState(false)
   const [generado, setGenerado] = useState(false)
   const [fromCache, setFromCache] = useState(false)
+  const [tiempoInicio, setTiempoInicio] = useState(0)
 
   const nombre = localStorage.getItem('nombre') || 'viajero'
+  const signo = localStorage.getItem('signo') || 'Leo'
   const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
-  const biorritmos = calcularBiorritmos(fechaNacimiento)
-  const hoy = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
   const fechaHoy = new Date().toISOString().split('T')[0]
-  const cacheKey = `biorritmos-${fechaNacimiento}-${fechaHoy}`
-  const userId = null
+  const { esPremium, userId, consultasRestantes } = useUserPlan()
+  const { registrarApertura, registrarLectura, registrarValoracion } = useAnalytics('biorritmos', esPremium)
 
-  const bgStyle = { backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }
+  useEffect(() => { registrarApertura() }, [])
 
   const generarLectura = async () => {
     setCargando(true)
     setGenerado(true)
+    setTiempoInicio(Date.now())
 
     try {
-      const { data: cached } = await supabase.from('ai_cache').select('respuesta').eq('cache_key', cacheKey).maybeSingle()
-      if (cached?.respuesta) {
-        setInterpretacion(`${nombre}, ${cached.respuesta}`)
+      const { data: cached } = await supabase.from('horoscopo_cache')
+        .select('contenido')
+        .eq('signo', signo.toLowerCase())
+        .eq('fecha', fechaHoy)
+        .eq('tipo', 'biorritmos')
+        .maybeSingle()
+      if (cached?.contenido) {
+        setInterpretacion(`${nombre}, ${cached.contenido}`)
         setFromCache(true)
         setCargando(false)
+        registrarLectura({ desdCache: true, tiempoMs: Date.now() - tiempoInicio, modeloIa: 'cache' })
         return
       }
-    } catch (err) { console.warn('[Biorritmos] Error caché:', err) }
+    } catch (err) { console.warn('[Biorritmos]', err) }
 
     const result = await llamarGemini({
       herramienta: 'biorritmos',
-      prompt: `Experto en biorritmología (herramienta de reflexión, no ciencia exacta).
-
-Fecha: ${hoy}
-Biorritmos:
-- Físico: ${biorritmos.fisico}% (${biorritmos.fisico > 0 ? 'fase alta' : 'fase baja'})
-- Emocional: ${biorritmos.emocional}% (${biorritmos.emocional > 0 ? 'fase alta' : 'fase baja'})
-- Intelectual: ${biorritmos.intelectual}% (${biorritmos.intelectual > 0 ? 'fase alta' : 'fase baja'})
-- Intuitivo: ${biorritmos.intuitivo}% (${biorritmos.intuitivo > 0 ? 'fase alta' : 'fase baja'})
-
-3 párrafos: energía general del día, recomendaciones por área, 2-3 acciones concretas. Menciona brevemente que es herramienta de reflexión.`,
-      userId,
-      usarLite: false,
-      cacheable: false,
-      maxTokens: 350,
+      prompt: `Experto en biorritmología (herramienta de reflexión). Nombre: ${nombre}, Nacimiento: ${fechaNacimiento}. Ciclos físico, emocional e intelectual hoy. 3 párrafos.`,
+      userId, usarLite: false, cacheable: false, maxTokens: 300,
     })
+
+    const tiempoMs = Date.now() - tiempoInicio
 
     if (!result.error && result.texto) {
       setInterpretacion(`${nombre}, ${result.texto}`)
       setFromCache(false)
-      supabase.from('ai_cache').insert({ cache_key: cacheKey, herramienta: 'biorritmos', prompt_hash: cacheKey, respuesta: result.texto, tokens_used: result.tokensUsados, expires_at: new Date(fechaHoy + 'T23:59:59').toISOString() }).then(() => {})
+      registrarLectura({ desdCache: false, tiempoMs, modeloIa: result.modelo })
+      supabase.from('horoscopo_cache').insert({
+        signo: signo.toLowerCase(), fecha: fechaHoy, tipo: 'biorritmos',
+        contenido: result.texto, tokens_used: result.tokensUsados
+      }).then(() => {})
     } else {
-      setInterpretacion('Los biorritmos guardan silencio. Inténtalo de nuevo.')
+      setInterpretacion('El universo guarda silencio. Inténtalo de nuevo.')
     }
     setCargando(false)
   }
 
-  const BIORRITMOS_DATA = [
-    { nombre: 'Físico', valor: biorritmos.fisico, descripcion: biorritmos.descripcionFisico, icono: '💪' },
-    { nombre: 'Emocional', valor: biorritmos.emocional, descripcion: biorritmos.descripcionEmocional, icono: '❤️' },
-    { nombre: 'Intelectual', valor: biorritmos.intelectual, descripcion: biorritmos.descripcionIntelectual, icono: '🧠' },
-    { nombre: 'Intuitivo', valor: biorritmos.intuitivo, descripcion: biorritmos.descripcionIntuitivo, icono: '✨' },
-  ]
+  const bgStyle = { backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)', backgroundSize: 'cover' as const, backgroundPosition: 'center' as const }
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
       <div className="absolute inset-0 bg-black/75" />
       <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-6 py-10 gap-6">
         <div className="flex items-center">
-          <button onClick={() => window.location.href = '/universo'} className="text-purple-300 text-sm">← Volver</button>
+          <button onClick={() => window.location.href = '/tradiciones'} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
             <p className="text-white font-semibold text-sm">Biorritmos</p>
-            <p className="text-purple-300 text-xs capitalize">{hoy}</p>
+            <p className="text-purple-300 text-xs">Ciclos energéticos del día</p>
           </div>
         </div>
-        <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-3 backdrop-blur">
-          <p className="text-amber-400/80 text-xs">Herramienta de reflexión personal. La biorritmología no tiene base científica sólida pero es útil para la autoobservación.</p>
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur text-center">
+          <p className="text-purple-300 text-xs tracking-widest uppercase mb-1">Biorritmos</p>
+          <p className="text-white/60 text-sm">{signo} · {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         </div>
-        {BIORRITMOS_DATA.map(b => {
-          const info = getBiorritmoDia(b.valor)
-          return (
-            <div key={b.nombre} className="bg-white/8 border border-white/20 rounded-2xl p-4 backdrop-blur" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">{b.icono}</span>
-                  <p className="text-white font-semibold">{b.nombre}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold" style={{ color: info.color }}>{info.label}</span>
-                  <span className="text-white/50 text-xs">{b.valor > 0 ? '+' : ''}{b.valor}%</span>
-                </div>
-              </div>
-              <div className="h-3 bg-white/10 rounded-full mb-2">
-                <div className="h-3 rounded-full transition-all" style={{ width: `${info.porcentaje}%`, backgroundColor: info.color }} />
-              </div>
-              <p className="text-white/60 text-xs">{b.descripcion}</p>
-            </div>
-          )
-        })}
         {!generado ? (
-          <button onClick={generarLectura} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition">Generar mi guía de biorritmos</button>
+          <div className="flex flex-col gap-3">
+            <DisclaimerIA compact />
+            <button onClick={generarLectura} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition">Generar mi lectura</button>
+          </div>
         ) : (
-          <div className="bg-white/8 border border-white/20 rounded-3xl p-6 backdrop-blur" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-purple-300 text-xs tracking-widest uppercase">Tu guía de hoy</p>
+              <p className="text-purple-300 text-xs tracking-widest uppercase">Tu lectura</p>
               {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
             </div>
             {cargando ? (
@@ -121,8 +104,15 @@ Biorritmos:
             ) : <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>}
           </div>
         )}
-        {!cargando && interpretacion && <Compartir titulo="Mis Biorritmos de hoy" texto={interpretacion} hashtags={['Biorritmos', 'Universe', 'Bienestar', 'Autoconocimiento']} />}
-        {generado && !cargando && <button onClick={() => window.location.href = '/guia'} className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full">Explorar con mi Guía IA</button>}
+        {!cargando && interpretacion && (
+          <>
+            <DisclaimerIA />
+            <Valoracion onValorar={registrarValoracion} />
+            <Compartir titulo="Biorritmos" texto={interpretacion} hashtags={['Universe', 'Biorritmos']} />
+            <CtaUpsell consultasRestantes={consultasRestantes} />
+            <button onClick={() => window.location.href = '/guia'} className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full">Explorar con mi Guía IA</button>
+          </>
+        )}
       </div>
     </div>
   )
