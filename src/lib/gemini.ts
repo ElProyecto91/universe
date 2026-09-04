@@ -3,6 +3,7 @@
 // UNIVERSE — Helper centralizado de Gemini
 // Incluye: kill switch · rate limiting · caché · registro de uso
 //          · selección automática Flash vs Flash-Lite
+//          · incremento automático de consultas diarias
 //
 // USO en cualquier página:
 //   import { llamarGemini } from '@/lib/gemini'
@@ -10,20 +11,17 @@
 //     herramienta: 'tarot',
 //     prompt,
 //     userId,
-//     usarLite: false  // true para respuestas cortas y simples
+//     usarLite: false
 //   })
 //
 // CUÁNDO USAR LITE (7x más barato):
-//   - Afirmaciones, mensajes cortos, descripciones de cristales
-//   - TarotDiario (mensaje de 3 frases)
-//   - ColorOracle, DiceOracle, CoinOracle, Sincronicidad
-//   - Cualquier respuesta < 100 palabras
+//   Afirmaciones, mensajes cortos, meditación, omikuji,
+//   tibetan-mo, sincronicidad, omens-oracle, vision-board,
+//   rituales, manifestacion — respuestas < 100 palabras
 //
 // CUÁNDO USAR FLASH (calidad máxima):
-//   - Tarot completo, Runas, IChing (lecturas profundas)
-//   - CartaNatal, Tránsitos, Compatibilidad
-//   - Guía IA, PaganPaths, Scrying
-//   - Cualquier respuesta > 150 palabras
+//   Tarot, Runas, IChing, CartaNatal, Tránsitos, Guía IA,
+//   PaganPaths, Scrying — respuestas > 150 palabras
 // ============================================================
 
 import { supabase } from './supabase'
@@ -36,23 +34,23 @@ const GEMINI_LITE_URL  = `https://generativelanguage.googleapis.com/v1beta/model
 // Costes por token (USD)
 const COSTE_FLASH_INPUT  = 0.00000075   // $0.75 / 1M tokens
 const COSTE_FLASH_OUTPUT = 0.0000045    // $4.50 / 1M tokens
-const COSTE_LITE_INPUT   = 0.000000010  // $0.10 / 1M tokens  (7.5x más barato)
-const COSTE_LITE_OUTPUT  = 0.000000040  // $0.40 / 1M tokens  (11x más barato)
+const COSTE_LITE_INPUT   = 0.000000010  // $0.10 / 1M tokens
+const COSTE_LITE_OUTPUT  = 0.000000040  // $0.40 / 1M tokens
 
 // ============================================================
 // Tipos
 // ============================================================
 
 export interface LlamarGeminiParams {
-  herramienta: string        // 'tarot', 'horoscopo', 'runas', etc.
-  prompt: string             // el prompt completo
-  userId?: string | null     // null = usuario anónimo
-  esPremium?: boolean        // plan del usuario
-  usarLite?: boolean         // true = Flash-Lite (más barato, respuestas cortas)
-  cacheable?: boolean        // ¿se puede cachear esta respuesta?
-  cacheExpiraHoras?: number  // horas de validez del caché (default: 24)
-  maxTokens?: number         // límite tokens output (default: 500 Flash, 200 Lite)
-  temperatura?: number       // creatividad 0-1 (default: 0.8)
+  herramienta: string
+  prompt: string
+  userId?: string | null
+  esPremium?: boolean
+  usarLite?: boolean
+  cacheable?: boolean
+  cacheExpiraHoras?: number
+  maxTokens?: number
+  temperatura?: number
 }
 
 export interface LlamarGeminiResult {
@@ -81,9 +79,9 @@ export async function llamarGemini(params: LlamarGeminiParams): Promise<LlamarGe
     temperatura = 0.8,
   } = params
 
-  const modeloUrl   = usarLite ? GEMINI_LITE_URL  : GEMINI_FLASH_URL
-  const costoInput  = usarLite ? COSTE_LITE_INPUT  : COSTE_FLASH_INPUT
-  const costoOutput = usarLite ? COSTE_LITE_OUTPUT : COSTE_FLASH_OUTPUT
+  const modeloUrl    = usarLite ? GEMINI_LITE_URL  : GEMINI_FLASH_URL
+  const costoInput   = usarLite ? COSTE_LITE_INPUT  : COSTE_FLASH_INPUT
+  const costoOutput  = usarLite ? COSTE_LITE_OUTPUT : COSTE_FLASH_OUTPUT
   const modeloNombre: 'flash' | 'lite' = usarLite ? 'lite' : 'flash'
 
   // ── 1. KILL SWITCH GLOBAL ──────────────────────────────────
@@ -187,7 +185,7 @@ export async function llamarGemini(params: LlamarGeminiParams): Promise<LlamarGe
     return error('Error de conexión. Comprueba tu internet e inténtalo de nuevo.')
   }
 
-  const costeUsd   = (tokensInput * costoInput) + (tokensOutput * costoOutput)
+  const costeUsd    = (tokensInput * costoInput) + (tokensOutput * costoOutput)
   const tokensTotal = tokensInput + tokensOutput
 
   // ── 6. GUARDAR EN CACHÉ (si aplica) ───────────────────────
@@ -206,8 +204,9 @@ export async function llamarGemini(params: LlamarGeminiParams): Promise<LlamarGe
     }).then(() => {})
   }
 
-  // ── 7. REGISTRAR USO ──────────────────────────────────────
+  // ── 7. REGISTRAR USO Y CONTADOR DIARIO ────────────────────
   if (userId) {
+    // Registrar en ai_usage para monitorización de costes
     supabase.from('ai_usage').insert({
       user_id:       userId,
       herramienta:   `${herramienta}/${modeloNombre}`,
@@ -215,6 +214,9 @@ export async function llamarGemini(params: LlamarGeminiParams): Promise<LlamarGe
       tokens_output: tokensOutput,
       coste_usd:     costeUsd,
     }).then(() => {})
+
+    // Incrementar contador diario del usuario (resetea automáticamente cada día)
+    supabase.rpc('incrementar_consulta', { user_id_param: userId }).then(() => {})
   }
 
   return {
