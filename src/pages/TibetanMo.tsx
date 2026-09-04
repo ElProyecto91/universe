@@ -20,7 +20,7 @@ export default function TibetanMo() {
     setErrorMsg('')
     const result = await llamarGemini({
       herramienta: 'tibetan-mo',
-      prompt: `Experto en Tibetan Mo. Nombre: ${nombre}, Signo: ${signo}. Situación o pregunta: "${pregunta}". 3 párrafos reflexivos y simbólicos. Sin predicciones absolutas.`,
+      prompt: `Eres experto en Tibetan Mo. Nombre del usuario: ${nombre}, Signo: ${signo}. Situación o pregunta: "${pregunta}". Escribe 3 párrafos reflexivos y simbólicos. Sin predicciones absolutas. Tono cálido y profundo.`,
       userId, usarLite: true, cacheable: false, maxTokens: 200,
     })
     if (result.error) setErrorMsg(result.error)
@@ -36,7 +36,7 @@ export default function TibetanMo() {
           <button onClick={() => { if (fase === 'resultado') setFase('preguntar'); else window.location.href = '/tradiciones' }} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
             <p className="text-white font-semibold text-sm">Tibetan Mo</p>
-            <p className="text-purple-300 text-xs">Oráculo tibetano tradicional</p>
+            <p className="text-purple-300 text-xs">Oráculo tibetano</p>
           </div>
         </div>
         {fase === 'preguntar' && (
@@ -50,7 +50,9 @@ export default function TibetanMo() {
         )}
         {fase === 'resultado' && (
           <div className="flex flex-col gap-5">
-            <div className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 backdrop-blur"><p className="text-white/40 text-xs italic">"{pregunta}"</p></div>
+            <div className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 backdrop-blur">
+              <p className="text-white/40 text-xs italic">"{pregunta}"</p>
+            </div>
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Interpretación</p>
               {cargando ? (
