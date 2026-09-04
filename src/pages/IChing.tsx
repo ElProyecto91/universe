@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { HEXAGRAMAS, lanzarMonedas, lineasAHexagrama, dibujarHexagrama } from '../lib/motores/iching'
 import Compartir from '../components/Compartir'
-import { llamarGemini } from '../lib/gemini'
+import Paywall from '../components/Paywall'
+import Valoracion from '../components/Valoracion'
+import DisclaimerIA from '../components/DisclaimerIA'
+import { llamarGemini, useUserPlan, useAnalytics, registrarEvento } from '../lib/paginaHelper'
 
 export default function IChing() {
   const [fase, setFase] = useState<'pregunta' | 'resultado'>('pregunta')
@@ -11,11 +14,19 @@ export default function IChing() {
   const [cargando, setCargando] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const nombre = localStorage.getItem('nombre') || 'viajero'
-  const userId = null
+
+  const { esPremium, userId } = useUserPlan()
+  useAnalytics('iching')
 
   const bgStyle = { backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }
 
+  // Paywall: bloquear si no es premium antes de consultar
+  if (!esPremium && fase === 'pregunta') {
+    // Mostramos la UI pero el botón lanza paywall
+  }
+
   const consultar = async () => {
+    const t0 = Date.now()
     const lineas = lanzarMonedas()
     const { hexagrama, cambiante, hexagramaResultante } = lineasAHexagrama(lineas)
     const dibujo = dibujarHexagrama(lineas)
@@ -27,6 +38,7 @@ export default function IChing() {
     setFase('resultado')
     setCargando(true)
     setErrorMsg('')
+    registrarEvento({ herramienta: 'iching', accion: 'consulta_iniciada', user_id: userId })
 
     const result = await llamarGemini({
       herramienta: 'iching',
@@ -43,13 +55,22 @@ Tema: ${hexData.tema}
     })
 
     if (result.error) setErrorMsg(result.error)
-    else setInterpretacion(result.texto || hexData.tema)
+    else {
+      setInterpretacion(result.texto || hexData.tema)
+      registrarEvento({ herramienta: 'iching', accion: 'lectura_ia', tiempo_respuesta_ms: Date.now() - t0, user_id: userId })
+    }
     setCargando(false)
   }
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
       <div className="absolute inset-0 bg-black/75" />
+
+      {/* Paywall para usuarios free */}
+      {!esPremium && fase === 'pregunta' && (
+        <Paywall motivo="herramienta" herramienta="I Ching · El Libro de los Cambios" />
+      )}
+
       <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-6 py-10 gap-6">
         <div className="flex items-center">
           <button onClick={() => window.location.href = '/tradiciones'} className="text-purple-300 text-sm">← Volver</button>
@@ -58,6 +79,7 @@ Tema: ${hexData.tema}
             <p className="text-purple-300 text-xs">El Libro de los Cambios</p>
           </div>
         </div>
+
         {fase === 'pregunta' && (
           <div className="flex flex-col gap-6">
             <div className="text-center">
@@ -68,9 +90,12 @@ Tema: ${hexData.tema}
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Tu pregunta</p>
               <textarea value={pregunta} onChange={e => setPregunta(e.target.value)} placeholder="Formula tu pregunta con sinceridad..." rows={3} className="w-full bg-transparent text-white text-sm resize-none outline-none placeholder-white/30" />
             </div>
-            <button onClick={consultar} disabled={!pregunta.trim()} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition disabled:opacity-40">Lanzar las monedas</button>
+            <button onClick={consultar} disabled={!pregunta.trim()} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition disabled:opacity-40">
+              Lanzar las monedas
+            </button>
           </div>
         )}
+
         {fase === 'resultado' && resultado && (
           <div className="flex flex-col gap-5">
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
@@ -87,6 +112,7 @@ Tema: ${hexData.tema}
                 </div>
               </div>
             </div>
+
             {resultado.hayCambio && (
               <div className="bg-white/5 border border-purple-500/20 rounded-3xl p-4 backdrop-blur">
                 <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Transformación hacia</p>
@@ -94,9 +120,11 @@ Tema: ${hexData.tema}
                 <p className="text-white/50 text-xs">{resultado.hexResultData.keywords}</p>
               </div>
             )}
+
             <div className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 backdrop-blur">
               <p className="text-white/40 text-xs">Tu pregunta: <span className="text-white/70 italic">"{pregunta}"</span></p>
             </div>
+
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Interpretación</p>
               {cargando ? (
@@ -105,13 +133,28 @@ Tema: ${hexData.tema}
                   <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                   <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
-              ) : errorMsg ? <p className="text-red-400 text-sm">{errorMsg}</p>
-              : <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>}
+              ) : errorMsg ? (
+                <p className="text-red-400 text-sm">{errorMsg}</p>
+              ) : (
+                <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>
+              )}
             </div>
-            {!cargando && interpretacion && <Compartir titulo={`Mi consulta al I Ching: ${resultado.hexData.nombre}`} texto={interpretacion} hashtags={['IChing', 'Universe', 'Sabiduria', 'China']} />}
+
+            {!cargando && interpretacion && (
+              <>
+                <DisclaimerIA />
+                <Valoracion herramienta="iching" userId={userId} />
+                <Compartir titulo={`Mi consulta al I Ching: ${resultado.hexData.nombre}`} texto={interpretacion} hashtags={['IChing', 'Universe', 'Sabiduria', 'China']} />
+              </>
+            )}
+
             <div className="flex flex-col gap-3">
-              <button onClick={() => window.location.href = '/guia'} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full">Explorar con mi Guía IA</button>
-              <button onClick={() => { setFase('pregunta'); setPregunta(''); setInterpretacion(''); setErrorMsg('') }} className="w-full text-purple-300/60 text-sm py-2">Nueva consulta</button>
+              <button onClick={() => window.location.href = '/guia'} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full">
+                Explorar con mi Guía IA
+              </button>
+              <button onClick={() => { setFase('pregunta'); setPregunta(''); setInterpretacion(''); setErrorMsg('') }} className="w-full text-purple-300/60 text-sm py-2">
+                Nueva consulta
+              </button>
             </div>
           </div>
         )}
