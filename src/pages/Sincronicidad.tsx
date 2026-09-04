@@ -20,7 +20,7 @@ export default function Sincronicidad() {
     setErrorMsg('')
     const result = await llamarGemini({
       herramienta: 'sincronicidad',
-      prompt: `Experto en Sincronicidad. Nombre: ${nombre}, Signo: ${signo}. Situación o pregunta: "${pregunta}". 3 párrafos reflexivos y simbólicos. Sin predicciones absolutas.`,
+      prompt: `Eres experto en Sincronicidad. Nombre del usuario: ${nombre}, Signo: ${signo}. Situación o pregunta: "${pregunta}". Escribe 3 párrafos reflexivos y simbólicos. Sin predicciones absolutas. Tono cálido y profundo.`,
       userId, usarLite: true, cacheable: false, maxTokens: 200,
     })
     if (result.error) setErrorMsg(result.error)
@@ -50,7 +50,9 @@ export default function Sincronicidad() {
         )}
         {fase === 'resultado' && (
           <div className="flex flex-col gap-5">
-            <div className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 backdrop-blur"><p className="text-white/40 text-xs italic">"{pregunta}"</p></div>
+            <div className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 backdrop-blur">
+              <p className="text-white/40 text-xs italic">"{pregunta}"</p>
+            </div>
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Interpretación</p>
               {cargando ? (
