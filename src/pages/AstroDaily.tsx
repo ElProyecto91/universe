@@ -1,13 +1,19 @@
 import { useState } from 'react'
 import { getMensajeDiario, getSignoSolar } from '../lib/motores/astroDaily'
 import Compartir from '../components/Compartir'
-import { supabase } from '../lib/supabase'
+import CtaUpsell from '../components/CtaUpsell'
+import Valoracion from '../components/Valoracion'
+import DisclaimerIA from '../components/DisclaimerIA'
+import { supabase, useUserPlan, useAnalytics, registrarEvento } from '../lib/paginaHelper'
 
 export default function AstroDaily() {
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando, setCargando] = useState(false)
   const [generado, setGenerado] = useState(false)
   const [fromCache, setFromCache] = useState(false)
+
+  const { esPremium, userId } = useUserPlan()
+  useAnalytics('astro-daily')
 
   const nombre = localStorage.getItem('nombre') || 'viajero'
   const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
@@ -23,6 +29,7 @@ export default function AstroDaily() {
   }
 
   const generarLectura = async () => {
+    const t0 = Date.now()
     setCargando(true)
     setGenerado(true)
 
@@ -40,15 +47,15 @@ export default function AstroDaily() {
         setInterpretacion(`${nombre}, ${cached.contenido}`)
         setFromCache(true)
         setCargando(false)
+        registrarEvento({ herramienta: 'astro-daily', accion: 'lectura_ia', desde_cache: true, tiempo_respuesta_ms: Date.now() - t0, signo, user_id: userId })
         return
       }
     } catch (err) {
-      console.warn('[AstroDaily] Error leyendo caché:', err)
+      console.warn('[AstroDaily] Error caché:', err)
     }
 
-    // ── 2. Fallback: Gemini ────────────────────────────────
+    // ── 2. Fallback Gemini ─────────────────────────────────
     const prompt = `Eres un astrólogo simbólico que combina astrología occidental con psicología moderna.
-
 Signo solar: ${signo}
 Fecha: ${hoy}
 Energía del día: ${mensajes.energia}
@@ -66,9 +73,7 @@ Máximo 200 palabras. Solo el texto, sin título ni encabezado.`
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          }),
+          body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] }),
         }
       )
       const data = await res.json()
@@ -78,15 +83,12 @@ Máximo 200 palabras. Solo el texto, sin título ni encabezado.`
       setInterpretacion(`${nombre}, ${texto}`)
       setFromCache(false)
 
-      // Guardar en caché (fire & forget)
       supabase.from('horoscopo_cache').insert({
-        signo: signo.toLowerCase(),
-        fecha: fechaHoy,
-        tipo: 'astro-daily',
-        contenido: texto,
-        tokens_used: tokens,
+        signo: signo.toLowerCase(), fecha: fechaHoy, tipo: 'astro-daily',
+        contenido: texto, tokens_used: tokens,
       }).then(() => {})
 
+      registrarEvento({ herramienta: 'astro-daily', accion: 'lectura_ia', desde_cache: false, tiempo_respuesta_ms: Date.now() - t0, signo, user_id: userId })
     } catch {
       setInterpretacion('Las estrellas guardan silencio hoy. Inténtalo de nuevo.')
     }
@@ -155,11 +157,16 @@ Máximo 200 palabras. Solo el texto, sin título ni encabezado.`
         )}
 
         {!cargando && interpretacion && (
-          <Compartir
-            titulo={`Mi Astro Daily: ${signo} · ${hoy}`}
-            texto={interpretacion}
-            hashtags={['AstroDaily', 'Universe', signo, 'Astrologia']}
-          />
+          <>
+            <DisclaimerIA />
+            <Valoracion herramienta="astro-daily" userId={userId} />
+            <Compartir
+              titulo={`Mi Astro Daily: ${signo} · ${hoy}`}
+              texto={interpretacion}
+              hashtags={['AstroDaily', 'Universe', signo, 'Astrologia']}
+            />
+            {!esPremium && <CtaUpsell herramienta="guía astrológica" />}
+          </>
         )}
 
         {generado && !cargando && (
