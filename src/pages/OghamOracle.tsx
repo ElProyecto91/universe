@@ -1,90 +1,123 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Compartir from '../components/Compartir'
-import { supabase } from '../lib/supabase'
+import Paywall from '../components/Paywall'
+import Valoracion from '../components/Valoracion'
+import DisclaimerIA from '../components/DisclaimerIA'
 import { llamarGemini } from '../lib/gemini'
+import { useUserPlan } from '../hooks/useUserPlan'
+import { useAnalytics } from '../hooks/useAnalytics'
+import { supabase } from '../lib/supabase'
 
 export default function OghamOracle() {
+  const [pregunta, setPregunta] = useState('')
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando, setCargando] = useState(false)
-  const [generado, setGenerado] = useState(false)
+  const [fase, setFase] = useState<'preguntar' | 'resultado'>('preguntar')
+  const [errorMsg, setErrorMsg] = useState('')
   const [fromCache, setFromCache] = useState(false)
+  const [tiempoInicio, setTiempoInicio] = useState(0)
 
   const nombre = localStorage.getItem('nombre') || 'viajero'
-  const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
   const signo = localStorage.getItem('signo') || 'Leo'
+  const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
   const añoActual = new Date().getFullYear()
-  const cacheKey = `ogham-oracle-${fechaNacimiento}-${añoActual}`
-  const userId = null
+  const { esPremium, userId, cargando: cargandoPlan } = useUserPlan()
+  const { registrarApertura, registrarLectura, registrarPaywall, registrarValoracion } = useAnalytics('ogham-oracle', esPremium)
 
-  const bgStyle = { backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }
+  useEffect(() => {
+    registrarApertura()
+  }, [])
 
-  const generarLectura = async () => {
+  // Mostrar paywall si no es premium
+  if (!cargandoPlan && !esPremium) {
+    registrarPaywall()
+    return <Paywall motivo="herramienta" herramienta="Oracle Ogham" />
+  }
+
+  
+
+  const consultar = async () => {
+    if (!pregunta.trim()) return
+    setFase('resultado')
     setCargando(true)
-    setGenerado(true)
+    setErrorMsg('')
+    setTiempoInicio(Date.now())
 
-    try {
-      const { data: cached } = await supabase.from('ai_cache').select('respuesta').eq('cache_key', cacheKey).maybeSingle()
-      if (cached?.respuesta) {
-        setInterpretacion(`${nombre}, ${cached.respuesta}`)
-        setFromCache(true)
-        setCargando(false)
-        return
-      }
-    } catch (err) { console.warn('[OghamOracle] Error caché:', err) }
+    
 
     const result = await llamarGemini({
       herramienta: 'ogham-oracle',
-      prompt: `Eres experto en Oracle Ogham. Nombre: ${nombre}, Signo: ${signo}, Fecha de nacimiento: ${fechaNacimiento}. Genera una lectura profunda y personalizada de 3-4 párrafos. Reflexivo, simbólico, poético. Sin predicciones absolutas.`,
+      prompt: `Experto en el Ogham (alfabeto sagrado de los celtas). Nombre: ${nombre}. Pregunta: "${pregunta}". Selecciona 3 símbolos Ogham e interprétalo simbólicamente.`,
       userId, usarLite: false, cacheable: false, maxTokens: 350,
     })
 
-    if (!result.error && result.texto) {
-      setInterpretacion(`${nombre}, ${result.texto}`)
-      setFromCache(false)
-      supabase.from('ai_cache').insert({
-        cache_key: cacheKey, herramienta: 'ogham-oracle', prompt_hash: cacheKey,
-        respuesta: result.texto, tokens_used: result.tokensUsados, expires_at: null
-      }).then(() => {})
+    const tiempoMs = Date.now() - tiempoInicio
+
+    if (result.error) {
+      setErrorMsg(result.error)
     } else {
-      setInterpretacion('El universo guarda silencio. Inténtalo de nuevo.')
+      setInterpretacion(result.texto)
+      setFromCache(false)
+      registrarLectura({ desdCache: false, tiempoMs, modeloIa: result.modelo })
+      
     }
     setCargando(false)
   }
 
   return (
-    <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
+    <div className="min-h-screen text-white flex flex-col relative" style={{ backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
       <div className="absolute inset-0 bg-black/75" />
       <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-6 py-10 gap-6">
         <div className="flex items-center">
-          <button onClick={() => window.location.href = '/tradiciones'} className="text-purple-300 text-sm">← Volver</button>
+          <button onClick={() => { if (fase === 'resultado') setFase('preguntar'); else window.location.href = '/tradiciones' }} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
             <p className="text-white font-semibold text-sm">Oracle Ogham</p>
             <p className="text-purple-300 text-xs">Alfabeto sagrado celta</p>
           </div>
+          <span className="text-purple-400 text-xs border border-purple-400/30 rounded-full px-2 py-0.5">✨ Premium</span>
         </div>
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur text-center">
-          <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Oracle Ogham</p>
-          <p className="text-white/60 text-sm">Nacimiento: {fechaNacimiento} · Signo: {signo}</p>
-        </div>
-        {!generado ? (
-          <button onClick={generarLectura} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition">Generar mi lectura</button>
-        ) : (
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-purple-300 text-xs tracking-widest uppercase">Tu lectura</p>
-              {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
+        {fase === 'preguntar' && (
+          <div className="flex flex-col gap-6">
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
+              <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Tu pregunta o situación</p>
+              <textarea value={pregunta} onChange={e => setPregunta(e.target.value)} placeholder="¿Qué quieres explorar?" rows={4} className="w-full bg-transparent text-white text-sm resize-none outline-none placeholder-white/30" />
             </div>
-            {cargando ? (
-              <div className="flex gap-2 py-2">
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-              </div>
-            ) : <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>}
+            <DisclaimerIA compact />
+            <button onClick={consultar} disabled={!pregunta.trim()} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full disabled:opacity-40">Consultar</button>
           </div>
         )}
-        {!cargando && interpretacion && <Compartir titulo="Oracle Ogham" texto={interpretacion} hashtags={['Universe', 'OghamOracle']} />}
-        {generado && !cargando && <button onClick={() => window.location.href = '/guia'} className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full">Explorar con mi Guía IA</button>}
+        {fase === 'resultado' && (
+          <div className="flex flex-col gap-5">
+            <div className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 backdrop-blur">
+              <p className="text-white/40 text-xs italic">"{pregunta}"</p>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-purple-300 text-xs tracking-widest uppercase">Interpretación</p>
+                {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
+              </div>
+              {cargando ? (
+                <div className="flex gap-2 py-2">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              ) : errorMsg ? <p className="text-red-400 text-sm">{errorMsg}</p>
+              : <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>}
+            </div>
+            {!cargando && interpretacion && (
+              <>
+                <DisclaimerIA />
+                <Valoracion onValorar={registrarValoracion} />
+                <Compartir titulo="Oracle Ogham" texto={interpretacion} hashtags={['Universe', 'OghamOracle']} />
+                <div className="flex flex-col gap-3">
+                  <button onClick={() => window.location.href = '/guia'} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full">Explorar con mi Guía IA</button>
+                  <button onClick={() => { setFase('preguntar'); setInterpretacion(''); setErrorMsg('') }} className="w-full text-purple-300/60 text-sm py-2">Nueva consulta</button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
