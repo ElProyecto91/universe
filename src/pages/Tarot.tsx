@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { getCartaSVG } from '../components/svg/TarotSVG'
 import Compartir from '../components/Compartir'
-import { llamarGemini } from '../lib/gemini'
+import Paywall from '../components/Paywall'
+import Valoracion from '../components/Valoracion'
+import DisclaimerIA from '../components/DisclaimerIA'
+import { llamarGemini, useUserPlan, useAnalytics, registrarEvento } from '../lib/paginaHelper'
 
 const ARCANOS_MAYORES = [
   { nombre: 'El Mago', numero: 'I', keywords: 'Voluntad · Poder · Acción' },
@@ -29,10 +32,10 @@ const ARCANOS_MAYORES = [
 ]
 
 const TIRADAS = [
-  { id: 'una', nombre: '1 carta', descripcion: 'Mensaje del día', cantidad: 1 },
-  { id: 'tres', nombre: '3 cartas', descripcion: 'Pasado · Presente · Futuro', cantidad: 3 },
-  { id: 'relacion', nombre: 'Relación', descripcion: 'Tú · Él/Ella · Conexión', cantidad: 3 },
-  { id: 'profunda', nombre: 'Lectura profunda', descripcion: '5 cartas · Visión completa', cantidad: 5 },
+  { id: 'una', nombre: '1 carta', descripcion: 'Mensaje del día', cantidad: 1, premium: false },
+  { id: 'tres', nombre: '3 cartas', descripcion: 'Pasado · Presente · Futuro', cantidad: 3, premium: true },
+  { id: 'relacion', nombre: 'Relación', descripcion: 'Tú · Él/Ella · Conexión', cantidad: 3, premium: true },
+  { id: 'profunda', nombre: 'Lectura profunda', descripcion: '5 cartas · Visión completa', cantidad: 5, premium: true },
 ]
 
 function cartaAleatoria() {
@@ -48,6 +51,10 @@ export default function Tarot() {
   const [cargando, setCargando] = useState(false)
   const [fase, setFase] = useState<'elegir' | 'revelar' | 'interpretar'>('elegir')
   const [errorMsg, setErrorMsg] = useState('')
+  const [mostrarPaywall, setMostrarPaywall] = useState(false)
+
+  const { esPremium, userId } = useUserPlan()
+  useAnalytics('tarot')
 
   const bgStyle = {
     backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
@@ -57,17 +64,24 @@ export default function Tarot() {
 
   const nombre = localStorage.getItem('nombre') || 'Luna'
   const signo = localStorage.getItem('signo') || 'Leo'
-  const userId = null // TODO: sustituir por ID real del usuario cuando tengas auth
 
   const iniciarTirada = (tirada: typeof TIRADAS[0]) => {
+    // Bloquear tiradas premium para usuarios free
+    if (tirada.premium && !esPremium) {
+      setMostrarPaywall(true)
+      registrarEvento({ herramienta: 'tarot', accion: 'paywall_mostrado', user_id: userId })
+      return
+    }
     setTiradaSeleccionada(tirada.id)
     const nuevasCartas = Array.from({ length: tirada.cantidad }, cartaAleatoria)
     setCartas(nuevasCartas)
     setFase('revelar')
     setErrorMsg('')
+    registrarEvento({ herramienta: 'tarot', accion: 'tirada_iniciada', user_id: userId })
   }
 
   const interpretarCartas = async () => {
+    const t0 = Date.now()
     setCargando(true)
     setFase('interpretar')
     setErrorMsg('')
@@ -91,6 +105,7 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
       setErrorMsg(result.error)
     } else {
       setInterpretacion(result.texto)
+      registrarEvento({ herramienta: 'tarot', accion: 'lectura_ia', tiempo_respuesta_ms: Date.now() - t0, user_id: userId })
     }
     setCargando(false)
   }
@@ -98,6 +113,14 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
       <div className="absolute inset-0 bg-black/75" />
+
+      {mostrarPaywall && (
+        <Paywall
+          motivo="herramienta"
+          herramienta="Tiradas de Tarot completas"
+          onCerrar={() => setMostrarPaywall(false)}
+        />
+      )}
 
       <div className="relative z-10 flex items-center px-4 py-4 border-b border-white/10">
         <button onClick={() => window.location.href = '/universo'} className="text-purple-300 text-sm">← Volver</button>
@@ -122,8 +145,15 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
                   className="w-full bg-white/8 border border-white/20 rounded-2xl p-4 text-left hover:bg-purple-600/20 hover:border-purple-500/40 transition backdrop-blur"
                   style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
                 >
-                  <p className="text-white font-semibold">{t.nombre}</p>
-                  <p className="text-purple-300/70 text-xs mt-1">{t.descripcion}</p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-white font-semibold">{t.nombre}</p>
+                      <p className="text-purple-300/70 text-xs mt-1">{t.descripcion}</p>
+                    </div>
+                    {t.premium && !esPremium && (
+                      <span className="text-xs bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full">✨ Premium</span>
+                    )}
+                  </div>
                 </button>
               ))}
             </div>
@@ -170,14 +200,7 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
             <div className="flex gap-3 flex-wrap justify-center">
               {cartas.map((carta, i) => (
                 <div key={i} className="flex flex-col items-center gap-1">
-                  <div
-                    className="rounded-xl overflow-hidden"
-                    style={{
-                      width: '70px',
-                      height: '110px',
-                      transform: carta.invertida ? 'rotate(180deg)' : 'none',
-                    }}
-                  >
+                  <div className="rounded-xl overflow-hidden" style={{ width: '70px', height: '110px', transform: carta.invertida ? 'rotate(180deg)' : 'none' }}>
                     {getCartaSVG(carta.nombre)}
                   </div>
                   <p className="text-white/60 text-xs text-center" style={{ maxWidth: '70px' }}>{carta.nombre}</p>
@@ -201,7 +224,9 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
             </div>
 
             {!cargando && interpretacion && (
-              <div className="w-full max-w-sm">
+              <div className="w-full max-w-sm flex flex-col gap-4">
+                <DisclaimerIA />
+                <Valoracion herramienta="tarot" userId={userId} />
                 <Compartir
                   titulo={`Mi tirada de Tarot: ${cartas.map(c => c.nombre).join(', ')}`}
                   texto={interpretacion}
@@ -212,22 +237,13 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
 
             {!cargando && (
               <div className="w-full max-w-sm flex flex-col gap-3">
-                <button
-                  onClick={() => window.location.href = '/guia'}
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition"
-                >
+                <button onClick={() => window.location.href = '/guia'} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition">
                   Explorar con mi Guía IA
                 </button>
-                <button
-                  onClick={() => window.location.href = '/experto'}
-                  className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full hover:bg-white/20 transition backdrop-blur"
-                >
+                <button onClick={() => window.location.href = '/experto'} className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full hover:bg-white/20 transition backdrop-blur">
                   Hablar con un Experto
                 </button>
-                <button
-                  onClick={() => { setFase('elegir'); setCartas([]); setInterpretacion(''); setErrorMsg('') }}
-                  className="w-full text-purple-300/60 text-sm py-2"
-                >
+                <button onClick={() => { setFase('elegir'); setCartas([]); setInterpretacion(''); setErrorMsg('') }} className="w-full text-purple-300/60 text-sm py-2">
                   Nueva tirada
                 </button>
               </div>
