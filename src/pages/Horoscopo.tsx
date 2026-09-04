@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
 import { getHoroscopoDiario, getSignoSolar } from '../lib/motores/horoscopo'
 import Compartir from '../components/Compartir'
-import { supabase } from '../lib/supabase'
+import CtaUpsell from '../components/CtaUpsell'
+import Valoracion from '../components/Valoracion'
+import DisclaimerIA from '../components/DisclaimerIA'
+import { supabase, useUserPlan, useAnalytics, registrarEvento } from '../lib/paginaHelper'
 
 const TODOS_LOS_SIGNOS = [
   'Aries', 'Tauro', 'Géminis', 'Cáncer', 'Leo', 'Virgo',
@@ -14,9 +17,6 @@ const SIMBOLOS_SIGNOS: Record<string, string> = {
   Sagitario: '♐', Capricornio: '♑', Acuario: '♒', Piscis: '♓',
 }
 
-// Coste por token (para fallback con Gemini directo)
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`
-
 export default function Horoscopo() {
   const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
   const miSigno = getSignoSolar(fechaNacimiento)
@@ -27,10 +27,13 @@ export default function Horoscopo() {
   const [generado, setGenerado] = useState(false)
   const [fromCache, setFromCache] = useState(false)
 
+  const { esPremium, userId } = useUserPlan()
+  useAnalytics('horoscopo')
+
   const horoscopo = getHoroscopoDiario(signoSeleccionado)
   const hoy = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
   const nombre = localStorage.getItem('nombre') || 'viajero'
-  const fechaHoy = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+  const fechaHoy = new Date().toISOString().split('T')[0]
 
   const bgStyle = {
     backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
@@ -38,7 +41,6 @@ export default function Horoscopo() {
     backgroundPosition: 'center',
   }
 
-  // Resetear al cambiar signo
   useEffect(() => {
     setGenerado(false)
     setInterpretacion('')
@@ -46,10 +48,11 @@ export default function Horoscopo() {
   }, [signoSeleccionado])
 
   const generarLectura = async () => {
+    const t0 = Date.now()
     setCargando(true)
     setGenerado(true)
 
-    // ── 1. Buscar en caché de Supabase ─────────────────────
+    // ── 1. Buscar en caché ─────────────────────────────────
     try {
       const { data: cached } = await supabase
         .from('horoscopo_cache')
@@ -60,36 +63,32 @@ export default function Horoscopo() {
         .maybeSingle()
 
       if (cached?.contenido) {
-        // ✅ Cache hit — 0 tokens gastados
-        // Personalizamos el saludo en el frontend, sin IA
-        const textoPersonalizado = `${nombre}, ${cached.contenido}`
-        setInterpretacion(textoPersonalizado)
+        setInterpretacion(`${nombre}, ${cached.contenido}`)
         setFromCache(true)
         setCargando(false)
+        registrarEvento({ herramienta: 'horoscopo', accion: 'lectura_ia', desde_cache: true, tiempo_respuesta_ms: Date.now() - t0, signo: signoSeleccionado, user_id: userId })
         return
       }
     } catch (err) {
-      console.warn('[Horoscopo] Error leyendo caché, usando Gemini:', err)
+      console.warn('[Horoscopo] Error caché:', err)
     }
 
-    // ── 2. Fallback: llamar a Gemini si no hay caché ───────
-    // (Solo ocurre si el cron no se ejecutó aún hoy)
+    // ── 2. Fallback Gemini ─────────────────────────────────
     const prompt = `Eres un astrólogo simbólico. Genera el horóscopo diario para ${signoSeleccionado} de hoy.
-
 Escribe 3-4 párrafos cortos sobre: energía general del día, amor/relaciones, trabajo/creatividad, y un mensaje de cierre.
-
 Tono: reflexivo, simbólico, nunca predictivo ni alarmante. Invita a la introspección.
 Evita frases como "hoy te pasará X" o predicciones absolutas.
-Máximo 200 palabras. Responde solo el texto del horóscopo, sin título ni encabezado.`
+Máximo 200 palabras. Solo el texto, sin título ni encabezado.`
 
     try {
-      const res = await fetch(GEMINI_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        }),
-      })
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] }),
+        }
+      )
       const data = await res.json()
       const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
       const tokens = data.usageMetadata?.totalTokenCount ?? 0
@@ -97,15 +96,12 @@ Máximo 200 palabras. Responde solo el texto del horóscopo, sin título ni enca
       setInterpretacion(`${nombre}, ${texto}`)
       setFromCache(false)
 
-      // Guardar en caché para los siguientes usuarios (fire & forget)
       supabase.from('horoscopo_cache').insert({
-        signo: signoSeleccionado.toLowerCase(),
-        fecha: fechaHoy,
-        tipo: 'diario',
-        contenido: texto,
-        tokens_used: tokens,
+        signo: signoSeleccionado.toLowerCase(), fecha: fechaHoy, tipo: 'diario',
+        contenido: texto, tokens_used: tokens,
       }).then(() => {})
 
+      registrarEvento({ herramienta: 'horoscopo', accion: 'lectura_ia', desde_cache: false, tiempo_respuesta_ms: Date.now() - t0, signo: signoSeleccionado, user_id: userId })
     } catch {
       setInterpretacion('Las estrellas guardan silencio. Inténtalo de nuevo.')
     }
@@ -132,15 +128,11 @@ Máximo 200 palabras. Responde solo el texto del horóscopo, sin título ni enca
           <button
             onClick={() => setVista('diario')}
             className={`flex-1 py-2 rounded-xl text-sm font-semibold transition ${vista === 'diario' ? 'bg-purple-600 text-white' : 'text-white/50'}`}
-          >
-            Mi horóscopo
-          </button>
+          >Mi horóscopo</button>
           <button
             onClick={() => setVista('todos')}
             className={`flex-1 py-2 rounded-xl text-sm font-semibold transition ${vista === 'todos' ? 'bg-purple-600 text-white' : 'text-white/50'}`}
-          >
-            Todos los signos
-          </button>
+          >Todos los signos</button>
         </div>
 
         {vista === 'todos' && (
@@ -162,7 +154,6 @@ Máximo 200 palabras. Responde solo el texto del horóscopo, sin título ni enca
 
         {vista === 'diario' && (
           <>
-            {/* Signo header */}
             <div className="bg-white/8 border border-white/20 rounded-3xl p-6 backdrop-blur flex flex-col items-center gap-2"
               style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
               <span className="text-6xl" style={{ fontFamily: 'serif', textShadow: '0 0 20px rgba(192,132,252,0.6)' }}>
@@ -170,23 +161,18 @@ Máximo 200 palabras. Responde solo el texto del horóscopo, sin título ni enca
               </span>
               <p className="text-2xl font-bold">{signoSeleccionado}</p>
               {signoSeleccionado !== miSigno && (
-                <button
-                  onClick={() => setSignoSeleccionado(miSigno)}
-                  className="text-purple-300 text-xs"
-                >
+                <button onClick={() => setSignoSeleccionado(miSigno)} className="text-purple-300 text-xs">
                   ← Volver a mi signo ({miSigno})
                 </button>
               )}
             </div>
 
-            {/* Mensaje general */}
             <div className="bg-white/8 border border-white/20 rounded-3xl p-6 backdrop-blur"
               style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Energía del día</p>
               <p className="text-white/90 text-sm leading-relaxed">{horoscopo.general}</p>
             </div>
 
-            {/* Grid amor/trabajo */}
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-white/8 border border-white/20 rounded-2xl p-4 backdrop-blur"
                 style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
@@ -200,14 +186,12 @@ Máximo 200 palabras. Responde solo el texto del horóscopo, sin título ni enca
               </div>
             </div>
 
-            {/* Salud */}
             <div className="bg-white/8 border border-white/20 rounded-2xl p-4 backdrop-blur"
               style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
               <p className="text-green-300 text-xs tracking-widest uppercase mb-2">🌿 Salud</p>
               <p className="text-white/80 text-xs leading-relaxed">{horoscopo.salud}</p>
             </div>
 
-            {/* Afirmación */}
             <div className="bg-purple-600/20 border border-purple-400/30 rounded-2xl p-4 backdrop-blur">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">✨ Afirmación del día</p>
               <p className="text-white font-medium text-sm italic">"{horoscopo.afirmacion}"</p>
@@ -225,9 +209,7 @@ Máximo 200 palabras. Responde solo el texto del horóscopo, sin título ni enca
                 style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-purple-300 text-xs tracking-widest uppercase">Tu horóscopo completo</p>
-                  {fromCache && (
-                    <span className="text-green-400 text-xs">⚡ Instantáneo</span>
-                  )}
+                  {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
                 </div>
                 {cargando ? (
                   <div className="flex gap-2 py-2">
@@ -242,11 +224,16 @@ Máximo 200 palabras. Responde solo el texto del horóscopo, sin título ni enca
             )}
 
             {!cargando && interpretacion && (
-              <Compartir
-                titulo={`Mi horóscopo de hoy: ${signoSeleccionado} ${SIMBOLOS_SIGNOS[signoSeleccionado]}`}
-                texto={interpretacion}
-                hashtags={['Horoscopo', 'Universe', signoSeleccionado, 'Astrologia']}
-              />
+              <>
+                <DisclaimerIA />
+                <Valoracion herramienta="horoscopo" userId={userId} />
+                <Compartir
+                  titulo={`Mi horóscopo de hoy: ${signoSeleccionado} ${SIMBOLOS_SIGNOS[signoSeleccionado]}`}
+                  texto={interpretacion}
+                  hashtags={['Horoscopo', 'Universe', signoSeleccionado, 'Astrologia']}
+                />
+                {!esPremium && <CtaUpsell herramienta="horóscopo completo" />}
+              </>
             )}
 
             <button onClick={() => window.location.href = '/guia'} className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full">
