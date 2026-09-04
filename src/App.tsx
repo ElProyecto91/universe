@@ -57,6 +57,7 @@ import Transitos from './pages/Transitos'
 import Diario from './pages/Diario'
 import VisionBoard from './pages/VisionBoard'
 import Biorritmos from './pages/Biorritmos'
+import Admin from './pages/Admin'
 
 export default function App() {
   return (
@@ -120,6 +121,7 @@ export default function App() {
         <Route path="/diario" element={<Diario />} />
         <Route path="/vision-board" element={<VisionBoard />} />
         <Route path="/biorritmos" element={<Biorritmos />} />
+        <Route path="/admin" element={<Admin />} />
       </Routes>
     </BrowserRouter>
   )
