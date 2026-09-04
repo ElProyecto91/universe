@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import Compartir from '../components/Compartir'
-import { llamarGemini } from '../lib/gemini'
+import Paywall from '../components/Paywall'
+import Valoracion from '../components/Valoracion'
+import DisclaimerIA from '../components/DisclaimerIA'
+import { llamarGemini, useUserPlan, useAnalytics, registrarEvento } from '../lib/paginaHelper'
 
 const CAMINOS = [
   {
@@ -85,8 +88,10 @@ export default function PaganPaths() {
   const [fase, setFase] = useState<'elegir' | 'preguntar' | 'resultado'>('elegir')
   const [errorMsg, setErrorMsg] = useState('')
 
+  const { esPremium, userId } = useUserPlan()
+  useAnalytics('pagan-paths')
+
   const nombre = localStorage.getItem('nombre') || 'viajero'
-  const userId = null // TODO: sustituir por el ID real del usuario cuando tengas auth
 
   const bgStyle = {
     backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
@@ -96,23 +101,25 @@ export default function PaganPaths() {
 
   const consultar = async () => {
     if (!pregunta.trim() || !caminoSeleccionado) return
+    const t0 = Date.now()
     setFase('resultado')
     setCargando(true)
     setErrorMsg('')
+    registrarEvento({ herramienta: `pagan-${caminoSeleccionado.id}`, accion: 'consulta_iniciada', user_id: userId })
 
     const result = await llamarGemini({
       herramienta: `pagan-${caminoSeleccionado.id}`,
       prompt: caminoSeleccionado.prompt(pregunta),
       userId,
-      cacheable: false, // pregunta libre — no cacheable
+      cacheable: false,
       maxTokens: 400,
     })
 
     if (result.error) {
       setErrorMsg(result.error)
-      setInterpretacion('')
     } else {
       setInterpretacion(result.texto)
+      registrarEvento({ herramienta: `pagan-${caminoSeleccionado.id}`, accion: 'lectura_ia', tiempo_respuesta_ms: Date.now() - t0, user_id: userId })
     }
     setCargando(false)
   }
@@ -127,6 +134,9 @@ export default function PaganPaths() {
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
       <div className="absolute inset-0 bg-black/75" />
+
+      {/* Paywall para usuarios free */}
+      {!esPremium && <Paywall motivo="herramienta" herramienta="Caminos Paganos · Sabiduría de las tradiciones" />}
 
       <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-6 py-10 gap-6">
 
@@ -151,13 +161,9 @@ export default function PaganPaths() {
                 <span className="bg-green-500/20 text-green-300 px-2 py-1 rounded-full">🌿 Vivo</span>
               </div>
             </div>
-
             {CAMINOS.map(c => (
-              <button
-                key={c.id}
-                onClick={() => { setCaminoSeleccionado(c); setFase('preguntar') }}
-                className="w-full bg-white/5 border border-white/10 rounded-3xl p-5 text-left hover:bg-white/10 transition backdrop-blur"
-              >
+              <button key={c.id} onClick={() => { setCaminoSeleccionado(c); setFase('preguntar') }}
+                className="w-full bg-white/5 border border-white/10 rounded-3xl p-5 text-left hover:bg-white/10 transition backdrop-blur">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
@@ -181,23 +187,14 @@ export default function PaganPaths() {
               <p className="text-white font-semibold">{caminoSeleccionado.nombre}</p>
               <p className="text-white/50 text-sm mt-1">{caminoSeleccionado.descripcion}</p>
             </div>
-
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Tu pregunta</p>
-              <textarea
-                value={pregunta}
-                onChange={e => setPregunta(e.target.value)}
-                placeholder="¿Qué quieres explorar desde esta tradición?"
-                rows={4}
-                className="w-full bg-transparent text-white text-sm resize-none outline-none placeholder-white/30"
-              />
+              <textarea value={pregunta} onChange={e => setPregunta(e.target.value)}
+                placeholder="¿Qué quieres explorar desde esta tradición?" rows={4}
+                className="w-full bg-transparent text-white text-sm resize-none outline-none placeholder-white/30" />
             </div>
-
-            <button
-              onClick={consultar}
-              disabled={!pregunta.trim()}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition disabled:opacity-40"
-            >
+            <button onClick={consultar} disabled={!pregunta.trim()}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition disabled:opacity-40">
               Consultar esta tradición
             </button>
           </div>
@@ -208,7 +205,6 @@ export default function PaganPaths() {
             <div className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 backdrop-blur">
               <p className="text-white/40 text-xs">{caminoSeleccionado?.nombre} · <span className="italic">"{pregunta}"</span></p>
             </div>
-
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Desde esta tradición</p>
               {cargando ? (
@@ -223,15 +219,13 @@ export default function PaganPaths() {
                 <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>
               )}
             </div>
-
             {!cargando && interpretacion && (
-              <Compartir
-                titulo={`${caminoSeleccionado?.nombre}: mi consulta espiritual`}
-                texto={interpretacion}
-                hashtags={['Universe', caminoSeleccionado?.id || 'Pagan', 'Espiritualidad']}
-              />
+              <>
+                <DisclaimerIA />
+                <Valoracion herramienta={`pagan-${caminoSeleccionado?.id}`} userId={userId} />
+                <Compartir titulo={`${caminoSeleccionado?.nombre}: mi consulta espiritual`} texto={interpretacion} hashtags={['Universe', caminoSeleccionado?.id || 'Pagan', 'Espiritualidad']} />
+              </>
             )}
-
             <div className="flex flex-col gap-3">
               <button onClick={() => window.location.href = '/guia'} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full">
                 Explorar con mi Guía IA
@@ -242,7 +236,6 @@ export default function PaganPaths() {
             </div>
           </div>
         )}
-
       </div>
     </div>
   )
