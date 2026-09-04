@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
-import { llamarGemini } from '../lib/gemini'
+import { llamarGemini, useUserPlan, useAnalytics, registrarEvento } from '../lib/paginaHelper'
+import Paywall from '../components/Paywall'
+import Valoracion from '../components/Valoracion'
+import DisclaimerIA from '../components/DisclaimerIA'
 
 interface Mensaje {
   rol: 'usuario' | 'asistente'
@@ -12,7 +15,9 @@ export default function Guia() {
   const elemento = localStorage.getItem('elemento') || 'Fuego'
   const animal = localStorage.getItem('animal') || 'Águila'
   const intencion = localStorage.getItem('intencion') || 'Espiritualidad'
-  const userId = null // TODO: ID real del usuario
+
+  const { esPremium, userId } = useUserPlan()
+  useAnalytics('guia-ia')
 
   const systemPrompt = `Eres una guía espiritual sabia, profunda y empática llamada UNIVERSE. Tu manera de comunicarte es cálida, poética y significativa. Nunca eres superficial. Siempre conectas tus respuestas con el cosmos, la energía y el camino interior del usuario.
 
@@ -31,20 +36,27 @@ Cuando el usuario haga una pregunta, ofrece diferentes perspectivas para explora
     'Quiero una tirada de tarot',
     '¿Cómo está mi energía ahora mismo?',
   ])
+  const [mostrarValoracion, setMostrarValoracion] = useState(false)
   const finRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => { finRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [mensajes])
+
+  // Mostrar valoración tras el 3er intercambio
+  useEffect(() => {
+    if (mensajes.length === 6) setMostrarValoracion(true)
+  }, [mensajes.length])
 
   const enviar = async (texto?: string) => {
     const pregunta = texto || input
     if (!pregunta.trim()) return
 
+    const t0 = Date.now()
     const nuevosMensajes: Mensaje[] = [...mensajes, { rol: 'usuario', contenido: pregunta }]
     setMensajes(nuevosMensajes)
     setInput('')
     setCargando(true)
+    registrarEvento({ herramienta: 'guia-ia', accion: 'mensaje_enviado', user_id: userId })
 
-    // Construir prompt completo con historial + system prompt
     const historialTexto = nuevosMensajes.map(m =>
       `${m.rol === 'usuario' ? 'Usuario' : 'UNIVERSE'}: ${m.contenido}`
     ).join('\n\n')
@@ -64,6 +76,7 @@ Cuando el usuario haga una pregunta, ofrece diferentes perspectivas para explora
       : result.texto
 
     setMensajes([...nuevosMensajes, { rol: 'asistente', contenido: respuesta }])
+    registrarEvento({ herramienta: 'guia-ia', accion: 'respuesta_ia', tiempo_respuesta_ms: Date.now() - t0, user_id: userId })
     setCargando(false)
   }
 
@@ -72,6 +85,10 @@ Cuando el usuario haga una pregunta, ofrece diferentes perspectivas para explora
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
       <div className="absolute inset-0 bg-black/75" />
+
+      {/* Paywall para usuarios free */}
+      {!esPremium && <Paywall motivo="herramienta" herramienta="Guía IA · Consultas ilimitadas" />}
+
       <div className="relative z-10 flex items-center gap-3 px-4 py-4 border-b border-white/10 backdrop-blur">
         <button onClick={() => window.location.href = '/universo'} className="text-purple-300 text-sm">← Volver</button>
         <div className="flex-1 text-center">
@@ -80,6 +97,7 @@ Cuando el usuario haga una pregunta, ofrece diferentes perspectivas para explora
         </div>
         <button onClick={() => window.location.href = '/tarot'} className="text-purple-300 text-xs border border-purple-500/30 rounded-full px-3 py-1">Tarot</button>
       </div>
+
       <div className="relative z-10 flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-4">
         {mensajes.map((m, i) => (
           <div key={i} className={`flex ${m.rol === 'usuario' ? 'justify-end' : 'justify-start'}`}>
@@ -99,8 +117,16 @@ Cuando el usuario haga una pregunta, ofrece diferentes perspectivas para explora
             </div>
           </div>
         )}
+        {mostrarValoracion && !cargando && (
+          <div className="flex justify-start">
+            <div className="max-w-xs">
+              <Valoracion herramienta="guia-ia" userId={userId} />
+            </div>
+          </div>
+        )}
         <div ref={finRef} />
       </div>
+
       {mensajes.length === 1 && (
         <div className="relative z-10 px-4 pb-2 flex gap-2 overflow-x-auto">
           {sugerencias.map(s => (
@@ -108,6 +134,11 @@ Cuando el usuario haga una pregunta, ofrece diferentes perspectivas para explora
           ))}
         </div>
       )}
+
+      <div className="relative z-10 px-4 py-2">
+        <DisclaimerIA compact />
+      </div>
+
       <div className="relative z-10 px-4 py-4 border-t border-white/10 backdrop-blur flex gap-3 items-end">
         <textarea value={input} onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar() } }}
