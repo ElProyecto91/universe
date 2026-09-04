@@ -1,6 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Compartir from '../components/Compartir'
+import Paywall from '../components/Paywall'
+import Valoracion from '../components/Valoracion'
+import DisclaimerIA from '../components/DisclaimerIA'
 import { llamarGemini } from '../lib/gemini'
+import { useUserPlan } from '../hooks/useUserPlan'
+import { useAnalytics } from '../hooks/useAnalytics'
+import { supabase } from '../lib/supabase'
 
 export default function OmensOracle() {
   const [pregunta, setPregunta] = useState('')
@@ -8,28 +14,58 @@ export default function OmensOracle() {
   const [cargando, setCargando] = useState(false)
   const [fase, setFase] = useState<'preguntar' | 'resultado'>('preguntar')
   const [errorMsg, setErrorMsg] = useState('')
+  const [fromCache, setFromCache] = useState(false)
+  const [tiempoInicio, setTiempoInicio] = useState(0)
+
   const nombre = localStorage.getItem('nombre') || 'viajero'
   const signo = localStorage.getItem('signo') || 'Leo'
-  const userId = null
-  const bgStyle = { backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }
+  const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
+  const añoActual = new Date().getFullYear()
+  const { esPremium, userId, cargando: cargandoPlan } = useUserPlan()
+  const { registrarApertura, registrarLectura, registrarPaywall, registrarValoracion } = useAnalytics('omens-oracle', esPremium)
+
+  useEffect(() => {
+    registrarApertura()
+  }, [])
+
+  // Mostrar paywall si no es premium
+  if (!cargandoPlan && !esPremium) {
+    registrarPaywall()
+    return <Paywall motivo="herramienta" herramienta="Oracle de Presagios" />
+  }
+
+  
 
   const consultar = async () => {
     if (!pregunta.trim()) return
     setFase('resultado')
     setCargando(true)
     setErrorMsg('')
+    setTiempoInicio(Date.now())
+
+    
+
     const result = await llamarGemini({
       herramienta: 'omens-oracle',
-      prompt: `Eres experto en Oracle de Presagios. Nombre del usuario: ${nombre}, Signo: ${signo}. Situación o pregunta: "${pregunta}". Escribe 3 párrafos reflexivos y simbólicos. Sin predicciones absolutas. Tono cálido y profundo.`,
+      prompt: `Experto en sincronicidades y presagios. Nombre: ${nombre}. Señal o evento: "${pregunta}". 2 párrafos: significado simbólico y mensaje.`,
       userId, usarLite: true, cacheable: false, maxTokens: 200,
     })
-    if (result.error) setErrorMsg(result.error)
-    else setInterpretacion(result.texto)
+
+    const tiempoMs = Date.now() - tiempoInicio
+
+    if (result.error) {
+      setErrorMsg(result.error)
+    } else {
+      setInterpretacion(result.texto)
+      setFromCache(false)
+      registrarLectura({ desdCache: false, tiempoMs, modeloIa: result.modelo })
+      
+    }
     setCargando(false)
   }
 
   return (
-    <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
+    <div className="min-h-screen text-white flex flex-col relative" style={{ backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
       <div className="absolute inset-0 bg-black/75" />
       <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-6 py-10 gap-6">
         <div className="flex items-center">
@@ -38,6 +74,7 @@ export default function OmensOracle() {
             <p className="text-white font-semibold text-sm">Oracle de Presagios</p>
             <p className="text-purple-300 text-xs">Señales y sincronicidades</p>
           </div>
+          <span className="text-purple-400 text-xs border border-purple-400/30 rounded-full px-2 py-0.5">✨ Premium</span>
         </div>
         {fase === 'preguntar' && (
           <div className="flex flex-col gap-6">
@@ -45,6 +82,7 @@ export default function OmensOracle() {
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Tu pregunta o situación</p>
               <textarea value={pregunta} onChange={e => setPregunta(e.target.value)} placeholder="¿Qué quieres explorar?" rows={4} className="w-full bg-transparent text-white text-sm resize-none outline-none placeholder-white/30" />
             </div>
+            <DisclaimerIA compact />
             <button onClick={consultar} disabled={!pregunta.trim()} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full disabled:opacity-40">Consultar</button>
           </div>
         )}
@@ -54,7 +92,10 @@ export default function OmensOracle() {
               <p className="text-white/40 text-xs italic">"{pregunta}"</p>
             </div>
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
-              <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Interpretación</p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-purple-300 text-xs tracking-widest uppercase">Interpretación</p>
+                {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
+              </div>
               {cargando ? (
                 <div className="flex gap-2 py-2">
                   <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -64,11 +105,17 @@ export default function OmensOracle() {
               ) : errorMsg ? <p className="text-red-400 text-sm">{errorMsg}</p>
               : <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>}
             </div>
-            {!cargando && interpretacion && <Compartir titulo="Oracle de Presagios" texto={interpretacion} hashtags={['Universe', 'OmensOracle']} />}
-            <div className="flex flex-col gap-3">
-              <button onClick={() => window.location.href = '/guia'} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full">Explorar con mi Guía IA</button>
-              <button onClick={() => { setFase('preguntar'); setInterpretacion(''); setErrorMsg('') }} className="w-full text-purple-300/60 text-sm py-2">Nueva consulta</button>
-            </div>
+            {!cargando && interpretacion && (
+              <>
+                <DisclaimerIA />
+                <Valoracion onValorar={registrarValoracion} />
+                <Compartir titulo="Oracle de Presagios" texto={interpretacion} hashtags={['Universe', 'OmensOracle']} />
+                <div className="flex flex-col gap-3">
+                  <button onClick={() => window.location.href = '/guia'} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full">Explorar con mi Guía IA</button>
+                  <button onClick={() => { setFase('preguntar'); setInterpretacion(''); setErrorMsg('') }} className="w-full text-purple-300/60 text-sm py-2">Nueva consulta</button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
