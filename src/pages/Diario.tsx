@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react'
 import { TIPOS_ENTRADA, guardarEntrada, cargarEntradas, eliminarEntrada, getEstadisticasDiario, EntradaDiario } from '../lib/motores/diario'
 import { getFaseLunar } from '../lib/motores/luna'
 import { getCartaDiaria } from '../lib/motores/tarotDiario'
-import { llamarGemini } from '../lib/gemini'
+import Paywall from '../components/Paywall'
+import Valoracion from '../components/Valoracion'
+import DisclaimerIA from '../components/DisclaimerIA'
+import { llamarGemini, useUserPlan, useAnalytics, registrarEvento } from '../lib/paginaHelper'
 
 export default function Diario() {
   const [entradas, setEntradas] = useState<EntradaDiario[]>([])
@@ -13,20 +16,32 @@ export default function Diario() {
   const [entradaVista, setEntradaVista] = useState<EntradaDiario | null>(null)
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando, setCargando] = useState(false)
+  const [mostrarPaywallSuenos, setMostrarPaywallSuenos] = useState(false)
+
+  const { esPremium, userId } = useUserPlan()
+  useAnalytics('diario')
 
   const nombre = localStorage.getItem('nombre') || 'viajero'
   const faseLunar = getFaseLunar()
   const cartaDiaria = getCartaDiaria()
   const stats = getEstadisticasDiario()
   const hoy = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
-  const userId = null
 
   const bgStyle = { backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }
 
   useEffect(() => { setEntradas(cargarEntradas()) }, [fase])
 
   const interpretarSueno = async (contenidoSueno: string) => {
+    // La interpretación de sueños con IA es premium
+    if (!esPremium) {
+      setMostrarPaywallSuenos(true)
+      registrarEvento({ herramienta: 'diario-suenos', accion: 'paywall_mostrado', user_id: userId })
+      return
+    }
+    const t0 = Date.now()
     setCargando(true)
+    registrarEvento({ herramienta: 'diario-suenos', accion: 'interpretacion_iniciada', user_id: userId })
+
     const result = await llamarGemini({
       herramienta: 'diario-suenos',
       prompt: `Intérprete de sueños experto en psicología jungiana y simbolismo universal.
@@ -38,6 +53,7 @@ Sueño: "${contenidoSueno}"
       userId, usarLite: true, cacheable: false, maxTokens: 200,
     })
     setInterpretacion(result.error ? '' : result.texto)
+    registrarEvento({ herramienta: 'diario-suenos', accion: 'lectura_ia', tiempo_respuesta_ms: Date.now() - t0, user_id: userId })
     setCargando(false)
   }
 
@@ -51,6 +67,7 @@ Sueño: "${contenidoSueno}"
     }
     guardarEntrada(entrada)
     setEntradas(cargarEntradas())
+    registrarEvento({ herramienta: 'diario', accion: 'entrada_guardada', user_id: userId })
     if (tipoActivo === 'sueno') await interpretarSueno(contenido)
     setContenido('')
     setFase('lista')
@@ -62,6 +79,15 @@ Sueño: "${contenidoSueno}"
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
       <div className="absolute inset-0 bg-black/80" />
+
+      {mostrarPaywallSuenos && (
+        <Paywall
+          motivo="herramienta"
+          herramienta="Interpretación de sueños con IA"
+          onCerrar={() => setMostrarPaywallSuenos(false)}
+        />
+      )}
+
       <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-6 py-10 gap-6">
         <div className="flex items-center">
           <button onClick={() => { if (fase !== 'lista') setFase('lista'); else window.location.href = '/universo' }} className="text-purple-300 text-sm">← Volver</button>
@@ -71,16 +97,22 @@ Sueño: "${contenidoSueno}"
           </div>
           {fase === 'lista' && <button onClick={() => setFase('nueva')} className="text-purple-300 text-sm border border-purple-500/30 rounded-full px-3 py-1">+ Nueva</button>}
         </div>
+
         {fase === 'lista' && (
           <div className="flex flex-col gap-5">
             <div className="grid grid-cols-3 gap-2">
-              {[{ label: 'Entradas', val: stats.total, color: 'text-purple-300' },{ label: 'Días seguidos', val: stats.rachaActual, color: 'text-purple-300' },{ label: faseLunar.nombre, val: faseLunar.simbolo, color: 'text-2xl' }].map((s, i) => (
+              {[
+                { label: 'Entradas', val: stats.total, color: 'text-purple-300' },
+                { label: 'Días seguidos', val: stats.rachaActual, color: 'text-purple-300' },
+                { label: faseLunar.nombre, val: faseLunar.simbolo, color: 'text-2xl' }
+              ].map((s, i) => (
                 <div key={i} className="bg-white/8 border border-white/20 rounded-2xl p-3 text-center backdrop-blur" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
                   <p className={`text-2xl font-bold ${s.color}`}>{s.val}</p>
                   <p className="text-white/40 text-xs">{s.label}</p>
                 </div>
               ))}
             </div>
+
             <div className="bg-purple-600/20 border border-purple-400/30 rounded-2xl p-4 backdrop-blur">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Contexto de hoy</p>
               <div className="flex justify-between text-sm">
@@ -88,10 +120,14 @@ Sueño: "${contenidoSueno}"
                 <span className="text-white/70">{faseLunar.simbolo} {faseLunar.nombre}</span>
               </div>
             </div>
-            <button onClick={() => { setTipoActivo('libre'); setFase('nueva') }} className="bg-white/8 border border-white/20 rounded-2xl p-4 backdrop-blur text-left hover:bg-white/15 transition" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+
+            <button onClick={() => { setTipoActivo('libre'); setFase('nueva') }}
+              className="bg-white/8 border border-white/20 rounded-2xl p-4 backdrop-blur text-left hover:bg-white/15 transition"
+              style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-1">Escribe hoy</p>
               <p className="text-white/70 text-sm">¿Qué necesitas procesar, celebrar o soltar hoy?</p>
             </button>
+
             {entradas.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-5xl mb-3">📖</p>
@@ -123,6 +159,7 @@ Sueño: "${contenidoSueno}"
             )}
           </div>
         )}
+
         {fase === 'nueva' && (
           <div className="flex flex-col gap-5">
             <div className="grid grid-cols-3 gap-2">
@@ -132,27 +169,41 @@ Sueño: "${contenidoSueno}"
                   style={{ backgroundColor: tipoActivo === tipo.id ? undefined : 'rgba(255,255,255,0.08)' }}>
                   <span className="text-xl">{tipo.icono}</span>
                   <span className="text-xs text-white leading-tight">{tipo.nombre}</span>
+                  {tipo.id === 'sueno' && !esPremium && <span className="text-xs text-amber-300">✨</span>}
                 </button>
               ))}
             </div>
+
             <div className="flex gap-2 text-xs text-white/40">
               <span>🃏 {cartaDiaria.nombre}</span><span>·</span><span>{faseLunar.simbolo} {faseLunar.nombre}</span>
             </div>
+
             <div className="bg-white/8 border border-white/20 rounded-3xl p-5 backdrop-blur" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">{TIPOS_ENTRADA.find(t => t.id === tipoActivo)?.descripcion}</p>
-              <textarea value={contenido} onChange={e => setContenido(e.target.value)} placeholder="Escribe aquí..." rows={8} className="w-full bg-transparent text-white text-sm resize-none outline-none placeholder-white/30 leading-relaxed" autoFocus />
+              <textarea value={contenido} onChange={e => setContenido(e.target.value)}
+                placeholder="Escribe aquí..." rows={8}
+                className="w-full bg-transparent text-white text-sm resize-none outline-none placeholder-white/30 leading-relaxed" autoFocus />
             </div>
+
+            {tipoActivo === 'sueno' && !esPremium && (
+              <div className="bg-amber-500/10 border border-amber-400/30 rounded-2xl p-3">
+                <p className="text-amber-300 text-xs">✨ La interpretación IA de sueños es Premium. Puedes guardar el sueño, pero la lectura requiere plan Premium.</p>
+              </div>
+            )}
+
             <div className="bg-white/8 border border-white/20 rounded-2xl p-4 backdrop-blur" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
               <p className="text-white/60 text-xs tracking-widest uppercase mb-3">¿Cómo te sientes? {HUMOR_EMOJIS[humor]}</p>
               <input type="range" min="0" max="10" value={humor} onChange={e => setHumor(parseInt(e.target.value))} className="w-full accent-purple-500" />
               <div className="flex justify-between text-xs text-white/30 mt-1"><span>😞</span><span>😐</span><span>🌈</span></div>
             </div>
+
             <div className="flex gap-3">
               <button onClick={() => setFase('lista')} className="flex-1 bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full">Cancelar</button>
               <button onClick={guardar} disabled={!contenido.trim()} className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full disabled:opacity-40">Guardar</button>
             </div>
           </div>
         )}
+
         {fase === 'ver' && entradaVista && (
           <div className="flex flex-col gap-5">
             <div className="bg-white/8 border border-white/20 rounded-3xl p-6 backdrop-blur" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
@@ -167,15 +218,34 @@ Sueño: "${contenidoSueno}"
                 {entradaVista.humor !== undefined && <span>{HUMOR_EMOJIS[entradaVista.humor]}</span>}
               </div>
             </div>
+
             {entradaVista.tipo === 'sueno' && !interpretacion && (
-              <button onClick={() => interpretarSueno(entradaVista.contenido)} className="w-full bg-purple-600/30 border border-purple-400/40 text-white font-semibold py-4 rounded-full">Interpretar este sueño</button>
+              <button onClick={() => interpretarSueno(entradaVista.contenido)}
+                className="w-full bg-purple-600/30 border border-purple-400/40 text-white font-semibold py-4 rounded-full">
+                {esPremium ? 'Interpretar este sueño' : '✨ Interpretar sueño (Premium)'}
+              </button>
             )}
-            {cargando && <div className="flex gap-2 justify-center py-4"><div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} /><div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} /><div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} /></div>}
+
+            {cargando && (
+              <div className="flex gap-2 justify-center py-4">
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+            )}
+
             {interpretacion && (
               <div className="bg-white/8 border border-white/20 rounded-3xl p-5 backdrop-blur" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
                 <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Interpretación</p>
                 <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>
               </div>
+            )}
+
+            {interpretacion && (
+              <>
+                <DisclaimerIA />
+                <Valoracion herramienta="diario-suenos" userId={userId} />
+              </>
             )}
           </div>
         )}
