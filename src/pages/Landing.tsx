@@ -1,3 +1,5 @@
+import CookieBanner from '../components/CookieBanner'
+
 export default function Landing() {
   return (
     <div
@@ -84,13 +86,16 @@ export default function Landing() {
         </p>
 
         <button
-          onClick={() => window.location.href = '/disclaimer'}
+          onClick={() => window.location.href = '/legal'}
           className="text-white/25 text-xs mt-2 underline"
         >
           Aviso Legal completo
         </button>
 
       </div>
+
+      {/* Banner de cookies — aparece en primer acceso */}
+      <CookieBanner />
     </div>
   )
 }
