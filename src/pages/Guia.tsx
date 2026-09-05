@@ -3,6 +3,7 @@ import { llamarGemini, useUserPlan, useAnalytics, registrarEvento } from '../lib
 import Paywall from '../components/Paywall'
 import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
+import AvisoIA from '../components/AvisoIA'
 
 interface Mensaje {
   rol: 'usuario' | 'asistente'
@@ -99,6 +100,8 @@ Cuando el usuario haga una pregunta, ofrece diferentes perspectivas para explora
       </div>
 
       <div className="relative z-10 flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-4">
+        {/* Aviso AI Act — obligatorio por ley */}
+        <AvisoIA />
         {mensajes.map((m, i) => (
           <div key={i} className={`flex ${m.rol === 'usuario' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-xs px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${m.rol === 'usuario' ? 'bg-purple-600/80 text-white rounded-br-sm' : 'bg-white/10 backdrop-blur border border-white/10 text-white/90 rounded-bl-sm'}`}>
