@@ -1,9 +1,12 @@
+import { useState, useEffect } from 'react'
 import { getCartaDiaria } from '../lib/motores/tarotDiario'
 import { getFaseLunar } from '../lib/motores/luna'
 import { getSignoSolar } from '../lib/motores/horoscopo'
 import { getAfirmacionDelDia } from '../lib/motores/afirmaciones'
 import { getRetrogradosActivos } from '../lib/motores/transitos'
 import { getImagenCarta } from '../components/svg/TarotSVG'
+import PWAInstallPrompt from '../components/PWAInstallPrompt'
+import { supabase } from '../lib/supabase'
 
 export default function Universo() {
   const nombre = localStorage.getItem('nombre') || 'Viajero'
@@ -13,6 +16,8 @@ export default function Universo() {
   const faseLunar = getFaseLunar()
   const afirmacion = getAfirmacionDelDia(signo)
   const retrogradosActivos = getRetrogradosActivos()
+  const [racha, setRacha] = useState<number | null>(null)
+  const [esPremium, setEsPremium] = useState(false)
 
   const SIMBOLOS_SIGNOS: Record<string, string> = {
     Aries: '♈', Tauro: '♉', Géminis: '♊', Cáncer: '♋',
@@ -39,6 +44,53 @@ export default function Universo() {
     { icono: '💎', label: 'Cristales', ruta: '/cristales' },
   ]
 
+  // Cargar racha de días y plan
+  useEffect(() => {
+    async function cargar() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('plan')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (data?.plan === 'premium') setEsPremium(true)
+
+      // Calcular racha desde historial de lecturas
+      const { data: lecturas } = await supabase
+        .from('historial_lecturas')
+        .select('created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(60)
+
+      if (!lecturas || lecturas.length === 0) { setRacha(0); return }
+
+      // Calcular días únicos consecutivos
+      const diasUnicos = [...new Set(lecturas.map(l =>
+        new Date(l.created_at).toISOString().split('T')[0]
+      ))].sort().reverse()
+
+      let rachaActual = 0
+      const hoyStr = new Date().toISOString().split('T')[0]
+      let diaEsperado = hoyStr
+
+      for (const dia of diasUnicos) {
+        if (dia === diaEsperado) {
+          rachaActual++
+          const d = new Date(diaEsperado)
+          d.setDate(d.getDate() - 1)
+          diaEsperado = d.toISOString().split('T')[0]
+        } else break
+      }
+
+      setRacha(rachaActual)
+    }
+    cargar()
+  }, [])
+
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
       <div className="absolute inset-0 bg-black/75" />
@@ -61,12 +113,41 @@ export default function Universo() {
             <button
               onClick={() => window.location.href = '/perfil'}
               className="w-9 h-9 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-base hover:bg-white/20 transition"
-              title="Mi perfil"
             >
               {nombre.charAt(0).toUpperCase()}
             </button>
           </div>
         </div>
+
+        {/* Racha de días */}
+        {racha !== null && racha > 0 && (
+          <div className="bg-amber-500/15 border border-amber-400/30 rounded-2xl p-3 backdrop-blur flex items-center gap-3">
+            <span className="text-2xl">🔥</span>
+            <div>
+              <p className="text-amber-300 text-sm font-semibold">
+                {racha} {racha === 1 ? 'día' : 'días'} seguidos
+              </p>
+              <p className="text-white/50 text-xs">Mantén tu racha espiritual</p>
+            </div>
+            {racha >= 7 && <span className="ml-auto text-amber-400 text-xs font-bold">🏆 Semana</span>}
+            {racha >= 30 && <span className="ml-auto text-amber-400 text-xs font-bold">👑 Mes</span>}
+          </div>
+        )}
+
+        {/* Banner premium si es free */}
+        {!esPremium && (
+          <button
+            onClick={() => window.location.href = '/premium'}
+            className="bg-gradient-to-r from-purple-900/60 to-pink-900/60 border border-purple-400/30 rounded-2xl p-4 text-left flex items-center gap-3"
+          >
+            <span className="text-2xl">✨</span>
+            <div className="flex-1">
+              <p className="text-white font-semibold text-sm">Desbloquea UNIVERSE Premium</p>
+              <p className="text-purple-300/70 text-xs">55+ herramientas · IA ilimitada · desde €4,17/mes</p>
+            </div>
+            <span className="text-purple-300/50">›</span>
+          </button>
+        )}
 
         {/* Alerta retrógrado */}
         {retrogradosActivos.length > 0 && (
@@ -167,7 +248,7 @@ export default function Universo() {
           Explorar 55+ tradiciones espirituales
         </button>
 
-        {/* Consulta un experto — próximamente */}
+        {/* Consulta un experto */}
         <div className="bg-white/8 border border-white/20 rounded-3xl p-5 backdrop-blur"
           style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
           <div className="flex items-center justify-between">
@@ -182,12 +263,15 @@ export default function Universo() {
         {/* Footer */}
         <div className="flex justify-center gap-6 text-white/60 text-xs">
           <button onClick={() => window.location.href = '/perfil'} className="hover:text-white transition">Mi perfil</button>
-          <button onClick={() => window.location.href = '/carta-natal'} className="hover:text-white transition">Carta natal</button>
+          <button onClick={() => window.location.href = '/historial'} className="hover:text-white transition">Historial</button>
           <button onClick={() => window.location.href = '/diario'} className="hover:text-white transition">Diario</button>
           <button onClick={() => window.location.href = '/legal'} className="hover:text-white transition">Legal</button>
         </div>
 
       </div>
+
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
     </div>
   )
 }
