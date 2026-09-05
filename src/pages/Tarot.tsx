@@ -5,6 +5,7 @@ import Paywall from '../components/Paywall'
 import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
 import { llamarGemini, useUserPlan, useAnalytics, registrarEvento } from '../lib/paginaHelper'
+import { guardarLectura } from '../hooks/useHistorial'
 
 const ARCANOS_MAYORES = [
   { nombre: 'El Mago', numero: 'I', keywords: 'Voluntad · Poder · Acción' },
@@ -106,6 +107,12 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
     } else {
       setInterpretacion(result.texto)
       registrarEvento({ herramienta: 'tarot', accion: 'lectura_ia', tiempo_respuesta_ms: Date.now() - t0, user_id: userId })
+      guardarLectura({
+        herramienta: 'tarot',
+        titulo: `Tirada: ${tirada?.descripcion} · ${cartas.map(c => c.nombre).join(', ')}`,
+        contenido: result.texto,
+        metadatos: { tirada: tiradaSeleccionada, cartas: cartas.map(c => ({ nombre: c.nombre, invertida: c.invertida })) },
+      })
     }
     setCargando(false)
   }
