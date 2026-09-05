@@ -180,11 +180,11 @@ export default function Universo() {
         </div>
 
         {/* Footer */}
-        <div className="flex justify-center gap-6 text-white/20 text-xs">
-          <button onClick={() => window.location.href = '/perfil'}>Mi perfil</button>
-          <button onClick={() => window.location.href = '/carta-natal'}>Carta natal</button>
-          <button onClick={() => window.location.href = '/diario'}>Diario</button>
-          <button onClick={() => window.location.href = '/legal'}>Legal</button>
+        <div className="flex justify-center gap-6 text-white/60 text-xs">
+          <button onClick={() => window.location.href = '/perfil'} className="hover:text-white transition">Mi perfil</button>
+          <button onClick={() => window.location.href = '/carta-natal'} className="hover:text-white transition">Carta natal</button>
+          <button onClick={() => window.location.href = '/diario'} className="hover:text-white transition">Diario</button>
+          <button onClick={() => window.location.href = '/legal'} className="hover:text-white transition">Legal</button>
         </div>
 
       </div>
