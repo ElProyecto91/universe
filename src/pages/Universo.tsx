@@ -51,12 +51,21 @@ export default function Universo() {
             <p className="text-white/50 text-xs capitalize">{hoy}</p>
             <p className="text-white text-xl font-bold">Hola, {nombre} ✨</p>
           </div>
-          <button
-            onClick={() => window.location.href = '/guia'}
-            className="bg-purple-600/40 border border-purple-400/50 rounded-full px-4 py-2 text-purple-300 text-xs font-semibold"
-          >
-            Guía IA
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => window.location.href = '/guia'}
+              className="bg-purple-600/40 border border-purple-400/50 rounded-full px-4 py-2 text-purple-300 text-xs font-semibold"
+            >
+              Guía IA
+            </button>
+            <button
+              onClick={() => window.location.href = '/perfil'}
+              className="w-9 h-9 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-base hover:bg-white/20 transition"
+              title="Mi perfil"
+            >
+              {nombre.charAt(0).toUpperCase()}
+            </button>
+          </div>
         </div>
 
         {/* Alerta retrógrado */}
@@ -172,9 +181,10 @@ export default function Universo() {
 
         {/* Footer */}
         <div className="flex justify-center gap-6 text-white/20 text-xs">
+          <button onClick={() => window.location.href = '/perfil'}>Mi perfil</button>
           <button onClick={() => window.location.href = '/carta-natal'}>Carta natal</button>
           <button onClick={() => window.location.href = '/diario'}>Diario</button>
-          <button onClick={() => window.location.href = '/disclaimer'}>Aviso Legal</button>
+          <button onClick={() => window.location.href = '/legal'}>Legal</button>
         </div>
 
       </div>
