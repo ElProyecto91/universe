@@ -6,6 +6,7 @@ import Paywall from '../components/Paywall'
 import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
 import { supabase, llamarGemini, useUserPlan, useAnalytics, registrarEvento } from '../lib/paginaHelper'
+import { guardarLectura } from '../hooks/useHistorial'
 
 export default function CartaNatal() {
   const [interpretacion, setInterpretacion] = useState('')
@@ -70,6 +71,12 @@ ${descripcionPlanetas}
     if (!result.error && result.texto) {
       setInterpretacion(`${nombre}, ${result.texto}`)
       registrarEvento({ herramienta: 'carta-natal', accion: 'lectura_ia', desde_cache: false, tiempo_respuesta_ms: Date.now() - t0, user_id: userId })
+      guardarLectura({
+        herramienta: 'carta-natal',
+        titulo: `Carta Natal · ${signoSolar} · ${fechaNacimiento}`,
+        contenido: result.texto,
+        metadatos: { signo: signoSolar, fecha_nacimiento: fechaNacimiento },
+      })
       supabase.from('ai_cache').insert({ cache_key: cacheKey, herramienta: 'carta-natal', prompt_hash: cacheKey, respuesta: result.texto, tokens_used: result.tokensUsados, expires_at: null }).then(() => {})
     } else {
       setInterpretacion('Las estrellas guardan silencio. Inténtalo de nuevo.')
