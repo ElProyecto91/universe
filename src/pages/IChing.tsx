@@ -5,6 +5,7 @@ import Paywall from '../components/Paywall'
 import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
 import { llamarGemini, useUserPlan, useAnalytics, registrarEvento } from '../lib/paginaHelper'
+import { guardarLectura } from '../hooks/useHistorial'
 
 export default function IChing() {
   const [fase, setFase] = useState<'pregunta' | 'resultado'>('pregunta')
@@ -58,6 +59,12 @@ Tema: ${hexData.tema}
     else {
       setInterpretacion(result.texto || hexData.tema)
       registrarEvento({ herramienta: 'iching', accion: 'lectura_ia', tiempo_respuesta_ms: Date.now() - t0, user_id: userId })
+      guardarLectura({
+        herramienta: 'iching',
+        titulo: `Hexagrama ${hexData.numero}: ${hexData.nombre} · "${pregunta.slice(0, 40)}${pregunta.length > 40 ? '…' : ''}"`,
+        contenido: result.texto || hexData.tema,
+        metadatos: { hexagrama: hexData.numero, nombre: hexData.nombre, pregunta },
+      })
     }
     setCargando(false)
   }
