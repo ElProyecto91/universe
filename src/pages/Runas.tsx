@@ -5,6 +5,7 @@ import Paywall from '../components/Paywall'
 import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
 import { useUserPlan, useAnalytics, registrarEvento } from '../lib/paginaHelper'
+import { guardarLectura } from '../hooks/useHistorial'
 
 const TIRADAS = [
   { id: 'una', nombre: '1 Runa', descripcion: 'Mensaje del día', cantidad: 1, premium: false },
@@ -69,6 +70,12 @@ Escribe una interpretación rúnica de 3-4 párrafos. Primero describe la energ�
       const texto = data.candidates?.[0]?.content?.parts?.[0]?.text
       setInterpretacion(texto || 'Error al interpretar las runas.')
       registrarEvento({ herramienta: 'runas', accion: 'lectura_ia', tiempo_respuesta_ms: Date.now() - t0, user_id: userId })
+      if (texto) guardarLectura({
+        herramienta: 'runas',
+        titulo: `Tirada: ${t.descripcion} · ${runasSeleccionadas.map(r => r.simbolo).join(' ')}`,
+        contenido: texto,
+        metadatos: { tirada: t.id, runas: runasSeleccionadas.map(r => ({ nombre: r.nombre, simbolo: r.simbolo, invertida: r.estaInvertida })) },
+      })
     } catch (err) {
       setInterpretacion('Error de conexión. Inténtalo de nuevo.')
     }
