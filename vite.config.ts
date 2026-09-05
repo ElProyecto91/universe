@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['stocksnap-constellations-2609647.jpg', 'favicon.ico'],
+      includeAssets: ['favicon.ico'],
       manifest: {
         name: 'UNIVERSE — Astrología y Tarot con IA',
         short_name: 'UNIVERSE',
@@ -38,11 +38,11 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Cachear assets estáticos para offline
-        globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg,woff2}'],
+        maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globIgnores: ['**/*.jpg', '**/*.jpeg', '**/*.webp'],
         runtimeCaching: [
           {
-            // Cachear llamadas a Supabase en modo offline
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
             handler: 'NetworkFirst',
             options: {
