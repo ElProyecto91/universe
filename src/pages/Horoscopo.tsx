@@ -5,6 +5,7 @@ import CtaUpsell from '../components/CtaUpsell'
 import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
 import { supabase, useUserPlan, useAnalytics, registrarEvento } from '../lib/paginaHelper'
+import { guardarLectura } from '../hooks/useHistorial'
 
 const TODOS_LOS_SIGNOS = [
   'Aries', 'Tauro', 'Géminis', 'Cáncer', 'Leo', 'Virgo',
@@ -102,6 +103,12 @@ Máximo 200 palabras. Solo el texto, sin título ni encabezado.`
       }).then(() => {})
 
       registrarEvento({ herramienta: 'horoscopo', accion: 'lectura_ia', desde_cache: false, tiempo_respuesta_ms: Date.now() - t0, signo: signoSeleccionado, user_id: userId })
+      guardarLectura({
+        herramienta: 'horoscopo',
+        titulo: `Horóscopo ${signoSeleccionado} · ${fechaHoy}`,
+        contenido: texto,
+        metadatos: { signo: signoSeleccionado, fecha: fechaHoy },
+      })
     } catch {
       setInterpretacion('Las estrellas guardan silencio. Inténtalo de nuevo.')
     }
