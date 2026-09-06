@@ -111,7 +111,7 @@ export default function Expertos() {
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/82" />
+      <div className="absolute inset-0 bg-black/88" />
 
       {/* Header */}
       <div className="relative z-10 px-4 pt-10 pb-4">
@@ -265,4 +265,4 @@ export default function Expertos() {
       </div>
     </div>
   )
-} 
+}
