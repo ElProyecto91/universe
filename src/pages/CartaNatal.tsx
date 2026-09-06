@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { limpiarMarkdown } from '../components/TextoIA'
 import { PLANETAS_INFO, CASAS_ASTROLOGICAS, calcularSignoLunaAprox, calcularVenusAprox, calcularMarteAprox, calcularMercurioAprox } from '../lib/motores/cartaNatal'
 import { getSignoSolar } from '../lib/motores/horoscopo'
 import Compartir from '../components/Compartir'
@@ -65,11 +66,11 @@ Posiciones:
 ${descripcionPlanetas}
 
 4-5 párrafos: trío Sol/Luna/Ascendente, Mercurio/Venus/Marte como perfil diario, aspectos clave de personalidad, propósito de vida emergente. Menciona que para máxima precisión se necesita hora de nacimiento. Específico, poético, profundo.`,
-      userId, usarLite: false, cacheable: false, maxTokens: 600,
+      userId, usarLite: false, cacheable: false, maxTokens: 1800,
     })
 
     if (!result.error && result.texto) {
-      setInterpretacion(`${nombre}, ${result.texto}`)
+      setInterpretacion(limpiarMarkdown(`${nombre}, ${result.texto}`))
       registrarEvento({ herramienta: 'carta-natal', accion: 'lectura_ia', desde_cache: false, tiempo_respuesta_ms: Date.now() - t0, user_id: userId })
       guardarLectura({
         herramienta: 'carta-natal',
