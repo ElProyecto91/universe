@@ -48,7 +48,7 @@ export default function Historial() {
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/80" />
+      <div className="absolute inset-0 bg-black/90" />
 
       {/* Header */}
       <div className="relative z-10 flex items-center px-4 py-4 border-b border-white/10">
