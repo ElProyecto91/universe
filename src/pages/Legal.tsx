@@ -294,4 +294,4 @@ export default function Legal() {
       </div>
     </div>
   )
-}
+} 
