@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { limpiarMarkdown } from '../components/TextoIA'
 import { lanzar3Dados, INTERPRETACIONES_DADO } from '../lib/motores/dados'
 import Compartir from '../components/Compartir'
 import Paywall from '../components/Paywall'
@@ -42,12 +43,12 @@ Dados: ${resultado.join(', ')} (suma: ${suma})
 Dado 1 = mente/pensamiento · Dado 2 = corazón/emoción · Dado 3 = acción/cuerpo
 
 2-3 párrafos: conecta los números con la pregunta, perspectiva y consejo concreto. Sin predicciones absolutas.`,
-      userId, usarLite: true, cacheable: false, maxTokens: 200,
+      userId, usarLite: true, cacheable: false, maxTokens: 600,
     })
 
     if (result.error) setErrorMsg(result.error)
     else {
-      setInterpretacion(result.texto)
+      setInterpretacion(limpiarMarkdown(result.texto))
       registrarEvento({ herramienta: 'dice-oracle', accion: 'lectura_ia', tiempo_respuesta_ms: Date.now() - t0, user_id: userId })
     }
     setCargando(false)
