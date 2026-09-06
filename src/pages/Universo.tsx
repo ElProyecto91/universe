@@ -276,4 +276,4 @@ export default function Universo() {
       <PWAInstallPrompt />
     </div>
   )
-}
+} 
