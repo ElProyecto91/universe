@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { limpiarMarkdown } from '../components/TextoIA'
 import { lanzar3Monedas, getInterpretacion, ResultadoMoneda } from '../lib/motores/coinOracle'
 import Compartir from '../components/Compartir'
 import Paywall from '../components/Paywall'
@@ -44,12 +45,12 @@ Resultado: ${resultado.join(', ')} (${caras} cara${caras !== 1 ? 's' : ''}, ${cr
 Patrón: ${interpretacionBase.titulo} — ${interpretacionBase.mensaje}
 
 2 párrafos: qué dice este patrón en respuesta a la pregunta, perspectiva más profunda. Pregunta de reflexión final. Sin predicciones absolutas.`,
-      userId, usarLite: true, cacheable: false, maxTokens: 200,
+      userId, usarLite: true, cacheable: false, maxTokens: 600,
     })
 
     if (result.error) setErrorMsg(result.error)
     else {
-      setInterpretacion(result.texto)
+      setInterpretacion(limpiarMarkdown(result.texto))
       registrarEvento({ herramienta: 'coin-oracle', accion: 'lectura_ia', tiempo_respuesta_ms: Date.now() - t0, user_id: userId })
     }
     setCargando(false)
