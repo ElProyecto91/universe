@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { limpiarMarkdown } from '../components/TextoIA'
 import { TIPOS_ENTRADA, guardarEntrada, cargarEntradas, eliminarEntrada, getEstadisticasDiario, EntradaDiario } from '../lib/motores/diario'
 import { getFaseLunar } from '../lib/motores/luna'
 import { getCartaDiaria } from '../lib/motores/tarotDiario'
@@ -50,7 +51,7 @@ Nombre: ${nombre}
 Sueño: "${contenidoSueno}"
 
 2 párrafos: símbolos principales y su significado, pregunta de reflexión final.`,
-      userId, usarLite: true, cacheable: false, maxTokens: 200,
+      userId, usarLite: true, cacheable: false, maxTokens: 600,
     })
     setInterpretacion(result.error ? '' : result.texto)
     registrarEvento({ herramienta: 'diario-suenos', accion: 'lectura_ia', tiempo_respuesta_ms: Date.now() - t0, user_id: userId })
