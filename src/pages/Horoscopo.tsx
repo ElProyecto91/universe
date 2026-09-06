@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { limpiarMarkdown } from '../components/TextoIA'
 import { getHoroscopoDiario, getSignoSolar } from '../lib/motores/horoscopo'
 import Compartir from '../components/Compartir'
 import CtaUpsell from '../components/CtaUpsell'
@@ -94,7 +95,7 @@ Máximo 200 palabras. Solo el texto, sin título ni encabezado.`
       const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
       const tokens = data.usageMetadata?.totalTokenCount ?? 0
 
-      setInterpretacion(`${nombre}, ${texto}`)
+      setInterpretacion(limpiarMarkdown(`${nombre}, ${texto}`))
       setFromCache(false)
 
       supabase.from('horoscopo_cache').insert({
