@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { limpiarMarkdown } from '../components/TextoIA'
 import { sacarRunas, RUNAS } from '../lib/motores/runas'
 import Compartir from '../components/Compartir'
 import Paywall from '../components/Paywall'
@@ -68,7 +69,7 @@ Escribe una interpretación rúnica de 3-4 párrafos. Primero describe la energ�
       )
       const data = await res.json()
       const texto = data.candidates?.[0]?.content?.parts?.[0]?.text
-      setInterpretacion(texto || 'Error al interpretar las runas.')
+      setInterpretacion(limpiarMarkdown(texto) || 'Error al interpretar las runas.')
       registrarEvento({ herramienta: 'runas', accion: 'lectura_ia', tiempo_respuesta_ms: Date.now() - t0, user_id: userId })
       if (texto) guardarLectura({
         herramienta: 'runas',
