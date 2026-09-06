@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import FiscalExperto from '../components/FiscalExperto'
 
 interface Experto {
   id: string
@@ -487,16 +488,10 @@ export default function PanelExperto() {
         {/* ── TAB: FISCAL ──────────────────────────────────── */}
         {tab === 'fiscal' && (
           <>
-            <div className="bg-purple-600/15 border border-purple-400/30 rounded-2xl p-4">
-              <p className="text-purple-300 text-xs leading-relaxed">
-                ℹ️ Esta sección te ayuda a preparar tu declaración como autónomo. Los datos son orientativos — consulta siempre con un asesor fiscal en tu país.
-              </p>
-            </div>
-
             {/* Selector año fiscal */}
             <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
-              <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">📅 Año fiscal</p>
-              <div className="flex gap-2">
+              <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">📅 Año fiscal para exportación</p>
+              <div className="flex gap-2 mb-3">
                 {[new Date().getFullYear() - 1, new Date().getFullYear()].map(anio => (
                   <button key={anio} onClick={() => setAnioFiscal(anio)}
                     className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition ${anioFiscal === anio ? 'bg-purple-600 border-purple-400 text-white' : 'bg-white/10 border-white/20 text-white/70'}`}>
@@ -504,117 +499,20 @@ export default function PanelExperto() {
                   </button>
                 ))}
               </div>
-            </div>
-
-            {/* Resumen fiscal del año */}
-            <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
-              <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">🧾 Resumen {anioFiscal}</p>
-              {(() => {
-                const sesionesFiscal = sesiones.filter(s => new Date(s.created_at).getFullYear() === anioFiscal)
-                const bruto = sesionesFiscal.reduce((acc, s) => acc + (s.importe_total ?? 0), 0)
-                const neto = sesionesFiscal.reduce((acc, s) => acc + (s.importe_experto ?? 0), 0)
-                const comision = bruto - neto
-                return (
-                  <div className="flex flex-col gap-2">
-                    {[
-                      { label: 'Facturación bruta', val: `€${bruto.toFixed(2)}`, desc: 'Lo que pagaron los usuarios' },
-                      { label: 'Comisión UNIVERSE (30%)', val: `-€${comision.toFixed(2)}`, desc: 'Intermediación + pagos', neg: true },
-                      { label: 'Ingresos netos recibidos', val: `€${neto.toFixed(2)}`, desc: 'Base imponible orientativa', bold: true },
-                      { label: 'Sesiones completadas', val: sesionesFiscal.length, desc: `en ${anioFiscal}` },
-                      { label: 'Minutos consultados', val: `${sesionesFiscal.reduce((acc, s) => acc + (s.duracion_minutos ?? 0), 0)} min`, desc: '' },
-                    ].map((s, i) => (
-                      <div key={i} className={`flex justify-between items-start py-2 border-b border-white/8 last:border-0 ${s.bold ? 'pt-3' : ''}`}>
-                        <div>
-                          <p className={`text-sm ${s.bold ? 'text-white font-bold' : 'text-white/80'}`}>{s.label}</p>
-                          {s.desc && <p className="text-white/40 text-xs">{s.desc}</p>}
-                        </div>
-                        <p className={`font-bold text-sm ${s.neg ? 'text-red-400' : s.bold ? 'text-green-300 text-base' : 'text-white'}`}>{s.val}</p>
-                      </div>
-                    ))}
-                  </div>
-                )
-              })()}
-            </div>
-
-            {/* Desglose mensual */}
-            <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
-              <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">📊 Desglose mensual {anioFiscal}</p>
-              <div className="flex flex-col gap-1">
-                {MESES.map((mes, i) => {
-                  const sesMes = sesiones.filter(s =>
-                    new Date(s.created_at).getFullYear() === anioFiscal &&
-                    new Date(s.created_at).getMonth() === i
-                  )
-                  const neto = sesMes.reduce((acc, s) => acc + (s.importe_experto ?? 0), 0)
-                  if (sesMes.length === 0 && i > new Date().getMonth() && anioFiscal === new Date().getFullYear()) return null
-                  return (
-                    <div key={mes} className="flex justify-between items-center py-1.5 border-b border-white/5 last:border-0">
-                      <span className="text-white/70 text-sm">{mes}</span>
-                      <div className="flex items-center gap-4">
-                        <span className="text-white/40 text-xs">{sesMes.length} ses.</span>
-                        <span className={`font-semibold text-sm ${neto > 0 ? 'text-green-300' : 'text-white/30'}`}>
-                          €{neto.toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Info fiscal por países */}
-            <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
-              <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">🌍 Obligaciones fiscales por país</p>
-              <div className="flex flex-col gap-3">
-                {[
-                  {
-                    pais: '🇪🇸 España',
-                    info: 'Alta en Hacienda como autónomo (modelo 036/037). IVA 21% en servicios digitales. IRPF trimestral (modelo 130). Retención 15% si trabajas para empresas españolas.',
-                  },
-                  {
-                    pais: '🇩🇪 Alemania',
-                    info: 'Registro como Freiberufler o Gewerbetreibender. IVA (Mehrwertsteuer) 19%. Declaración anual (Einkommensteuererklärung). Kleinunternehmerregelung si ingresos < €22.000/año.',
-                  },
-                  {
-                    pais: '🇲🇽 México',
-                    info: 'Alta en el SAT como persona física con actividad empresarial o RIF. ISR (Impuesto Sobre la Renta). IVA 16%. Declaraciones mensuales y anual.',
-                  },
-                  {
-                    pais: '🇦🇷 Argentina',
-                    info: 'Inscripción en AFIP como monotributista o responsable inscripto. Facturación en pesos o divisas según categoría. Ingresos del exterior: declarar como renta de fuente extranjera.',
-                  },
-                  {
-                    pais: '🇨🇴 Colombia',
-                    info: 'Registro en DIAN como persona natural. Renta de trabajo independiente. IVA 19% en servicios. Retención en la fuente aplicable.',
-                  },
-                ].map((p, i) => (
-                  <div key={i} className="border-b border-white/8 last:border-0 pb-3 last:pb-0">
-                    <p className="text-white font-semibold text-sm mb-1">{p.pais}</p>
-                    <p className="text-white/70 text-xs leading-relaxed">{p.info}</p>
-                  </div>
-                ))}
-                <p className="text-white/30 text-xs">⚠️ Información orientativa. Consulta siempre con un asesor fiscal local.</p>
-              </div>
-            </div>
-
-            {/* Documento que emite UNIVERSE */}
-            <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
-              <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">📄 Documentos disponibles</p>
-              <p className="text-white/70 text-xs leading-relaxed mb-3">
-                UNIVERSE emite un resumen mensual de pagos que puedes usar como justificante de ingresos ante tu autoridad fiscal. Incluye: fecha, importe bruto, comisión retenida e importe neto.
-              </p>
               <div className="flex flex-col gap-2">
                 <button onClick={exportarSesionesCSV} disabled={exportando}
                   className="w-full bg-white/10 border border-white/20 text-white font-semibold py-3 rounded-xl text-sm disabled:opacity-40">
-                  {exportando ? '...' : `↓ Exportar todas mis sesiones (CSV)`}
+                  {exportando ? '...' : '↓ Exportar todas mis sesiones (CSV)'}
                 </button>
                 <button onClick={exportarInformeFiscal} disabled={exportando}
                   className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-3 rounded-xl text-sm disabled:opacity-40">
                   {exportando ? '...' : `↓ Informe fiscal ${anioFiscal} (CSV)`}
                 </button>
               </div>
-              <p className="text-white/30 text-xs text-center mt-2">Los archivos CSV incluyen BOM UTF-8 para compatibilidad con Excel y software contable.</p>
+              <p className="text-white/30 text-xs text-center mt-2">CSV con BOM UTF-8 · Compatible con Excel y software contable</p>
             </div>
+
+            <FiscalExperto anioFiscal={anioFiscal} sesiones={sesiones} />
           </>
         )}
 
