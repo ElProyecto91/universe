@@ -34,7 +34,7 @@ export default function Legal() {
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/85" />
+      <div className="absolute inset-0 bg-black/92" />
 
       <div className="relative z-10 flex items-center px-4 py-4 border-b border-white/10">
         <button onClick={() => window.history.back()} className="text-purple-300 text-sm">← Volver</button>
@@ -294,4 +294,4 @@ export default function Legal() {
       </div>
     </div>
   )
-} 
+}
