@@ -1,4 +1,5 @@
 // src/pages/HoroscopoCeltico.tsx
+import { limpiarMarkdown } from '../components/TextoIA'
 import { useState } from 'react'
 import Compartir from '../components/Compartir'
 import CtaUpsell from '../components/CtaUpsell'
@@ -114,11 +115,11 @@ Tono: poético, profundo, nunca predictivo. Habla del árbol como ser vivo y sab
       userId,
       usarLite: false,
       cacheable: false,
-      maxTokens: 400,
+      maxTokens: 1200,
     })
 
     if (!result.error && result.texto) {
-      setInterpretacion(result.texto)
+      setInterpretacion(limpiarMarkdown(result.texto))
       setFromCache(false)
       registrarEvento({ herramienta: 'horoscopo-celtico', accion: 'lectura_ia', desde_cache: false, tiempo_respuesta_ms: Date.now() - t0, user_id: userId })
       supabase.from('horoscopo_cache').insert({
