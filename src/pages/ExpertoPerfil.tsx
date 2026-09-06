@@ -137,7 +137,7 @@ export default function ExpertoPerfil() {
   if (cargando) {
     return (
       <div className="min-h-screen text-white flex items-center justify-center relative" style={bgStyle}>
-        <div className="absolute inset-0 bg-black/88" />
+        <div className="absolute inset-0 bg-black/92" />
         <div className="relative z-10 flex gap-2">
           <div className="w-3 h-3 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
           <div className="w-3 h-3 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -150,7 +150,7 @@ export default function ExpertoPerfil() {
   if (!experto) {
     return (
       <div className="min-h-screen text-white flex items-center justify-center relative" style={bgStyle}>
-        <div className="absolute inset-0 bg-black/88" />
+        <div className="absolute inset-0 bg-black/92" />
         <div className="relative z-10 text-center px-6">
           <p className="text-5xl mb-4">🔮</p>
           <p className="text-white font-bold text-xl mb-2">Experto no encontrado</p>
@@ -165,7 +165,7 @@ export default function ExpertoPerfil() {
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/88" />
+      <div className="absolute inset-0 bg-black/92" />
 
       {/* Modal de inicio de sesión */}
       {mostrarModal && (
@@ -173,7 +173,7 @@ export default function ExpertoPerfil() {
           <div className="w-full max-w-sm bg-black/95 border-t border-white/10 rounded-t-3xl p-6 flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <p className="text-white font-bold text-lg">Iniciar consulta</p>
-              <button onClick={() => setMostrarModal(false)} className="text-white/30 text-2xl">✕</button>
+              <button onClick={() => setMostrarModal(false)} className="text-white/60 text-2xl">✕</button>
             </div>
 
             <div className="flex items-center gap-3 bg-white/8 border border-white/15 rounded-2xl p-3"
@@ -183,13 +183,13 @@ export default function ExpertoPerfil() {
               </div>
               <div>
                 <p className="text-white font-semibold">{experto.nombre_artistico}</p>
-                <p className="text-white/50 text-xs">€{experto.precio_minuto.toFixed(2)}/min</p>
+                <p className="text-white/80 text-xs">€{experto.precio_minuto.toFixed(2)}/min</p>
               </div>
             </div>
 
             <div className="bg-green-500/10 border border-green-400/30 rounded-2xl p-3">
               <p className="text-green-300 text-sm font-semibold">🎁 {experto.minutos_gratis} minutos gratis</p>
-              <p className="text-white/60 text-xs mt-0.5">Tu primera sesión con {experto.nombre_artistico} empieza gratis. Solo se cobra a partir del minuto {experto.minutos_gratis + 1}.</p>
+              <p className="text-white text-xs mt-0.5">Tu primera sesión con {experto.nombre_artistico} empieza gratis. Solo se cobra a partir del minuto {experto.minutos_gratis + 1}.</p>
             </div>
 
             <div className="flex flex-col gap-3">
@@ -201,7 +201,7 @@ export default function ExpertoPerfil() {
               </button>
               <button
                 onClick={() => iniciarSesion('llamada')}
-                className="w-full bg-black/65 border border-white/25 text-white font-semibold py-4 rounded-full"
+                className="w-full bg-black/88 border border-white/25 text-white font-semibold py-4 rounded-full"
               >
                 📞 Llamada de voz
               </button>
@@ -240,7 +240,7 @@ export default function ExpertoPerfil() {
               <span className="bg-blue-500/20 text-blue-300 text-xs border border-blue-400/30 px-2 py-0.5 rounded-full">✓ Verificado</span>
             )}
           </div>
-          <p className={`text-sm font-medium mt-1 ${experto.disponible ? 'text-green-300' : 'text-white/40'}`}>
+          <p className={`text-sm font-medium mt-1 ${experto.disponible ? 'text-green-300' : 'text-white/70'}`}>
             {experto.disponible ? '● Disponible ahora' : '○ No disponible'}
           </p>
         </div>
@@ -250,17 +250,17 @@ export default function ExpertoPerfil() {
           <div className="text-center">
             <p className="text-white font-bold text-xl">{experto.valoracion_media.toFixed(1)}</p>
             <Estrellas valoracion={experto.valoracion_media} size="sm" />
-            <p className="text-white/40 text-xs mt-0.5">{experto.total_valoraciones} reseñas</p>
+            <p className="text-white/70 text-xs mt-0.5">{experto.total_valoraciones} reseñas</p>
           </div>
           <div className="w-px bg-white/10" />
           <div className="text-center">
             <p className="text-white font-bold text-xl">{experto.total_sesiones}</p>
-            <p className="text-white/40 text-xs">sesiones</p>
+            <p className="text-white/70 text-xs">sesiones</p>
           </div>
           <div className="w-px bg-white/10" />
           <div className="text-center">
             <p className="text-white font-bold text-xl">€{experto.precio_minuto.toFixed(2)}</p>
-            <p className="text-white/40 text-xs">por minuto</p>
+            <p className="text-white/70 text-xs">por minuto</p>
           </div>
         </div>
       </div>
@@ -269,13 +269,13 @@ export default function ExpertoPerfil() {
       <div className="relative z-10 flex-1 px-4 py-5 flex flex-col gap-5">
 
         {/* Bio */}
-        <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
+        <div className="bg-black/90 border border-white/15 rounded-2xl p-4">
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Sobre mí</p>
           <p className="text-white text-sm leading-relaxed">{experto.bio}</p>
         </div>
 
         {/* Especialidades */}
-        <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
+        <div className="bg-black/90 border border-white/15 rounded-2xl p-4">
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Especialidades</p>
           <div className="flex flex-wrap gap-2">
             {experto.especialidades?.map(esp => (
@@ -287,7 +287,7 @@ export default function ExpertoPerfil() {
         </div>
 
         {/* Métodos */}
-        <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
+        <div className="bg-black/90 border border-white/15 rounded-2xl p-4">
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Métodos de lectura</p>
           <div className="flex flex-col gap-2">
             {experto.metodos?.map(met => (
@@ -301,18 +301,18 @@ export default function ExpertoPerfil() {
 
         {/* Idiomas */}
         {experto.idiomas && experto.idiomas.length > 0 && (
-          <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
+          <div className="bg-black/90 border border-white/15 rounded-2xl p-4">
             <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Idiomas</p>
             <div className="flex gap-2">
               {experto.idiomas.map(id => (
-                <span key={id} className="bg-white/10 text-white/70 border border-white/20 text-sm px-3 py-1 rounded-full">{id}</span>
+                <span key={id} className="bg-white/10 text-white border border-white/20 text-sm px-3 py-1 rounded-full">{id}</span>
               ))}
             </div>
           </div>
         )}
 
         {/* Precio */}
-        <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
+        <div className="bg-black/90 border border-white/15 rounded-2xl p-4">
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Precios</p>
           <div className="flex flex-col gap-2">
             <div className="flex justify-between items-center">
@@ -340,18 +340,18 @@ export default function ExpertoPerfil() {
               <p className="text-purple-300 text-xs tracking-widest uppercase">Reseñas verificadas</p>
               <div className="flex items-center gap-1">
                 <Estrellas valoracion={experto.valoracion_media} size="sm" />
-                <span className="text-white/50 text-xs">{experto.valoracion_media.toFixed(1)}</span>
+                <span className="text-white/80 text-xs">{experto.valoracion_media.toFixed(1)}</span>
               </div>
             </div>
 
             {resenasVisibles.map(resena => (
-              <div key={resena.id} className="bg-black/70 border border-white/15 rounded-2xl p-4">
+              <div key={resena.id} className="bg-black/90 border border-white/15 rounded-2xl p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Estrellas valoracion={resena.valoracion} size="sm" />
-                  <p className="text-white/30 text-xs">{formatearFecha(resena.created_at)}</p>
+                  <p className="text-white/60 text-xs">{formatearFecha(resena.created_at)}</p>
                 </div>
                 {resena.comentario && (
-                  <p className="text-white/80 text-sm leading-relaxed">"{resena.comentario}"</p>
+                  <p className="text-white text-sm leading-relaxed">"{resena.comentario}"</p>
                 )}
               </div>
             ))}
@@ -368,8 +368,8 @@ export default function ExpertoPerfil() {
         )}
 
         {/* Aviso legal */}
-        <div className="bg-black/60 border border-white/10 rounded-2xl p-3">
-          <p className="text-white/30 text-xs leading-relaxed text-center">
+        <div className="bg-black/85 border border-white/10 rounded-2xl p-3">
+          <p className="text-white/60 text-xs leading-relaxed text-center">
             Las consultas con expertos son solo para entretenimiento y reflexión personal. No constituyen asesoramiento médico, psicológico, financiero ni legal.
           </p>
         </div>
@@ -377,7 +377,7 @@ export default function ExpertoPerfil() {
       </div>
 
       {/* CTA fijo en el fondo */}
-      <div className="relative z-10 px-4 py-4 border-t border-white/10 bg-black/80 backdrop-blur">
+      <div className="relative z-10 px-4 py-4 border-t border-white/10 bg-black/90 backdrop-blur">
         {experto.disponible ? (
           <button
             onClick={() => setMostrarModal(true)}
@@ -388,10 +388,10 @@ export default function ExpertoPerfil() {
           </button>
         ) : (
           <div className="flex flex-col gap-2">
-            <button className="w-full bg-white/10 border border-white/20 text-white/60 font-semibold py-4 rounded-full cursor-not-allowed">
+            <button className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full cursor-not-allowed">
               ○ No disponible ahora
             </button>
-            <p className="text-white/30 text-xs text-center">Vuelve más tarde o explora otros expertos</p>
+            <p className="text-white/60 text-xs text-center">Vuelve más tarde o explora otros expertos</p>
           </div>
         )}
       </div>
