@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { limpiarMarkdown } from '../components/TextoIA'
 import Compartir from '../components/Compartir'
 import Paywall from '../components/Paywall'
 import Valoracion from '../components/Valoracion'
@@ -112,13 +113,13 @@ export default function PaganPaths() {
       prompt: caminoSeleccionado.prompt(pregunta),
       userId,
       cacheable: false,
-      maxTokens: 400,
+      maxTokens: 1200,
     })
 
     if (result.error) {
       setErrorMsg(result.error)
     } else {
-      setInterpretacion(result.texto)
+      setInterpretacion(limpiarMarkdown(result.texto))
       registrarEvento({ herramienta: `pagan-${caminoSeleccionado.id}`, accion: 'lectura_ia', tiempo_respuesta_ms: Date.now() - t0, user_id: userId })
     }
     setCargando(false)
