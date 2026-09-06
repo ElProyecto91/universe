@@ -65,6 +65,7 @@ import Premium from './pages/Premium'
 import Expertos from './pages/Expertos'
 import ExpertoPerfil from './pages/ExpertoPerfil'
 import ExpertoUnirse from './pages/ExpertoUnirse'
+import PanelExperto from './pages/PanelExperto'
 
 export default function App() {
   return (
@@ -136,7 +137,8 @@ export default function App() {
         <Route path="/expertos" element={<Expertos />} />
         <Route path="/expertos/unirse" element={<ExpertoUnirse />} />
         <Route path="/expertos/:slug" element={<ExpertoPerfil />} />
+        <Route path="/panel-experto" element={<PanelExperto />} />
       </Routes>
     </BrowserRouter>
   )
-} 
+}
