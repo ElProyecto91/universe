@@ -155,7 +155,7 @@ export default function ExpertoUnirse() {
                     value={(form as any)[field.key]}
                     onChange={e => setForm(f => ({ ...f, [field.key]: e.target.value }))}
                     placeholder={field.placeholder}
-                    className="w-full bg-black/50 border border-white/20 rounded-2xl px-4 py-3 text-white text-sm outline-none focus:border-purple-400 placeholder-white/30"
+                    className="w-full bg-black/65 border border-white/20 rounded-2xl px-4 py-3 text-white text-sm outline-none focus:border-purple-400 placeholder-white/30"
                   />
                 </div>
               ))}
@@ -167,7 +167,7 @@ export default function ExpertoUnirse() {
                   onChange={e => setForm(f => ({ ...f, bio: e.target.value }))}
                   placeholder="Cuéntanos tu historia, tu experiencia y cómo ayudas a las personas..."
                   rows={5}
-                  className="w-full bg-black/50 border border-white/20 rounded-2xl px-4 py-3 text-white text-sm resize-none outline-none focus:border-purple-400 placeholder-white/30 leading-relaxed"
+                  className="w-full bg-black/65 border border-white/20 rounded-2xl px-4 py-3 text-white text-sm resize-none outline-none focus:border-purple-400 placeholder-white/30 leading-relaxed"
                 />
                 <p className="text-white/25 text-xs mt-1">{form.bio.length} caracteres</p>
               </div>
@@ -193,7 +193,7 @@ export default function ExpertoUnirse() {
                     className={`text-sm px-3 py-1.5 rounded-full border transition ${
                       form.especialidades.includes(esp)
                         ? 'bg-purple-600 border-purple-400 text-white'
-                        : 'bg-black/50 border-white/20 text-white/60'
+                        : 'bg-black/65 border-white/20 text-white/60'
                     }`}
                   >
                     {esp}
@@ -212,7 +212,7 @@ export default function ExpertoUnirse() {
                     className={`text-sm px-3 py-1.5 rounded-full border transition ${
                       form.metodos.includes(met)
                         ? 'bg-pink-600 border-pink-400 text-white'
-                        : 'bg-black/50 border-white/20 text-white/60'
+                        : 'bg-black/65 border-white/20 text-white/60'
                     }`}
                   >
                     {met}
@@ -241,14 +241,14 @@ export default function ExpertoUnirse() {
                     className={`py-3 rounded-2xl border text-sm font-semibold transition ${
                       form.precio_minuto === precio
                         ? 'bg-purple-600 border-purple-400 text-white'
-                        : 'bg-black/50 border-white/20 text-white/60'
+                        : 'bg-black/65 border-white/20 text-white/60'
                     }`}
                   >
                     €{precio}
                   </button>
                 ))}
               </div>
-              <div className="bg-black/50 border border-white/10 rounded-xl p-3 mt-2">
+              <div className="bg-black/65 border border-white/10 rounded-xl p-3 mt-2">
                 <p className="text-white/40 text-xs">
                   <strong className="text-green-400">🎁 Primer mes: 0% comisión.</strong> Solo se descuenta la tasa de Stripe (~2%). Desde el segundo mes recibirás el <strong className="text-white/60">70%</strong> (€{(parseFloat(form.precio_minuto) * 0.7).toFixed(2)}/min). Los primeros expertos verificados aparecen primero en el directorio durante 6 meses.
                 </p>
@@ -264,7 +264,7 @@ export default function ExpertoUnirse() {
                 value={form.experiencia_anos}
                 onChange={e => setForm(f => ({ ...f, experiencia_anos: e.target.value }))}
                 placeholder="Ej: 5"
-                className="w-full bg-black/50 border border-white/20 rounded-2xl px-4 py-3 text-white text-sm outline-none focus:border-purple-400 placeholder-white/30"
+                className="w-full bg-black/65 border border-white/20 rounded-2xl px-4 py-3 text-white text-sm outline-none focus:border-purple-400 placeholder-white/30"
               />
             </div>
 
@@ -275,11 +275,11 @@ export default function ExpertoUnirse() {
                 onChange={e => setForm(f => ({ ...f, motivacion: e.target.value }))}
                 placeholder="Cuéntanos qué te motiva a compartir tu don con la comunidad de UNIVERSE..."
                 rows={4}
-                className="w-full bg-black/50 border border-white/20 rounded-2xl px-4 py-3 text-white text-sm resize-none outline-none focus:border-purple-400 placeholder-white/30 leading-relaxed"
+                className="w-full bg-black/65 border border-white/20 rounded-2xl px-4 py-3 text-white text-sm resize-none outline-none focus:border-purple-400 placeholder-white/30 leading-relaxed"
               />
             </div>
 
-            <div className="bg-black/50 border border-white/10 rounded-2xl p-4">
+            <div className="bg-black/65 border border-white/10 rounded-2xl p-4">
               <p className="text-white/50 text-xs leading-relaxed">
                 Al solicitar unirte aceptas nuestros <button className="text-purple-400 underline" onClick={() => window.location.href = '/legal'}>términos para expertos</button>. Verificaremos tu identidad y experiencia antes de activar tu perfil.
               </p>
@@ -311,4 +311,4 @@ export default function ExpertoUnirse() {
       </div>
     </div>
   )
-} 
+}
