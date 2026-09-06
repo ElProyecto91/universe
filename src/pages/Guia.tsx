@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { limpiarMarkdown } from '../components/TextoIA'
 import { llamarGemini, useUserPlan, useAnalytics, registrarEvento } from '../lib/paginaHelper'
 import Paywall from '../components/Paywall'
 import Valoracion from '../components/Valoracion'
@@ -68,7 +69,7 @@ Cuando el usuario haga una pregunta, ofrece diferentes perspectivas para explora
       userId,
       usarLite: false,
       cacheable: false,
-      maxTokens: 500,
+      maxTokens: 1500,
       temperatura: 0.9,
     })
 
