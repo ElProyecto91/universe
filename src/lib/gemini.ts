@@ -1,17 +1,23 @@
 // src/lib/gemini.ts
+// ============================================================
+// UNIVERSE — Helper centralizado de Gemini
+// Modelos activos septiembre 2026:
+// Flash: gemini-3.6-flash ($0.75/$3.75 por 1M tokens)
+// Lite:  gemini-3.1-flash-lite ($0.25/$1.50 por 1M tokens)
+// ============================================================
+
 import { supabase } from './supabase'
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
 
-// ✅ Modelos activos a septiembre 2026
-// gemini-2.0-flash y gemini-2.0-flash-lite fueron apagados el 1 jun 2026
-const GEMINI_FLASH_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${GEMINI_API_KEY}`
+const GEMINI_FLASH_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${GEMINI_API_KEY}`
 const GEMINI_LITE_URL  = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${GEMINI_API_KEY}`
 
-const COSTE_FLASH_INPUT  = 0.00000150   // $1.50 / 1M tokens
-const COSTE_FLASH_OUTPUT = 0.0000090    // $9.00 / 1M tokens
-const COSTE_LITE_INPUT   = 0.000000010  // $0.10 / 1M tokens
-const COSTE_LITE_OUTPUT  = 0.000000040  // $0.40 / 1M tokens
+// Costes reales septiembre 2026 (USD por token)
+const COSTE_FLASH_INPUT  = 0.00000075   // $0.75 / 1M tokens
+const COSTE_FLASH_OUTPUT = 0.00000375   // $3.75 / 1M tokens
+const COSTE_LITE_INPUT   = 0.00000025   // $0.25 / 1M tokens
+const COSTE_LITE_OUTPUT  = 0.0000015    // $1.50 / 1M tokens
 
 export interface LlamarGeminiParams {
   herramienta: string
@@ -43,7 +49,7 @@ export async function llamarGemini(params: LlamarGeminiParams): Promise<LlamarGe
     usarLite = false,
     cacheable = false,
     cacheExpiraHoras = 24,
-    maxTokens = usarLite ? 200 : 500,
+    maxTokens = usarLite ? 600 : 1500,
     temperatura = 0.8,
   } = params
 
@@ -75,12 +81,8 @@ export async function llamarGemini(params: LlamarGeminiParams): Promise<LlamarGe
       contarCallsUsuario(userId, 'hora'),
       contarCallsUsuario(userId, 'dia'),
     ])
-    if (callsHora >= limiteHora) {
-      return error(`Has alcanzado el límite de ${limiteHora} consultas por hora.${esPremium ? '' : ' Hazte Premium para aumentar tu límite.'}`)
-    }
-    if (callsDia >= limiteDia) {
-      return error(`Has alcanzado el límite de ${limiteDia} consultas por día.${esPremium ? '' : ' Hazte Premium para aumentar tu límite.'}`)
-    }
+    if (callsHora >= limiteHora) return error(`Has alcanzado el límite de ${limiteHora} consultas por hora.${esPremium ? '' : ' Hazte Premium para aumentar tu límite.'}`)
+    if (callsDia >= limiteDia) return error(`Has alcanzado el límite de ${limiteDia} consultas por día.${esPremium ? '' : ' Hazte Premium para aumentar tu límite.'}`)
   }
 
   // ── 4. CACHÉ ───────────────────────────────────────────────
