@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { limpiarMarkdown } from '../components/TextoIA'
 import { HEXAGRAMAS, lanzarMonedas, lineasAHexagrama, dibujarHexagrama } from '../lib/motores/iching'
 import Compartir from '../components/Compartir'
 import Paywall from '../components/Paywall'
@@ -52,7 +53,7 @@ ${hayCambio ? `Líneas cambiantes → Hexagrama ${hexResultData.numero}: ${hexRe
 Tema: ${hexData.tema}
 
 3-4 párrafos: energía del hexagrama, conexión con la pregunta${hayCambio ? ', transformación que señala el hexagrama resultante' : ''}, pregunta de reflexión profunda. El I Ching refleja la situación, no determina el futuro.`,
-      userId, usarLite: false, cacheable: false, maxTokens: 450,
+      userId, usarLite: false, cacheable: false, maxTokens: 1350,
     })
 
     if (result.error) setErrorMsg(result.error)
