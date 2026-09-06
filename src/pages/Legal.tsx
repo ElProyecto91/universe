@@ -16,9 +16,9 @@ const TABS = [
 
 function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="bg-black/75 border border-white/15 rounded-2xl p-4 flex flex-col gap-2">
       <p className="text-purple-300 text-xs tracking-widest uppercase">{titulo}</p>
-      <div className="text-white/80 text-sm leading-relaxed">{children}</div>
+      <div className="text-white text-sm leading-relaxed">{children}</div>
     </div>
   )
 }
