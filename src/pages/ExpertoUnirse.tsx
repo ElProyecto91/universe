@@ -83,12 +83,12 @@ export default function ExpertoUnirse() {
   if (enviado) {
     return (
       <div className="min-h-screen text-white flex flex-col items-center justify-center relative px-6" style={bgStyle}>
-        <div className="absolute inset-0 bg-black/82" />
+        <div className="absolute inset-0 bg-black/92" />
         <div className="relative z-10 text-center flex flex-col items-center gap-5 max-w-sm">
           <p className="text-7xl">✨</p>
           <div>
             <p className="text-white font-bold text-2xl mb-2">¡Solicitud recibida!</p>
-            <p className="text-white/60 text-sm leading-relaxed">
+            <p className="text-white/90 text-sm leading-relaxed">
               Hemos recibido tu solicitud para unirte como experto en UNIVERSE. Revisaremos tu perfil y nos pondremos en contacto en los próximos 3-5 días laborables.
             </p>
           </div>
@@ -98,7 +98,7 @@ export default function ExpertoUnirse() {
               {['Revisión de tu perfil y experiencia', 'Entrevista de verificación (15 min)', 'Configuración de tu perfil público', 'Activación y primera sesión'].map((paso, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <span className="text-purple-400 text-xs font-bold">{i + 1}.</span>
-                  <p className="text-white/70 text-sm">{paso}</p>
+                  <p className="text-white text-sm">{paso}</p>
                 </div>
               ))}
             </div>
@@ -113,7 +113,7 @@ export default function ExpertoUnirse() {
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/82" />
+      <div className="absolute inset-0 bg-black/92" />
 
       {/* Header */}
       <div className="relative z-10 flex items-center px-4 py-4 border-b border-white/10">
@@ -139,7 +139,7 @@ export default function ExpertoUnirse() {
           <>
             <div className="text-center">
               <p className="text-white font-bold text-lg">Cuéntanos sobre ti</p>
-              <p className="text-white/50 text-sm mt-1">Esta información aparecerá en tu perfil público</p>
+              <p className="text-white/80 text-sm mt-1">Esta información aparecerá en tu perfil público</p>
             </div>
 
             <div className="flex flex-col gap-4">
@@ -149,25 +149,25 @@ export default function ExpertoUnirse() {
                 { label: 'Email de contacto', key: 'email', placeholder: 'Para notificaciones y pagos' },
               ].map(field => (
                 <div key={field.key}>
-                  <p className="text-white/60 text-xs mb-1">{field.label}</p>
+                  <p className="text-white/90 text-xs mb-1">{field.label}</p>
                   <input
                     type={field.key === 'email' ? 'email' : 'text'}
                     value={(form as any)[field.key]}
                     onChange={e => setForm(f => ({ ...f, [field.key]: e.target.value }))}
                     placeholder={field.placeholder}
-                    className="w-full bg-black/65 border border-white/20 rounded-2xl px-4 py-3 text-white text-sm outline-none focus:border-purple-400 placeholder-white/30"
+                    className="w-full bg-black/90 border border-white/20 rounded-2xl px-4 py-3 text-white text-sm outline-none focus:border-purple-400 placeholder-white/30"
                   />
                 </div>
               ))}
 
               <div>
-                <p className="text-white/60 text-xs mb-1">Tu bio pública <span className="text-white/30">(mín. 50 caracteres)</span></p>
+                <p className="text-white/90 text-xs mb-1">Tu bio pública <span className="text-white/30">(mín. 50 caracteres)</span></p>
                 <textarea
                   value={form.bio}
                   onChange={e => setForm(f => ({ ...f, bio: e.target.value }))}
                   placeholder="Cuéntanos tu historia, tu experiencia y cómo ayudas a las personas..."
                   rows={5}
-                  className="w-full bg-black/65 border border-white/20 rounded-2xl px-4 py-3 text-white text-sm resize-none outline-none focus:border-purple-400 placeholder-white/30 leading-relaxed"
+                  className="w-full bg-black/90 border border-white/20 rounded-2xl px-4 py-3 text-white text-sm resize-none outline-none focus:border-purple-400 placeholder-white/30 leading-relaxed"
                 />
                 <p className="text-white/25 text-xs mt-1">{form.bio.length} caracteres</p>
               </div>
@@ -180,11 +180,11 @@ export default function ExpertoUnirse() {
           <>
             <div className="text-center">
               <p className="text-white font-bold text-lg">Tus especialidades</p>
-              <p className="text-white/50 text-sm mt-1">Selecciona todo lo que ofreces</p>
+              <p className="text-white/80 text-sm mt-1">Selecciona todo lo que ofreces</p>
             </div>
 
             <div>
-              <p className="text-white/60 text-xs mb-2">Áreas de especialización</p>
+              <p className="text-white/90 text-xs mb-2">Áreas de especialización</p>
               <div className="flex flex-wrap gap-2">
                 {ESPECIALIDADES_OPCIONES.map(esp => (
                   <button
@@ -193,7 +193,7 @@ export default function ExpertoUnirse() {
                     className={`text-sm px-3 py-1.5 rounded-full border transition ${
                       form.especialidades.includes(esp)
                         ? 'bg-purple-600 border-purple-400 text-white'
-                        : 'bg-black/65 border-white/20 text-white/60'
+                        : 'bg-black/90 border-white/20 text-white/90'
                     }`}
                   >
                     {esp}
@@ -203,7 +203,7 @@ export default function ExpertoUnirse() {
             </div>
 
             <div>
-              <p className="text-white/60 text-xs mb-2">Métodos de lectura</p>
+              <p className="text-white/90 text-xs mb-2">Métodos de lectura</p>
               <div className="flex flex-wrap gap-2">
                 {METODOS_OPCIONES.map(met => (
                   <button
@@ -212,7 +212,7 @@ export default function ExpertoUnirse() {
                     className={`text-sm px-3 py-1.5 rounded-full border transition ${
                       form.metodos.includes(met)
                         ? 'bg-pink-600 border-pink-400 text-white'
-                        : 'bg-black/65 border-white/20 text-white/60'
+                        : 'bg-black/90 border-white/20 text-white/90'
                     }`}
                   >
                     {met}
@@ -228,11 +228,11 @@ export default function ExpertoUnirse() {
           <>
             <div className="text-center">
               <p className="text-white font-bold text-lg">Últimos detalles</p>
-              <p className="text-white/50 text-sm mt-1">Precio y motivación para unirte</p>
+              <p className="text-white/80 text-sm mt-1">Precio y motivación para unirte</p>
             </div>
 
             <div>
-              <p className="text-white/60 text-xs mb-1">Precio por minuto (€)</p>
+              <p className="text-white/90 text-xs mb-1">Precio por minuto (€)</p>
               <div className="grid grid-cols-3 gap-2">
                 {['2.50', '3.50', '4.50', '5.50', '7.00', '10.00'].map(precio => (
                   <button
@@ -241,22 +241,22 @@ export default function ExpertoUnirse() {
                     className={`py-3 rounded-2xl border text-sm font-semibold transition ${
                       form.precio_minuto === precio
                         ? 'bg-purple-600 border-purple-400 text-white'
-                        : 'bg-black/65 border-white/20 text-white/60'
+                        : 'bg-black/90 border-white/20 text-white/90'
                     }`}
                   >
                     €{precio}
                   </button>
                 ))}
               </div>
-              <div className="bg-black/65 border border-white/10 rounded-xl p-3 mt-2">
-                <p className="text-white/40 text-xs">
-                  <strong className="text-green-400">🎁 Primer mes: 0% comisión.</strong> Solo se descuenta la tasa de Stripe (~2%). Desde el segundo mes recibirás el <strong className="text-white/60">70%</strong> (€{(parseFloat(form.precio_minuto) * 0.7).toFixed(2)}/min). Los primeros expertos verificados aparecen primero en el directorio durante 6 meses.
+              <div className="bg-black/90 border border-white/10 rounded-xl p-3 mt-2">
+                <p className="text-white/70 text-xs">
+                  <strong className="text-green-400">🎁 Primer mes: 0% comisión.</strong> Solo se descuenta la tasa de Stripe (~2%). Desde el segundo mes recibirás el <strong className="text-white/90">70%</strong> (€{(parseFloat(form.precio_minuto) * 0.7).toFixed(2)}/min). Los primeros expertos verificados aparecen primero en el directorio durante 6 meses.
                 </p>
               </div>
             </div>
 
             <div>
-              <p className="text-white/60 text-xs mb-1">Años de experiencia</p>
+              <p className="text-white/90 text-xs mb-1">Años de experiencia</p>
               <input
                 type="number"
                 min="1"
@@ -264,23 +264,23 @@ export default function ExpertoUnirse() {
                 value={form.experiencia_anos}
                 onChange={e => setForm(f => ({ ...f, experiencia_anos: e.target.value }))}
                 placeholder="Ej: 5"
-                className="w-full bg-black/65 border border-white/20 rounded-2xl px-4 py-3 text-white text-sm outline-none focus:border-purple-400 placeholder-white/30"
+                className="w-full bg-black/90 border border-white/20 rounded-2xl px-4 py-3 text-white text-sm outline-none focus:border-purple-400 placeholder-white/30"
               />
             </div>
 
             <div>
-              <p className="text-white/60 text-xs mb-1">¿Por qué quieres unirte a UNIVERSE? <span className="text-white/30">(mín. 30 caracteres)</span></p>
+              <p className="text-white/90 text-xs mb-1">¿Por qué quieres unirte a UNIVERSE? <span className="text-white/30">(mín. 30 caracteres)</span></p>
               <textarea
                 value={form.motivacion}
                 onChange={e => setForm(f => ({ ...f, motivacion: e.target.value }))}
                 placeholder="Cuéntanos qué te motiva a compartir tu don con la comunidad de UNIVERSE..."
                 rows={4}
-                className="w-full bg-black/65 border border-white/20 rounded-2xl px-4 py-3 text-white text-sm resize-none outline-none focus:border-purple-400 placeholder-white/30 leading-relaxed"
+                className="w-full bg-black/90 border border-white/20 rounded-2xl px-4 py-3 text-white text-sm resize-none outline-none focus:border-purple-400 placeholder-white/30 leading-relaxed"
               />
             </div>
 
-            <div className="bg-black/65 border border-white/10 rounded-2xl p-4">
-              <p className="text-white/50 text-xs leading-relaxed">
+            <div className="bg-black/90 border border-white/10 rounded-2xl p-4">
+              <p className="text-white/80 text-xs leading-relaxed">
                 Al solicitar unirte aceptas nuestros <button className="text-purple-400 underline" onClick={() => window.location.href = '/legal'}>términos para expertos</button>. Verificaremos tu identidad y experiencia antes de activar tu perfil.
               </p>
             </div>
@@ -290,7 +290,7 @@ export default function ExpertoUnirse() {
       </div>
 
       {/* Botón siguiente / enviar */}
-      <div className="relative z-10 px-4 py-4 border-t border-white/10 bg-black/80 backdrop-blur">
+      <div className="relative z-10 px-4 py-4 border-t border-white/10 bg-black/90 backdrop-blur">
         {paso < 3 ? (
           <button
             onClick={() => setPaso(p => (p + 1) as any)}
