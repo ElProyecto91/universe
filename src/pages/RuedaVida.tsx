@@ -76,11 +76,11 @@ Escribe un análisis profundo y personalizado de 3-4 párrafos sobre esta área 
 3. Qué acciones concretas y rituales pueden ayudarle a mejorar el equilibrio en esta área
 4. Termina con una pregunta de reflexión profunda
 
-Tono: cálido, directo, empoderador. Habla en segunda persona (tú). Sin predicciones. Sin asteriscos ni formato markdown. Solo texto limpio en párrafos.`,
+Tono: cálido, directo, empoderador. Habla en segunda persona (tú). Sin predicciones. Sin asteriscos ni formato markdown. Solo texto limpio en párrafos. Completa siempre los 4 párrafos, nunca dejes una frase a medias.`,
       userId,
       usarLite: false,
       cacheable: false,
-      maxTokens: 500,
+      maxTokens: 800,
     })
 
     if (result.error) {
@@ -94,7 +94,7 @@ Tono: cálido, directo, empoderador. Habla en segunda persona (tú). Sin predicc
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/80" />
+      <div className="absolute inset-0 bg-black/90" />
 
       <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-5 py-10 gap-5">
 
