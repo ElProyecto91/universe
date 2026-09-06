@@ -111,7 +111,7 @@ export default function Expertos() {
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/88" />
+      <div className="absolute inset-0 bg-black/92" />
 
       {/* Header */}
       <div className="relative z-10 px-4 pt-10 pb-4">
@@ -129,7 +129,7 @@ export default function Expertos() {
             <span className="text-2xl flex-shrink-0">🎁</span>
             <div>
               <p className="text-white font-semibold text-sm">3 minutos gratis con cada experto nuevo</p>
-              <p className="text-white/60 text-xs mt-0.5 leading-relaxed">
+              <p className="text-white/90 text-xs mt-0.5 leading-relaxed">
                 Prueba la conexión antes de comprometerte. Sin tarjeta de crédito para los primeros minutos.
               </p>
             </div>
@@ -140,7 +140,7 @@ export default function Expertos() {
         <div className="flex items-center justify-between mb-3">
           <button
             onClick={() => setSoloDisponibles(!soloDiponibles)}
-            className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-full border transition ${soloDiponibles ? 'bg-green-500/20 border-green-400/50 text-green-300' : 'bg-white/10 border-white/20 text-white/60'}`}
+            className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-full border transition ${soloDiponibles ? 'bg-green-500/20 border-green-400/50 text-green-300' : 'bg-white/10 border-white/20 text-white/90'}`}
           >
             <div className={`w-2 h-2 rounded-full ${soloDiponibles ? 'bg-green-400' : 'bg-white/30'}`} />
             Solo disponibles
@@ -165,7 +165,7 @@ export default function Expertos() {
               className={`whitespace-nowrap text-xs px-3 py-1.5 rounded-full border transition flex-shrink-0 ${
                 filtroEspecialidad === esp
                   ? 'bg-purple-600 border-purple-400 text-white'
-                  : 'bg-white/8 border-white/20 text-white/60'
+                  : 'bg-white/8 border-white/20 text-white/90'
               }`}
               style={{ backgroundColor: filtroEspecialidad === esp ? undefined : 'rgba(255,255,255,0.08)' }}
             >
@@ -189,7 +189,7 @@ export default function Expertos() {
         {!cargando && expertosFiltrados.length === 0 && (
           <div className="text-center py-16">
             <p className="text-4xl mb-3">🔮</p>
-            <p className="text-white/60 text-sm">No hay expertos disponibles con estos filtros.</p>
+            <p className="text-white/90 text-sm">No hay expertos disponibles con estos filtros.</p>
           </div>
         )}
 
@@ -216,16 +216,16 @@ export default function Expertos() {
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       <Estrellas valoracion={experto.valoracion_media} />
-                      <span className="text-white/50 text-xs">{experto.valoracion_media.toFixed(1)} ({experto.total_valoraciones})</span>
+                      <span className="text-white/80 text-xs">{experto.valoracion_media.toFixed(1)} ({experto.total_valoraciones})</span>
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-white font-bold text-sm">€{experto.precio_minuto.toFixed(2)}</p>
-                    <p className="text-white/40 text-xs">por min</p>
+                    <p className="text-white/70 text-xs">por min</p>
                   </div>
                 </div>
 
-                <p className="text-white/60 text-xs leading-relaxed mt-2 line-clamp-2">{experto.bio}</p>
+                <p className="text-white/90 text-xs leading-relaxed mt-2 line-clamp-2">{experto.bio}</p>
 
                 <div className="flex items-center gap-2 mt-3 flex-wrap">
                   {experto.especialidades?.slice(0, 3).map(esp => (
@@ -239,11 +239,11 @@ export default function Expertos() {
 
             {/* Footer */}
             <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
-              <div className="flex items-center gap-3 text-xs text-white/40">
+              <div className="flex items-center gap-3 text-xs text-white/70">
                 <span>💬 {experto.total_sesiones} sesiones</span>
                 <span>🎁 {experto.minutos_gratis} min gratis</span>
               </div>
-              <div className={`text-xs font-semibold px-3 py-1 rounded-full ${experto.disponible ? 'bg-green-500/20 text-green-300' : 'bg-white/10 text-white/40'}`}>
+              <div className={`text-xs font-semibold px-3 py-1 rounded-full ${experto.disponible ? 'bg-green-500/20 text-green-300' : 'bg-white/10 text-white/70'}`}>
                 {experto.disponible ? '● Disponible ahora' : '○ No disponible'}
               </div>
             </div>
@@ -253,7 +253,7 @@ export default function Expertos() {
         {/* ¿Eres experto? */}
         <div className="bg-black/50 border border-white/10 rounded-2xl p-4 mt-2">
           <p className="text-white font-semibold text-sm mb-1">¿Eres tarotista o experto espiritual?</p>
-          <p className="text-white/50 text-xs leading-relaxed mb-3">Únete ahora y disfruta del <strong className="text-white">primer mes sin comisión</strong> y posición prioritaria en el directorio. Sin cuota de alta.</p>
+          <p className="text-white/80 text-xs leading-relaxed mb-3">Únete ahora y disfruta del <strong className="text-white">primer mes sin comisión</strong> y posición prioritaria en el directorio. Sin cuota de alta.</p>
           <button
             onClick={() => window.location.href = '/expertos/unirse'}
             className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-3 rounded-full text-sm"
