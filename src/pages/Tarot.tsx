@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { limpiarMarkdown } from '../components/TextoIA'
 import { getCartaSVG } from '../components/svg/TarotSVG'
 import Compartir from '../components/Compartir'
 import Paywall from '../components/Paywall'
@@ -99,13 +100,13 @@ Cartas: ${nombresCartas}
 Da una interpretación profunda, poética y personal. Conecta las cartas entre sí. No seas genérica. Habla directamente a ${nombre}. Máximo 200 palabras. Termina con una pregunta de reflexión.`,
       userId,
       cacheable: false,
-      maxTokens: 400,
+      maxTokens: 1200,
     })
 
     if (result.error) {
       setErrorMsg(result.error)
     } else {
-      setInterpretacion(result.texto)
+      setInterpretacion(limpiarMarkdown(result.texto))
       registrarEvento({ herramienta: 'tarot', accion: 'lectura_ia', tiempo_respuesta_ms: Date.now() - t0, user_id: userId })
       guardarLectura({
         herramienta: 'tarot',
