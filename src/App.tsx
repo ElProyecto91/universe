@@ -62,6 +62,9 @@ import Perfil from './pages/Perfil'
 import Legal from './pages/Legal'
 import Historial from './pages/Historial'
 import Premium from './pages/Premium'
+import Expertos from './pages/Expertos'
+import ExpertoPerfil from './pages/ExpertoPerfil'
+import ExpertoUnirse from './pages/ExpertoUnirse'
 
 export default function App() {
   return (
@@ -130,6 +133,9 @@ export default function App() {
         <Route path="/legal" element={<Legal />} />
         <Route path="/historial" element={<Historial />} />
         <Route path="/premium" element={<Premium />} />
+        <Route path="/expertos" element={<Expertos />} />
+        <Route path="/expertos/unirse" element={<ExpertoUnirse />} />
+        <Route path="/expertos/:slug" element={<ExpertoPerfil />} />
       </Routes>
     </BrowserRouter>
   )
