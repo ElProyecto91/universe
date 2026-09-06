@@ -134,7 +134,7 @@ Tono: poético, profundo, nunca predictivo. Habla del árbol como ser vivo y sab
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/88" />
+      <div className="absolute inset-0 bg-black/92" />
 
       <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-5 py-10 gap-5">
 
