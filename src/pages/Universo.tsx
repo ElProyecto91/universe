@@ -249,16 +249,18 @@ export default function Universo() {
         </button>
 
         {/* Consulta un experto */}
-        <div className="bg-white/8 border border-white/20 rounded-3xl p-5 backdrop-blur"
+        <button
+          onClick={() => window.location.href = '/expertos'}
+          className="bg-white/8 border border-white/20 rounded-3xl p-5 backdrop-blur text-left hover:bg-white/12 transition"
           style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white font-semibold">Consulta con un Experto</p>
-              <p className="text-white/50 text-xs mt-1">Chat en tiempo real con expertos espirituales humanos</p>
+              <p className="text-white/50 text-xs mt-1">Tarotistas y astrólogos reales · Chat en tiempo real</p>
             </div>
-            <span className="text-xs bg-purple-500/30 text-purple-300 px-2 py-1 rounded-full flex-shrink-0 ml-3">Próximamente</span>
+            <span className="text-purple-300 text-lg ml-3">›</span>
           </div>
-        </div>
+        </button>
 
         {/* Footer */}
         <div className="flex justify-center gap-6 text-white/60 text-xs">
