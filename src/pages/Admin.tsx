@@ -312,7 +312,7 @@ export default function Admin() {
   if (autorizado === false) {
     return (
       <div className="min-h-screen text-white flex items-center justify-center relative" style={bgStyle}>
-        <div className="absolute inset-0 bg-black/85" />
+        <div className="absolute inset-0 bg-black/92" />
         <div className="relative z-10 text-center px-6">
           <p className="text-5xl mb-4">🔒</p>
           <p className="text-white font-bold text-xl mb-2">Acceso restringido</p>
@@ -327,7 +327,7 @@ export default function Admin() {
   if (autorizado === null || cargando) {
     return (
       <div className="min-h-screen text-white flex items-center justify-center relative" style={bgStyle}>
-        <div className="absolute inset-0 bg-black/85" />
+        <div className="absolute inset-0 bg-black/92" />
         <div className="relative z-10 flex gap-2">
           <div className="w-3 h-3 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
           <div className="w-3 h-3 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -351,7 +351,7 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/85" />
+      <div className="absolute inset-0 bg-black/92" />
 
       {/* Header */}
       <div className="relative z-10 flex items-center px-4 py-4 border-b border-white/10 backdrop-blur">
