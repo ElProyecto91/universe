@@ -81,7 +81,7 @@ export default function Premium() {
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/80" />
+      <div className="absolute inset-0 bg-black/90" />
 
       <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-4 py-8 gap-6">
 
