@@ -251,11 +251,11 @@ export default function PanelExperto() {
   // ── Render: no autorizado ────────────────────────────────
   if (noAutorizado) return (
     <div className="min-h-screen text-white flex items-center justify-center relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/92" />
+      <div className="absolute inset-0 bg-[#0d0015]" />
       <div className="relative z-10 text-center px-6 flex flex-col items-center gap-4">
         <p className="text-5xl">🔒</p>
         <p className="text-white font-bold text-xl">No tienes un perfil de experto</p>
-        <p className="text-white/70 text-sm">Si quieres unirte como consultor, solicítalo desde el directorio.</p>
+        <p className="text-white text-sm">Si quieres unirte como consultor, solicítalo desde el directorio.</p>
         <button onClick={() => window.location.href = '/expertos/unirse'}
           className="bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold px-6 py-3 rounded-full text-sm">
           Solicitar ser experto
@@ -266,7 +266,7 @@ export default function PanelExperto() {
 
   if (cargando || !experto) return (
     <div className="min-h-screen text-white flex items-center justify-center relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/92" />
+      <div className="absolute inset-0 bg-[#0d0015]" />
       <div className="relative z-10 flex gap-2">
         {[0, 150, 300].map(d => (
           <div key={d} className="w-3 h-3 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />
@@ -277,7 +277,7 @@ export default function PanelExperto() {
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/92" />
+      <div className="absolute inset-0 bg-[#0d0015]" />
 
       {/* Header */}
       <div className="relative z-10 flex items-center px-4 py-4 border-b border-white/10">
@@ -288,7 +288,7 @@ export default function PanelExperto() {
         </div>
         {/* Toggle disponibilidad */}
         <button onClick={toggleDisponible}
-          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition ${experto.disponible ? 'bg-green-500/20 border-green-400/50 text-green-300' : 'bg-white/10 border-white/20 text-white/50'}`}>
+          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition ${experto.disponible ? 'bg-green-500/20 border-green-400/50 text-green-300' : 'bg-[#150020] border-white/20 text-white/80'}`}>
           <div className={`w-2 h-2 rounded-full ${experto.disponible ? 'bg-green-400' : 'bg-white/30'}`} />
           {experto.disponible ? 'Activo' : 'Inactivo'}
         </button>
@@ -296,7 +296,7 @@ export default function PanelExperto() {
 
       {/* Msg flash */}
       {msg && (
-        <div className="relative z-10 mx-4 mt-3 bg-white/10 border border-white/20 rounded-2xl px-4 py-2 text-center text-sm text-white">
+        <div className="relative z-10 mx-4 mt-3 bg-[#150020] border border-white/20 rounded-2xl px-4 py-2 text-center text-sm text-white">
           {msg}
         </div>
       )}
@@ -305,7 +305,7 @@ export default function PanelExperto() {
       <div className="relative z-10 flex gap-1 px-4 pt-4 overflow-x-auto">
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`whitespace-nowrap py-2 px-3 rounded-xl text-xs font-semibold transition flex-shrink-0 ${tab === t.id ? 'bg-purple-600 text-white' : 'bg-white/10 text-white/70'}`}>
+            className={`whitespace-nowrap py-2 px-3 rounded-xl text-xs font-semibold transition flex-shrink-0 ${tab === t.id ? 'bg-purple-600 text-white' : 'bg-[#150020] text-white'}`}>
             {t.label}
           </button>
         ))}
@@ -324,16 +324,16 @@ export default function PanelExperto() {
                 { label: 'Sesiones este mes', val: stats.sesionesMes, icon: '💬', color: 'text-purple-300' },
                 { label: 'Valoración media', val: `${stats.valoracionMedia.toFixed(1)} ★`, icon: '⭐', color: 'text-amber-300' },
               ].map((k, i) => (
-                <div key={i} className="bg-black/70 border border-white/15 rounded-2xl p-4">
+                <div key={i} className="bg-[#0d0015] border border-white/15 rounded-2xl p-4">
                   <p className="text-xl mb-1">{k.icon}</p>
                   <p className={`text-2xl font-bold ${k.color}`}>{k.val}</p>
-                  <p className="text-white/70 text-xs">{k.label}</p>
+                  <p className="text-white text-xs">{k.label}</p>
                 </div>
               ))}
             </div>
 
             {/* Estadísticas detalladas */}
-            <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
+            <div className="bg-[#0d0015] border border-white/15 rounded-2xl p-4">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">📈 Estadísticas completas</p>
               <div className="flex flex-col gap-2">
                 {[
@@ -346,7 +346,7 @@ export default function PanelExperto() {
                   { label: 'Precio actual por minuto', val: `€${experto.precio_minuto.toFixed(2)}/min` },
                 ].map((s, i) => (
                   <div key={i} className="flex justify-between items-center py-1.5 border-b border-white/8 last:border-0">
-                    <span className="text-white/70 text-sm">{s.label}</span>
+                    <span className="text-white text-sm">{s.label}</span>
                     <span className="text-white font-semibold text-sm">{s.val}</span>
                   </div>
                 ))}
@@ -354,22 +354,22 @@ export default function PanelExperto() {
             </div>
 
             {/* Distribución de ingresos */}
-            <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
+            <div className="bg-[#0d0015] border border-white/15 rounded-2xl p-4">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">💰 Distribución de ingresos</p>
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between">
-                  <span className="text-white/70 text-sm">Ingresos brutos (total facturado)</span>
+                  <span className="text-white text-sm">Ingresos brutos (total facturado)</span>
                   <span className="text-white font-semibold text-sm">€{(stats.ingresosTotal / 0.7).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-white/70 text-sm">Comisión UNIVERSE (30%)</span>
+                  <span className="text-white text-sm">Comisión UNIVERSE (30%)</span>
                   <span className="text-red-400 font-semibold text-sm">-€{(stats.ingresosTotal / 0.7 * 0.3).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-white/70 text-sm">Comisión Stripe (~2%)</span>
+                  <span className="text-white text-sm">Comisión Stripe (~2%)</span>
                   <span className="text-red-400 font-semibold text-sm">-€{(stats.ingresosTotal / 0.7 * 0.02).toFixed(2)}</span>
                 </div>
-                <div className="h-px bg-white/15 my-1" />
+                <div className="h-px bg-[#150020] my-1" />
                 <div className="flex justify-between">
                   <span className="text-white font-bold text-sm">Tus ingresos netos</span>
                   <span className="text-green-300 font-bold text-base">€{stats.ingresosTotal.toFixed(2)}</span>
@@ -380,7 +380,7 @@ export default function PanelExperto() {
             {/* Enlace a perfil público */}
             <button
               onClick={() => window.location.href = `/expertos/${experto.slug}`}
-              className="w-full bg-white/10 border border-white/20 text-white font-semibold py-3 rounded-2xl text-sm">
+              className="w-full bg-[#150020] border border-white/20 text-white font-semibold py-3 rounded-2xl text-sm">
               Ver mi perfil público →
             </button>
           </>
@@ -390,7 +390,7 @@ export default function PanelExperto() {
         {tab === 'sesiones' && (
           <>
             <div className="flex items-center justify-between">
-              <p className="text-white/70 text-xs">{sesiones.length} sesiones completadas</p>
+              <p className="text-white text-xs">{sesiones.length} sesiones completadas</p>
               <button onClick={exportarSesionesCSV} disabled={exportando}
                 className="text-xs bg-purple-600/30 border border-purple-400/40 text-purple-300 px-3 py-1.5 rounded-full disabled:opacity-40">
                 {exportando ? '...' : '↓ Exportar CSV'}
@@ -400,29 +400,29 @@ export default function PanelExperto() {
             {sesiones.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-4xl mb-3">💬</p>
-                <p className="text-white/70 text-sm">Aún no tienes sesiones completadas.</p>
+                <p className="text-white text-sm">Aún no tienes sesiones completadas.</p>
               </div>
             ) : (
               <div className="flex flex-col gap-3">
                 {sesiones.slice(0, 30).map(s => (
-                  <div key={s.id} className="bg-black/70 border border-white/15 rounded-2xl p-4">
+                  <div key={s.id} className="bg-[#0d0015] border border-white/15 rounded-2xl p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-sm">{s.tipo === 'chat' ? '💬' : '📞'}</span>
                           <p className="text-white text-sm font-semibold">{formatearFecha(s.created_at)}</p>
                         </div>
-                        <p className="text-white/70 text-xs">{s.duracion_minutos} min · {s.tipo}</p>
+                        <p className="text-white text-xs">{s.duracion_minutos} min · {s.tipo}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-green-300 font-bold text-sm">+€{s.importe_experto?.toFixed(2)}</p>
-                        <p className="text-white/40 text-xs">de €{s.importe_total?.toFixed(2)}</p>
+                        <p className="text-white/70 text-xs">de €{s.importe_total?.toFixed(2)}</p>
                       </div>
                     </div>
                   </div>
                 ))}
                 {sesiones.length > 30 && (
-                  <p className="text-white/40 text-xs text-center">Exporta el CSV para ver todas las sesiones</p>
+                  <p className="text-white/70 text-xs text-center">Exporta el CSV para ver todas las sesiones</p>
                 )}
               </div>
             )}
@@ -433,7 +433,7 @@ export default function PanelExperto() {
         {tab === 'resenas' && (
           <>
             {/* Resumen valoraciones */}
-            <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
+            <div className="bg-[#0d0015] border border-white/15 rounded-2xl p-4">
               <div className="flex items-center gap-4">
                 <div className="text-center">
                   <p className="text-4xl font-bold text-amber-300">{experto.valoracion_media.toFixed(1)}</p>
@@ -442,7 +442,7 @@ export default function PanelExperto() {
                       <span key={i} className={`text-sm ${i <= Math.round(experto.valoracion_media) ? 'text-amber-400' : 'text-white/20'}`}>★</span>
                     ))}
                   </div>
-                  <p className="text-white/60 text-xs mt-1">{experto.total_valoraciones} reseñas</p>
+                  <p className="text-white/90 text-xs mt-1">{experto.total_valoraciones} reseñas</p>
                 </div>
                 <div className="flex-1">
                   {[5,4,3,2,1].map(n => {
@@ -450,11 +450,11 @@ export default function PanelExperto() {
                     const pct = resenas.length > 0 ? (count / resenas.length) * 100 : 0
                     return (
                       <div key={n} className="flex items-center gap-2 mb-1">
-                        <span className="text-white/60 text-xs w-3">{n}</span>
-                        <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                        <span className="text-white/90 text-xs w-3">{n}</span>
+                        <div className="flex-1 h-1.5 bg-[#150020] rounded-full overflow-hidden">
                           <div className="h-full bg-amber-400 rounded-full" style={{ width: `${pct}%` }} />
                         </div>
-                        <span className="text-white/40 text-xs w-4">{count}</span>
+                        <span className="text-white/70 text-xs w-4">{count}</span>
                       </div>
                     )
                   })}
@@ -465,18 +465,18 @@ export default function PanelExperto() {
             {resenas.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-4xl mb-3">⭐</p>
-                <p className="text-white/70 text-sm">Aún no tienes reseñas. Completa sesiones para recibirlas.</p>
+                <p className="text-white text-sm">Aún no tienes reseñas. Completa sesiones para recibirlas.</p>
               </div>
             ) : (
               resenas.map(r => (
-                <div key={r.id} className="bg-black/70 border border-white/15 rounded-2xl p-4">
+                <div key={r.id} className="bg-[#0d0015] border border-white/15 rounded-2xl p-4">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex gap-0.5">
                       {[1,2,3,4,5].map(i => (
                         <span key={i} className={`text-sm ${i <= r.valoracion ? 'text-amber-400' : 'text-white/20'}`}>★</span>
                       ))}
                     </div>
-                    <p className="text-white/50 text-xs">{formatearFecha(r.created_at)}</p>
+                    <p className="text-white/80 text-xs">{formatearFecha(r.created_at)}</p>
                   </div>
                   {r.comentario && <p className="text-white text-sm leading-relaxed">"{r.comentario}"</p>}
                 </div>
@@ -489,19 +489,19 @@ export default function PanelExperto() {
         {tab === 'fiscal' && (
           <>
             {/* Selector año fiscal */}
-            <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
+            <div className="bg-[#0d0015] border border-white/15 rounded-2xl p-4">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">📅 Año fiscal para exportación</p>
               <div className="flex gap-2 mb-3">
                 {[new Date().getFullYear() - 1, new Date().getFullYear()].map(anio => (
                   <button key={anio} onClick={() => setAnioFiscal(anio)}
-                    className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition ${anioFiscal === anio ? 'bg-purple-600 border-purple-400 text-white' : 'bg-white/10 border-white/20 text-white/70'}`}>
+                    className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition ${anioFiscal === anio ? 'bg-purple-600 border-purple-400 text-white' : 'bg-[#150020] border-white/20 text-white'}`}>
                     {anio}
                   </button>
                 ))}
               </div>
               <div className="flex flex-col gap-2">
                 <button onClick={exportarSesionesCSV} disabled={exportando}
-                  className="w-full bg-white/10 border border-white/20 text-white font-semibold py-3 rounded-xl text-sm disabled:opacity-40">
+                  className="w-full bg-[#150020] border border-white/20 text-white font-semibold py-3 rounded-xl text-sm disabled:opacity-40">
                   {exportando ? '...' : '↓ Exportar todas mis sesiones (CSV)'}
                 </button>
                 <button onClick={exportarInformeFiscal} disabled={exportando}
@@ -509,7 +509,7 @@ export default function PanelExperto() {
                   {exportando ? '...' : `↓ Informe fiscal ${anioFiscal} (CSV)`}
                 </button>
               </div>
-              <p className="text-white/30 text-xs text-center mt-2">CSV con BOM UTF-8 · Compatible con Excel y software contable</p>
+              <p className="text-white/60 text-xs text-center mt-2">CSV con BOM UTF-8 · Compatible con Excel y software contable</p>
             </div>
 
             <FiscalExperto anioFiscal={anioFiscal} sesiones={sesiones} />
@@ -520,33 +520,33 @@ export default function PanelExperto() {
         {tab === 'ajustes' && (
           <>
             {/* Precio por minuto */}
-            <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
+            <div className="bg-[#0d0015] border border-white/15 rounded-2xl p-4">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">💶 Precio por minuto</p>
-              <p className="text-white/70 text-xs mb-3">Fija tu tarifa libremente. Recibirás el 70% de cada sesión.</p>
+              <p className="text-white text-xs mb-3">Fija tu tarifa libremente. Recibirás el 70% de cada sesión.</p>
               <div className="grid grid-cols-3 gap-2 mb-3">
                 {['1.99', '2.50', '3.50', '4.50', '5.50', '7.00', '9.00', '12.00', '15.00'].map(precio => (
                   <button key={precio}
                     onClick={() => guardarPrecio(parseFloat(precio))}
                     disabled={guardando}
-                    className={`py-3 rounded-xl text-sm font-semibold border transition ${experto.precio_minuto === parseFloat(precio) ? 'bg-purple-600 border-purple-400 text-white' : 'bg-white/10 border-white/20 text-white/80'}`}>
+                    className={`py-3 rounded-xl text-sm font-semibold border transition ${experto.precio_minuto === parseFloat(precio) ? 'bg-purple-600 border-purple-400 text-white' : 'bg-[#150020] border-white/20 text-white'}`}>
                     €{precio}
                   </button>
                 ))}
               </div>
-              <div className="bg-white/8 border border-white/10 rounded-xl p-3">
-                <p className="text-white/60 text-xs">
+              <div className="bg-[#0d0015] border border-white/10 rounded-xl p-3">
+                <p className="text-white/90 text-xs">
                   Con €{experto.precio_minuto.toFixed(2)}/min → recibes <strong className="text-green-300">€{(experto.precio_minuto * 0.7).toFixed(2)}/min</strong> · Sesión 30 min = <strong className="text-green-300">€{(experto.precio_minuto * 0.7 * 30).toFixed(0)}</strong>
                 </p>
               </div>
             </div>
 
             {/* Estado disponibilidad */}
-            <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
+            <div className="bg-[#0d0015] border border-white/15 rounded-2xl p-4">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">🟢 Disponibilidad</p>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white font-semibold">Estado actual</p>
-                  <p className="text-white/70 text-xs mt-0.5">
+                  <p className="text-white text-xs mt-0.5">
                     {experto.disponible ? 'Los usuarios pueden iniciarte sesiones' : 'No recibirás nuevas sesiones'}
                   </p>
                 </div>
@@ -558,26 +558,26 @@ export default function PanelExperto() {
             </div>
 
             {/* Info del perfil */}
-            <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
+            <div className="bg-[#0d0015] border border-white/15 rounded-2xl p-4">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">👤 Tu perfil público</p>
-              <p className="text-white/70 text-xs leading-relaxed mb-3">Para actualizar tu bio, foto, especialidades o métodos, escribe a:</p>
+              <p className="text-white text-xs leading-relaxed mb-3">Para actualizar tu bio, foto, especialidades o métodos, escribe a:</p>
               <p className="text-white font-semibold text-sm">esxdinero@gmail.com</p>
-              <p className="text-white/50 text-xs mt-1">Indica tu nombre artístico y los cambios que quieres hacer.</p>
+              <p className="text-white/80 text-xs mt-1">Indica tu nombre artístico y los cambios que quieres hacer.</p>
             </div>
 
             {/* Cuenta bancaria */}
-            <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
+            <div className="bg-[#0d0015] border border-white/15 rounded-2xl p-4">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">🏦 Datos de pago</p>
-              <p className="text-white/70 text-xs leading-relaxed">Los pagos se procesan vía Stripe. Para configurar tu cuenta bancaria de cobro, recibirás un enlace de onboarding de Stripe al activarse tu perfil.</p>
-              <p className="text-white/50 text-xs mt-2">Los pagos se transfieren automáticamente cada 7 días laborables.</p>
+              <p className="text-white text-xs leading-relaxed">Los pagos se procesan vía Stripe. Para configurar tu cuenta bancaria de cobro, recibirás un enlace de onboarding de Stripe al activarse tu perfil.</p>
+              <p className="text-white/80 text-xs mt-2">Los pagos se transfieren automáticamente cada 7 días laborables.</p>
             </div>
 
             {/* Soporte */}
-            <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
+            <div className="bg-[#0d0015] border border-white/15 rounded-2xl p-4">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">🆘 Soporte para expertos</p>
-              <p className="text-white/70 text-xs leading-relaxed">¿Tienes algún problema con una sesión, un pago o tu perfil? Escríbenos y te respondemos en menos de 24h.</p>
+              <p className="text-white text-xs leading-relaxed">¿Tienes algún problema con una sesión, un pago o tu perfil? Escríbenos y te respondemos en menos de 24h.</p>
               <button onClick={() => window.location.href = `mailto:esxdinero@gmail.com?subject=Soporte Experto - ${experto.nombre_artistico}`}
-                className="w-full mt-3 bg-white/10 border border-white/20 text-white font-semibold py-3 rounded-xl text-sm">
+                className="w-full mt-3 bg-[#150020] border border-white/20 text-white font-semibold py-3 rounded-xl text-sm">
                 Contactar soporte →
               </button>
             </div>
