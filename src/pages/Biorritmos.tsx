@@ -66,8 +66,9 @@ export default function Biorritmos() {
 
       const result = await llamarGemini({
         herramienta: HERRAMIENTA,
-        prompt: `Experto en biorritmología (herramienta de reflexión). Nombre: ${nombre}, Nacimiento: ${fechaNacimiento}. Ciclos físico, emocional e intelectual hoy. 3 párrafos.`,
-        userId: userPlan.userId, usarLite: false, cacheable: false, maxTokens: 300,
+        prompt: `Eres un experto en biorritmología simbólica. El usuario se llama ${nombre} y nació el ${fechaNacimiento}. Hoy analiza sus tres ciclos: físico (23 días), emocional (28 días) e intelectual (33 días). Escribe una lectura profunda y personalizada de 5-6 párrafos detallados. Incluye: en qué fase está cada ciclo hoy, qué significa para su energía, sus emociones y su mente, qué actividades favorece este momento, y un consejo práctico para aprovechar esta energía. Tono cálido, reflexivo y orientador.`,
+        maxTokens: 800,
+        userId: userPlan.userId, usarLite: false, cacheable: false,
       })
 
       if (!result.error && result.texto) {
