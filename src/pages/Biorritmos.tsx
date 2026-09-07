@@ -65,15 +65,25 @@ export default function Biorritmos() {
         return
       }
 
+      const prompt = [
+        'Eres un guía espiritual experto en biorritmología. Escribe SOLO texto en prosa, en español.',
+        'Está PROHIBIDO usar fórmulas, ecuaciones, símbolos matemáticos, LaTeX, asteriscos, guiones, viñetas o cualquier markdown.',
+        '',
+        `El usuario se llama ${nombre} y nació el ${fechaNacimiento}. Hoy es ${fechaHoy}.`,
+        '',
+        `Escribe una lectura de 5 párrafos en prosa natural dirigiéndote directamente a ${nombre}.`,
+        'Primer párrafo: cómo está su energía física hoy, si es momento de acción o de descanso y qué actividades le favorecen.',
+        'Segundo párrafo: cómo está su mundo emocional hoy, sus relaciones y su estado interior.',
+        'Tercer párrafo: cómo está su claridad mental hoy, si conviene tomar decisiones o reflexionar.',
+        'Cuarto párrafo: cómo se combinan estas tres energías hoy y qué tipo de jornada le espera.',
+        'Quinto párrafo: un consejo práctico y concreto para sacar el máximo a este día.',
+        '',
+        'Tono cálido y orientador. Párrafos separados por línea en blanco. Cero símbolos especiales.',
+      ].join('\n')
+
       const result = await llamarGemini({
         herramienta: HERRAMIENTA,
-        prompt: `Eres un guía espiritual experto en biorritmología. Escribe SOLO texto en prosa, en español. Está PROHIBIDO usar fórmulas, ecuaciones, símbolos matemáticos, LaTeX, asteriscos, guiones, viñetas o markdown de cualquier tipo.
-
-El usuario se llama ${nombre} y nació el ${fechaNacimiento}. Hoy es ${fechaHoy}.
-
-Escribe una lectura de 5 párrafos en prosa natural. En el primero habla de su energía física hoy, si se encuentra en un momento de vitalidad o de recuperación y qué actividades le favorecen. En el segundo habla de su mundo emocional hoy, cómo están sus relaciones y su estado interior. En el tercero habla de su claridad mental hoy, si es buen momento para tomar decisiones o para reflexionar. En el cuarto describe cómo se combinan estas tres energías y qué tipo de día le espera. En el quinto da un consejo práctico y concreto para ${nombre}.
-
-Usa un tono cálido, cercano y orientador. Escribe en párrafos separados por una línea en blanco. Ningún símbolo especial, solo palabras.,
+        prompt,
         userId: userPlan.userId,
         usarLite: false,
         cacheable: false,
