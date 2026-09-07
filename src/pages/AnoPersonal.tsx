@@ -11,6 +11,7 @@ import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
 import CtaUpsell from '../components/CtaUpsell'
 import PageLayout from '../components/PageLayout'
+import TextoIA from '../components/TextoIA'
 
 const HERRAMIENTA = 'ano-personal'
 
@@ -61,8 +62,14 @@ export default function AnoPersonal() {
 
       const result = await llamarGemini({
         herramienta: HERRAMIENTA,
-        prompt: `Experta en numerología personal. Nombre: ${nombre}, Nacimiento: ${fechaNacimiento}. Año Personal actual. 3 párrafos: energía del año, oportunidades, consejo.`,
-        userId: userPlan.userId, usarLite: false, cacheable: false, maxTokens: 400,
+        prompt: `Eres una experta en numerología. Escribe en español, en texto corrido sin listas, sin asteriscos, sin markdown.
+
+El usuario se llama ${nombre} y nació el ${fechaNacimiento}. Hoy es ${fechaHoy}.
+
+Calcula su Año Personal numerológico actual y escribe una lectura de 5 párrafos. Primer párrafo: cuál es su número de Año Personal y qué arquetipo representa. Segundo párrafo: qué energía y temas principales trae este año a su vida. Tercer párrafo: qué oportunidades específicas se abren en este ciclo. Cuarto párrafo: qué desafíos o lecciones puede encontrar y cómo navegarlos. Quinto párrafo: un mensaje de cierre y consejo práctico para aprovechar este año al máximo.
+
+Escribe de forma cálida y directa, dirigiéndote a ${nombre}. Sin títulos, sin guiones, sin asteriscos. Solo párrafos separados por línea en blanco.`,
+        userId: userPlan.userId, usarLite: false, cacheable: false, maxTokens: 800,
       })
 
       if (!result.error && result.texto) {
@@ -126,7 +133,7 @@ export default function AnoPersonal() {
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
-            ) : <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>}
+            ) : <TextoIA texto={interpretacion} />}
           </div>
         )}
 
