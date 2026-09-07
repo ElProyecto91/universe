@@ -30,13 +30,13 @@ const NIVELES_CONFIG: Record<string, { label: string; color: string; bg: string 
   premium:    { label: '✨ Premium',   color: 'text-amber-300',  bg: 'bg-amber-500/20 border-amber-400/40' },
   top:        { label: '🔥 Top',       color: 'text-orange-300', bg: 'bg-orange-500/20 border-orange-400/40' },
   verificado: { label: '✓ Verificado', color: 'text-purple-300', bg: 'bg-purple-500/20 border-purple-400/40' },
-  nuevo:      { label: '⭐ Nuevo',     color: 'text-white/60',   bg: 'bg-white/10 border-white/20' },
+  nuevo:      { label: '⭐ Nuevo',     color: 'text-white/90',   bg: 'bg-[#150020] border-white/20' },
 }
 
 const ESTADO_CONFIG: Record<string, { color: string; label: string; text: string }> = {
   online:  { color: 'bg-green-400',  label: '● Disponible ahora', text: 'text-green-300' },
   ocupado: { color: 'bg-amber-400',  label: '● En sesión',        text: 'text-amber-300' },
-  offline: { color: 'bg-white/30',   label: '○ No disponible',    text: 'text-white/40' },
+  offline: { color: 'bg-white/30',   label: '○ No disponible',    text: 'text-white/70' },
 }
 
 const AVATAR_COLORES = ['from-purple-600 to-pink-600','from-blue-600 to-purple-600','from-amber-500 to-orange-600','from-green-600 to-teal-600','from-pink-600 to-rose-600']
@@ -155,7 +155,7 @@ export default function ExpertoPerfil() {
 
   if (cargando) return (
     <div className="min-h-screen flex items-center justify-center relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/88" />
+      <div className="absolute inset-0 bg-[#0d0015]" />
       <div className="relative z-10 flex gap-2">
         {[0,150,300].map(d => <div key={d} className="w-3 h-3 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />)}
       </div>
@@ -164,7 +164,7 @@ export default function ExpertoPerfil() {
 
   if (!experto) return (
     <div className="min-h-screen text-white flex items-center justify-center relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/88" />
+      <div className="absolute inset-0 bg-[#0d0015]" />
       <div className="relative z-10 text-center px-6">
         <p className="text-5xl mb-4">🔮</p>
         <p className="text-white font-bold text-xl mb-4">Experto no encontrado</p>
@@ -180,24 +180,24 @@ export default function ExpertoPerfil() {
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/88" />
+      <div className="absolute inset-0 bg-[#0d0015]" />
 
       {/* Modal consulta email */}
       {mostrarEmail && (
         <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.85)' }}>
-          <div className="w-full max-w-sm bg-black/95 border-t border-white/10 rounded-t-3xl p-6 flex flex-col gap-4">
+          <div className="w-full max-w-sm bg-[#0d0015] border-t border-white/10 rounded-t-3xl p-6 flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <p className="text-white font-bold">📧 Consulta por email</p>
-              <button onClick={() => { setMostrarEmail(false); setMsgEmail('') }} className="text-white/30 text-2xl">✕</button>
+              <button onClick={() => { setMostrarEmail(false); setMsgEmail('') }} className="text-white/60 text-2xl">✕</button>
             </div>
-            <div className="bg-black/60 border border-white/15 rounded-2xl p-3">
-              <p className="text-white/70 text-xs">Precio: <strong className="text-white">€{experto.precio_email?.toFixed(2)}</strong> · Respuesta en máx. 3 días</p>
+            <div className="bg-[#0d0015] border border-white/15 rounded-2xl p-3">
+              <p className="text-white text-xs">Precio: <strong className="text-white">€{experto.precio_email?.toFixed(2)}</strong> · Respuesta en máx. 3 días</p>
             </div>
             {!msgEmail ? (
               <>
                 <textarea value={preguntaEmail} onChange={e => setPreguntaEmail(e.target.value)}
                   placeholder="Escribe tu pregunta en detalle. Cuanto más específica, mejor respuesta recibirás..."
-                  rows={6} className="w-full bg-black/50 border border-white/20 rounded-2xl px-4 py-3 text-white text-sm resize-none outline-none placeholder-white/30" />
+                  rows={6} className="w-full bg-[#0d0015] border border-white/20 rounded-2xl px-4 py-3 text-white text-sm resize-none outline-none placeholder-white/30" />
                 <button onClick={enviarConsultaEmail} disabled={!preguntaEmail.trim() || enviandoEmail}
                   className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-4 rounded-full disabled:opacity-40">
                   {enviandoEmail ? 'Enviando...' : `Enviar consulta · €${experto.precio_email?.toFixed(2)}`}
@@ -215,16 +215,16 @@ export default function ExpertoPerfil() {
       {/* Modal regalos */}
       {mostrarRegalos && (
         <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.85)' }}>
-          <div className="w-full max-w-sm bg-black/95 border-t border-white/10 rounded-t-3xl p-6 flex flex-col gap-4">
+          <div className="w-full max-w-sm bg-[#0d0015] border-t border-white/10 rounded-t-3xl p-6 flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <p className="text-white font-bold">🎁 Enviar un regalo</p>
-              <button onClick={() => { setMostrarRegalos(false); setRegaloSeleccionado(null) }} className="text-white/30 text-2xl">✕</button>
+              <button onClick={() => { setMostrarRegalos(false); setRegaloSeleccionado(null) }} className="text-white/60 text-2xl">✕</button>
             </div>
-            <p className="text-white/60 text-xs">Los regalos son una forma de agradecer una sesión especial. El experto recibe el 70%.</p>
+            <p className="text-white/90 text-xs">Los regalos son una forma de agradecer una sesión especial. El experto recibe el 70%.</p>
             <div className="grid grid-cols-5 gap-2">
               {REGALOS_DISPONIBLES.map(r => (
                 <button key={r.tipo} onClick={() => setRegaloSeleccionado(r)}
-                  className={`flex flex-col items-center gap-1 p-2 rounded-2xl border transition ${regaloSeleccionado?.tipo === r.tipo ? 'bg-purple-600/40 border-purple-400' : 'bg-white/10 border-white/20'}`}>
+                  className={`flex flex-col items-center gap-1 p-2 rounded-2xl border transition ${regaloSeleccionado?.tipo === r.tipo ? 'bg-purple-600/40 border-purple-400' : 'bg-[#150020] border-white/20'}`}>
                   <span className="text-2xl">{r.emoji}</span>
                   <span className="text-white text-xs">€{r.valor}</span>
                 </button>
@@ -232,12 +232,12 @@ export default function ExpertoPerfil() {
             </div>
             {regaloSeleccionado && (
               <>
-                <div className="bg-black/60 border border-white/15 rounded-2xl p-3 text-center">
+                <div className="bg-[#0d0015] border border-white/15 rounded-2xl p-3 text-center">
                   <p className="text-white font-semibold">{regaloSeleccionado.emoji} {regaloSeleccionado.nombre} · €{regaloSeleccionado.valor}</p>
                 </div>
                 <input value={mensajeRegalo} onChange={e => setMensajeRegalo(e.target.value)}
                   placeholder="Mensaje para el experto (opcional)..."
-                  className="w-full bg-black/50 border border-white/20 rounded-2xl px-4 py-3 text-white text-sm outline-none placeholder-white/30" />
+                  className="w-full bg-[#0d0015] border border-white/20 rounded-2xl px-4 py-3 text-white text-sm outline-none placeholder-white/30" />
                 <button onClick={enviarRegalo} disabled={enviandoRegalo}
                   className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-4 rounded-full disabled:opacity-40">
                   {enviandoRegalo ? 'Enviando...' : `Enviar ${regaloSeleccionado.emoji} · €${regaloSeleccionado.valor}`}
@@ -251,23 +251,23 @@ export default function ExpertoPerfil() {
       {/* Modal inicio sesión */}
       {mostrarModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.85)' }}>
-          <div className="w-full max-w-sm bg-black/95 border-t border-white/10 rounded-t-3xl p-6 flex flex-col gap-4">
+          <div className="w-full max-w-sm bg-[#0d0015] border-t border-white/10 rounded-t-3xl p-6 flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <p className="text-white font-bold text-lg">Iniciar consulta</p>
-              <button onClick={() => setMostrarModal(false)} className="text-white/30 text-2xl">✕</button>
+              <button onClick={() => setMostrarModal(false)} className="text-white/60 text-2xl">✕</button>
             </div>
-            <div className="flex items-center gap-3 bg-black/60 border border-white/15 rounded-2xl p-3">
+            <div className="flex items-center gap-3 bg-[#0d0015] border border-white/15 rounded-2xl p-3">
               <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${AVATAR_COLORES[colorIndex]} flex items-center justify-center font-bold text-white text-lg flex-shrink-0`}>
                 {experto.nombre_artistico.charAt(0)}
               </div>
               <div>
                 <p className="text-white font-semibold">{experto.nombre_artistico}</p>
-                <p className="text-white/60 text-xs">PIN {experto.pin} · €{experto.precio_minuto?.toFixed(2)}/min</p>
+                <p className="text-white/90 text-xs">PIN {experto.pin} · €{experto.precio_minuto?.toFixed(2)}/min</p>
               </div>
             </div>
             <div className="bg-green-500/10 border border-green-400/30 rounded-2xl p-3">
               <p className="text-green-300 text-sm font-semibold">🎁 {experto.minutos_gratis} minutos gratis</p>
-              <p className="text-white/70 text-xs mt-0.5">Tu primera sesión comienza gratis. Solo se cobra desde el minuto {experto.minutos_gratis + 1}.</p>
+              <p className="text-white text-xs mt-0.5">Tu primera sesión comienza gratis. Solo se cobra desde el minuto {experto.minutos_gratis + 1}.</p>
             </div>
             <div className="flex flex-col gap-3">
               <button onClick={() => iniciarSesion('chat')}
@@ -275,11 +275,11 @@ export default function ExpertoPerfil() {
                 💬 Iniciar chat ahora
               </button>
               <button onClick={() => iniciarSesion('llamada')}
-                className="w-full bg-black/60 border border-white/25 text-white font-semibold py-4 rounded-full">
+                className="w-full bg-[#0d0015] border border-white/25 text-white font-semibold py-4 rounded-full">
                 📞 Llamada de voz
               </button>
             </div>
-            <p className="text-white/30 text-xs text-center">Pago seguro. Cancela en cualquier momento.</p>
+            <p className="text-white/60 text-xs text-center">Pago seguro. Cancela en cualquier momento.</p>
           </div>
         </div>
       )}
@@ -290,12 +290,12 @@ export default function ExpertoPerfil() {
         <div className="flex items-center gap-2">
           {/* Favorito */}
           <button onClick={toggleFavorito}
-            className={`w-9 h-9 rounded-full border flex items-center justify-center text-base transition ${esFavorito ? 'bg-pink-500/20 border-pink-400/50 text-pink-300' : 'bg-white/10 border-white/20 text-white/50'}`}>
+            className={`w-9 h-9 rounded-full border flex items-center justify-center text-base transition ${esFavorito ? 'bg-pink-500/20 border-pink-400/50 text-pink-300' : 'bg-[#150020] border-white/20 text-white/80'}`}>
             {esFavorito ? '❤️' : '🤍'}
           </button>
           {/* Regalar */}
           <button onClick={() => setMostrarRegalos(true)}
-            className="w-9 h-9 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-base">
+            className="w-9 h-9 rounded-full bg-[#150020] border border-white/20 flex items-center justify-center text-base">
             🎁
           </button>
         </div>
@@ -317,7 +317,7 @@ export default function ExpertoPerfil() {
 
         <div className="text-center">
           <p className="text-white font-bold text-2xl">{experto.nombre_artistico}</p>
-          <p className="text-white/50 text-xs mt-0.5">PIN: {experto.pin}</p>
+          <p className="text-white/80 text-xs mt-0.5">PIN: {experto.pin}</p>
           <div className="flex items-center gap-2 justify-center mt-1.5">
             <span className={`text-xs px-2 py-0.5 rounded-full border ${nivelCfg.bg} ${nivelCfg.color}`}>{nivelCfg.label}</span>
             {experto.verificado && <span className="text-blue-400 text-xs">✓ Verificado</span>}
@@ -335,17 +335,17 @@ export default function ExpertoPerfil() {
             <div className="flex gap-0.5 justify-center">
               {[1,2,3,4,5].map(i => <span key={i} className={`text-xs ${i <= Math.round(experto.valoracion_media) ? 'text-amber-400' : 'text-white/20'}`}>★</span>)}
             </div>
-            <p className="text-white/50 text-xs">{experto.total_valoraciones} reseñas</p>
+            <p className="text-white/80 text-xs">{experto.total_valoraciones} reseñas</p>
           </div>
-          <div className="w-px bg-white/10" />
+          <div className="w-px bg-[#150020]" />
           <div className="text-center">
             <p className="text-white font-bold text-xl">{experto.total_sesiones}</p>
-            <p className="text-white/50 text-xs">sesiones</p>
+            <p className="text-white/80 text-xs">sesiones</p>
           </div>
-          <div className="w-px bg-white/10" />
+          <div className="w-px bg-[#150020]" />
           <div className="text-center">
             <p className="text-white font-bold text-xl">€{experto.precio_minuto?.toFixed(2)}</p>
-            <p className="text-white/50 text-xs">por minuto</p>
+            <p className="text-white/80 text-xs">por minuto</p>
           </div>
         </div>
       </div>
@@ -355,32 +355,32 @@ export default function ExpertoPerfil() {
 
         {/* Vídeo presentación */}
         {experto.video_url && (
-          <div className="bg-black/70 border border-white/15 rounded-2xl overflow-hidden">
+          <div className="bg-[#0d0015] border border-white/15 rounded-2xl overflow-hidden">
             <p className="text-purple-300 text-xs tracking-widest uppercase px-4 pt-3 mb-2">🎥 Presentación</p>
             <video src={experto.video_url} controls className="w-full" style={{ maxHeight: '200px' }} />
           </div>
         )}
 
         {/* Bio */}
-        <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
+        <div className="bg-[#0d0015] border border-white/15 rounded-2xl p-4">
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Sobre mí</p>
           <p className="text-white text-sm leading-relaxed">{experto.bio}</p>
         </div>
 
         {/* Temáticas */}
         {experto.especialidad_tematica?.length > 0 && (
-          <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
+          <div className="bg-[#0d0015] border border-white/15 rounded-2xl p-4">
             <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Te puedo ayudar con</p>
             <div className="flex flex-wrap gap-2">
               {experto.especialidad_tematica.map(t => (
-                <span key={t} className="bg-white/10 text-white text-sm px-3 py-1 rounded-full border border-white/20">{t}</span>
+                <span key={t} className="bg-[#150020] text-white text-sm px-3 py-1 rounded-full border border-white/20">{t}</span>
               ))}
             </div>
           </div>
         )}
 
         {/* Especialidades y métodos */}
-        <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
+        <div className="bg-[#0d0015] border border-white/15 rounded-2xl p-4">
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Especialidades</p>
           <div className="flex flex-wrap gap-2">
             {experto.especialidades?.map(e => (
@@ -389,7 +389,7 @@ export default function ExpertoPerfil() {
           </div>
         </div>
 
-        <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
+        <div className="bg-[#0d0015] border border-white/15 rounded-2xl p-4">
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Métodos de lectura</p>
           <div className="flex flex-col gap-2">
             {experto.metodos?.map(m => (
@@ -402,7 +402,7 @@ export default function ExpertoPerfil() {
         </div>
 
         {/* Precios */}
-        <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
+        <div className="bg-[#0d0015] border border-white/15 rounded-2xl p-4">
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Precios</p>
           <div className="flex flex-col gap-2">
             <div className="flex justify-between"><span className="text-white text-sm">Chat por minuto</span><span className="text-white font-bold">€{experto.precio_minuto?.toFixed(2)}/min</span></div>
@@ -428,15 +428,15 @@ export default function ExpertoPerfil() {
 
         {/* Webinars próximos */}
         {webinars.length > 0 && (
-          <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
+          <div className="bg-[#0d0015] border border-white/15 rounded-2xl p-4">
             <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">🎥 Próximos webinars</p>
             <div className="flex flex-col gap-3">
               {webinars.map(w => (
-                <div key={w.id} className="bg-white/8 border border-white/15 rounded-xl p-3" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                <div key={w.id} className="bg-[#0d0015] border border-white/15 rounded-xl p-3" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
                   <p className="text-white font-semibold text-sm">{w.titulo}</p>
-                  <p className="text-white/60 text-xs mt-0.5">{formatearFecha(w.fecha)}</p>
+                  <p className="text-white/90 text-xs mt-0.5">{formatearFecha(w.fecha)}</p>
                   <div className="flex items-center justify-between mt-2">
-                    <p className="text-white/50 text-xs">{w.participantes_actuales}/{w.max_participantes} plazas</p>
+                    <p className="text-white/80 text-xs">{w.participantes_actuales}/{w.max_participantes} plazas</p>
                     <span className="text-white font-bold text-sm">€{w.precio_eur?.toFixed(2)}</span>
                   </div>
                 </div>
@@ -448,23 +448,23 @@ export default function ExpertoPerfil() {
         {/* Consulta email */}
         {experto.acepta_email && (
           <button onClick={() => setMostrarEmail(true)}
-            className="w-full bg-black/70 border border-white/15 rounded-2xl p-4 text-left flex items-center gap-3">
+            className="w-full bg-[#0d0015] border border-white/15 rounded-2xl p-4 text-left flex items-center gap-3">
             <span className="text-3xl">📧</span>
             <div>
               <p className="text-white font-semibold text-sm">Consulta por email</p>
-              <p className="text-white/60 text-xs">Respuesta detallada en máx. 3 días · €{experto.precio_email?.toFixed(2)}</p>
+              <p className="text-white/90 text-xs">Respuesta detallada en máx. 3 días · €{experto.precio_email?.toFixed(2)}</p>
             </div>
-            <span className="ml-auto text-white/40">›</span>
+            <span className="ml-auto text-white/70">›</span>
           </button>
         )}
 
         {/* Idiomas */}
         {experto.idiomas?.length > 0 && (
-          <div className="bg-black/70 border border-white/15 rounded-2xl p-4">
+          <div className="bg-[#0d0015] border border-white/15 rounded-2xl p-4">
             <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Idiomas</p>
             <div className="flex gap-2 flex-wrap">
               {experto.idiomas.map(id => (
-                <span key={id} className="bg-white/10 text-white border border-white/20 text-sm px-3 py-1 rounded-full">{id}</span>
+                <span key={id} className="bg-[#150020] text-white border border-white/20 text-sm px-3 py-1 rounded-full">{id}</span>
               ))}
             </div>
           </div>
@@ -477,16 +477,16 @@ export default function ExpertoPerfil() {
               <p className="text-purple-300 text-xs tracking-widest uppercase">Reseñas verificadas</p>
               <div className="flex items-center gap-1">
                 {[1,2,3,4,5].map(i => <span key={i} className={`text-xs ${i <= Math.round(experto.valoracion_media) ? 'text-amber-400' : 'text-white/20'}`}>★</span>)}
-                <span className="text-white/60 text-xs ml-1">{experto.valoracion_media?.toFixed(1)}</span>
+                <span className="text-white/90 text-xs ml-1">{experto.valoracion_media?.toFixed(1)}</span>
               </div>
             </div>
             {resenasVisibles.map(r => (
-              <div key={r.id} className="bg-black/70 border border-white/15 rounded-2xl p-4">
+              <div key={r.id} className="bg-[#0d0015] border border-white/15 rounded-2xl p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex gap-0.5">
                     {[1,2,3,4,5].map(i => <span key={i} className={`text-sm ${i <= r.valoracion ? 'text-amber-400' : 'text-white/20'}`}>★</span>)}
                   </div>
-                  <p className="text-white/40 text-xs">{formatearFecha(r.created_at)}</p>
+                  <p className="text-white/70 text-xs">{formatearFecha(r.created_at)}</p>
                 </div>
                 {r.comentario && <p className="text-white text-sm leading-relaxed">"{r.comentario}"</p>}
               </div>
@@ -500,8 +500,8 @@ export default function ExpertoPerfil() {
         )}
 
         {/* Aviso legal */}
-        <div className="bg-black/50 border border-white/10 rounded-2xl p-3">
-          <p className="text-white/40 text-xs leading-relaxed text-center">
+        <div className="bg-[#0d0015] border border-white/10 rounded-2xl p-3">
+          <p className="text-white/70 text-xs leading-relaxed text-center">
             Las consultas con expertos son solo para entretenimiento y reflexión personal. No constituyen asesoramiento médico, psicológico, financiero ni legal.
           </p>
         </div>
@@ -509,7 +509,7 @@ export default function ExpertoPerfil() {
       </div>
 
       {/* CTA fijo */}
-      <div className="relative z-10 px-4 py-4 border-t border-white/10 bg-black/80 backdrop-blur">
+      <div className="relative z-10 px-4 py-4 border-t border-white/10 bg-[#0d0015] backdrop-blur">
         {experto.estado === 'online' ? (
           <button onClick={() => setMostrarModal(true)}
             className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-4 rounded-full text-base"
@@ -523,14 +523,14 @@ export default function ExpertoPerfil() {
             </button>
             {experto.acepta_email && (
               <button onClick={() => setMostrarEmail(true)}
-                className="w-full bg-black/60 border border-white/20 text-white font-semibold py-3 rounded-full text-sm">
+                className="w-full bg-[#0d0015] border border-white/20 text-white font-semibold py-3 rounded-full text-sm">
                 📧 Enviar consulta por email · €{experto.precio_email?.toFixed(2)}
               </button>
             )}
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            <button className="w-full bg-white/10 border border-white/20 text-white/60 font-semibold py-4 rounded-full cursor-not-allowed">
+            <button className="w-full bg-[#150020] border border-white/20 text-white/90 font-semibold py-4 rounded-full cursor-not-allowed">
               ○ No disponible ahora
             </button>
             {experto.acepta_email && (
