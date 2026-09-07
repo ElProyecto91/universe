@@ -1,98 +1,137 @@
-import { useState, useEffect } from 'react'
+// src/pages/Biorritmos.tsx
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useUserPlan, incrementarConsulta } from '../hooks/useUserPlan'
+import { useAnalytics } from '../hooks/useAnalytics'
+import { guardarLectura } from '../hooks/useHistorial'
+import { llamarGemini } from '../lib/gemini'
+import { supabase } from '../lib/supabase'
 import Compartir from '../components/Compartir'
-import CtaUpsell from '../components/CtaUpsell'
 import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
-import { llamarGemini } from '../lib/gemini'
-import { useUserPlan } from '../hooks/useUserPlan'
-import { useAnalytics } from '../hooks/useAnalytics'
-import { supabase } from '../lib/supabase'
+import CtaUpsell from '../components/CtaUpsell'
+import PageLayout from '../components/PageLayout'
+
+const HERRAMIENTA = 'biorritmos'
 
 export default function Biorritmos() {
+  const navigate  = useNavigate()
+  const userPlan  = useUserPlan()
+  const analytics = useAnalytics(HERRAMIENTA, userPlan.esPremium)
+
   const [interpretacion, setInterpretacion] = useState('')
-  const [cargando, setCargando] = useState(false)
-  const [generado, setGenerado] = useState(false)
-  const [fromCache, setFromCache] = useState(false)
-  const [tiempoInicio, setTiempoInicio] = useState(0)
+  const [cargando,       setCargando]       = useState(false)
+  const [generado,       setGenerado]       = useState(false)
+  const [fromCache,      setFromCache]      = useState(false)
+  const [errorMsg,       setErrorMsg]       = useState('')
+  const [yaValorado,     setYaValorado]     = useState(false)
+  const lecturaGuardadaRef                  = useRef(false)
 
-  const nombre = localStorage.getItem('nombre') || 'viajero'
-  const signo = localStorage.getItem('signo') || 'Leo'
+  const nombre          = localStorage.getItem('nombre')          || 'viajero'
+  const signo           = localStorage.getItem('signo')           || 'Leo'
   const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
-  const fechaHoy = new Date().toISOString().split('T')[0]
-  const { esPremium, userId, consultasRestantes } = useUserPlan()
-  const { registrarApertura, registrarLectura, registrarValoracion } = useAnalytics('biorritmos', esPremium)
+  const fechaHoy        = new Date().toISOString().split('T')[0]
+  const hoy             = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
 
-  useEffect(() => { registrarApertura() }, [])
+  useEffect(() => {
+    if (!userPlan.cargando) analytics.registrarApertura()
+  }, [userPlan.cargando])
 
   const generarLectura = async () => {
+    if (userPlan.cargando) return
+    if (!userPlan.puedeConsultar) { analytics.registrarPaywall(); navigate('/premium'); return }
+    if (!userPlan.esPremium && userPlan.consultasRestantes <= 0) {
+      analytics.registrarLimite()
+      setErrorMsg(`Has alcanzado tu límite diario de ${userPlan.limiteConsultasDia} consultas gratuitas.`)
+      return
+    }
+
     setCargando(true)
     setGenerado(true)
-    setTiempoInicio(Date.now())
+    setErrorMsg('')
+    const t0 = Date.now()
 
     try {
-      const { data: cached } = await supabase.from('horoscopo_cache')
-        .select('contenido')
-        .eq('signo', signo.toLowerCase())
-        .eq('fecha', fechaHoy)
-        .eq('tipo', 'biorritmos')
-        .maybeSingle()
+      const { data: cached } = await supabase.from('horoscopo_cache').select('contenido')
+        .eq('signo', signo.toLowerCase()).eq('fecha', fechaHoy).eq('tipo', HERRAMIENTA).maybeSingle()
+
       if (cached?.contenido) {
-        setInterpretacion(`${nombre}, ${cached.contenido}`)
+        setInterpretacion(cached.contenido)
         setFromCache(true)
+        analytics.registrarLectura({ desdCache: true, tiempoMs: Date.now() - t0, modeloIa: 'cache' })
+        await _guardarSiPrimera(cached.contenido)
         setCargando(false)
-        registrarLectura({ desdCache: true, tiempoMs: Date.now() - tiempoInicio, modeloIa: 'cache' })
         return
       }
-    } catch (err) { console.warn('[Biorritmos]', err) }
 
-    const result = await llamarGemini({
-      herramienta: 'biorritmos',
-      prompt: `Experto en biorritmología (herramienta de reflexión). Nombre: ${nombre}, Nacimiento: ${fechaNacimiento}. Ciclos físico, emocional e intelectual hoy. 3 párrafos.`,
-      userId, usarLite: false, cacheable: false, maxTokens: 300,
-    })
+      const result = await llamarGemini({
+        herramienta: HERRAMIENTA,
+        prompt: `Experto en biorritmología (herramienta de reflexión). Nombre: ${nombre}, Nacimiento: ${fechaNacimiento}. Ciclos físico, emocional e intelectual hoy. 3 párrafos.`,
+        userId: userPlan.userId, usarLite: false, cacheable: false, maxTokens: 300,
+      })
 
-    const tiempoMs = Date.now() - tiempoInicio
-
-    if (!result.error && result.texto) {
-      setInterpretacion(`${nombre}, ${result.texto}`)
-      setFromCache(false)
-      registrarLectura({ desdCache: false, tiempoMs, modeloIa: result.modelo })
-      supabase.from('horoscopo_cache').insert({
-        signo: signo.toLowerCase(), fecha: fechaHoy, tipo: 'biorritmos',
-        contenido: result.texto, tokens_used: result.tokensUsados
-      }).then(() => {})
-    } else {
-      setInterpretacion('El universo guarda silencio. Inténtalo de nuevo.')
+      if (!result.error && result.texto) {
+        setInterpretacion(result.texto)
+        setFromCache(false)
+        supabase.from('horoscopo_cache').insert({ signo: signo.toLowerCase(), fecha: fechaHoy, tipo: HERRAMIENTA, contenido: result.texto, tokens_used: result.tokensUsados }).then(() => {})
+        if (userPlan.userId) await incrementarConsulta(userPlan.userId)
+        analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: result.modelo })
+        await _guardarSiPrimera(result.texto)
+      } else {
+        setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.')
+      }
+    } catch (err) {
+      console.error('[Biorritmos]', err)
+      setErrorMsg('Error inesperado. Inténtalo de nuevo.')
+    } finally {
+      setCargando(false)
     }
-    setCargando(false)
   }
 
-  const bgStyle = { backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)', backgroundSize: 'cover' as const, backgroundPosition: 'center' as const }
+  const _guardarSiPrimera = async (texto: string) => {
+    if (lecturaGuardadaRef.current) return
+    lecturaGuardadaRef.current = true
+    await guardarLectura({ herramienta: HERRAMIENTA, titulo: `Biorritmos · ${signo} · ${fechaHoy}`, contenido: texto, metadatos: { signo, fecha: fechaHoy, nombre } })
+  }
+
+  const handleValorar = (valor: 1 | -1) => {
+    if (yaValorado) return
+    setYaValorado(true)
+    analytics.registrarValoracion(valor)
+  }
 
   return (
-    <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/75" />
-      <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-6 py-10 gap-6">
+    <PageLayout>
+      <div className="flex flex-col gap-6">
+
         <div className="flex items-center">
-          <button onClick={() => window.location.href = '/tradiciones'} className="text-purple-300 text-sm">← Volver</button>
+          <button onClick={() => navigate('/tradiciones')} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
             <p className="text-white font-semibold text-sm">Biorritmos</p>
             <p className="text-purple-300 text-xs">Ciclos energéticos del día</p>
           </div>
+          {!userPlan.cargando && !userPlan.esPremium && (
+            <p className="text-white/40 text-xs">{userPlan.consultasRestantes}/{userPlan.limiteConsultasDia}</p>
+          )}
         </div>
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur text-center">
-          <p className="text-purple-300 text-xs tracking-widest uppercase mb-1">Biorritmos</p>
-          <p className="text-white/60 text-sm">{signo} · {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+
+        <div className="bg-[#0d0015] border border-purple-500/50 rounded-3xl p-5 text-center">
+          <p className="text-purple-400 text-xs tracking-widest uppercase mb-1">Biorritmos</p>
+          <p className="text-white text-sm">{signo} · {hoy}</p>
         </div>
+
         {!generado ? (
           <div className="flex flex-col gap-3">
             <DisclaimerIA compact />
-            <button onClick={generarLectura} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition">Generar mi lectura</button>
+            <button onClick={generarLectura} disabled={userPlan.cargando}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition disabled:opacity-40">
+              Generar mi lectura
+            </button>
           </div>
         ) : (
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
+          <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-6">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-purple-300 text-xs tracking-widest uppercase">Tu lectura</p>
+              <p className="text-purple-400 text-xs tracking-widest uppercase">Tu lectura</p>
               {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
             </div>
             {cargando ? (
@@ -101,19 +140,34 @@ export default function Biorritmos() {
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
-            ) : <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>}
+            ) : <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>}
           </div>
         )}
+
+        {errorMsg && (
+          <div className="bg-[#0d0015] border border-red-400/50 rounded-2xl p-4">
+            <p className="text-red-300 text-sm text-center">{errorMsg}</p>
+            {!userPlan.esPremium && (
+              <button onClick={() => navigate('/premium')} className="mt-3 w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold py-2 rounded-full">
+                Hazte Premium
+              </button>
+            )}
+          </div>
+        )}
+
         {!cargando && interpretacion && (
           <>
             <DisclaimerIA />
-            <Valoracion onValorar={registrarValoracion} />
+            <Valoracion onValorar={handleValorar} />
             <Compartir titulo="Biorritmos" texto={interpretacion} hashtags={['Universe', 'Biorritmos']} />
-            <CtaUpsell consultasRestantes={consultasRestantes} />
-            <button onClick={() => window.location.href = '/guia'} className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full">Explorar con mi Guía IA</button>
+            <CtaUpsell consultasRestantes={userPlan.consultasRestantes} />
+            <button onClick={() => navigate('/guia')} className="w-full bg-[#0d0015] border border-white/15 text-white font-semibold py-4 rounded-full hover:border-purple-500/50 transition">
+              Explorar con mi Guía IA
+            </button>
           </>
         )}
+
       </div>
-    </div>
+    </PageLayout>
   )
 }
