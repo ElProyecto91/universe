@@ -1,8 +1,7 @@
 // src/pages/Afirmaciones.tsx
 // ============================================================
 // UNIVERSE — Afirmaciones
-// Migrada: useUserPlan, useAnalytics, Valoracion, guardarLectura
-// Diseño: todo sólido, máxima legibilidad
+// Usa PageLayout — fondo y overlay gestionados globalmente
 // ============================================================
 
 import { useState, useEffect, useRef } from 'react'
@@ -16,6 +15,7 @@ import { getSignoSolar } from '../lib/motores/horoscopo'
 import { AFIRMACIONES_TEMATICAS, getAfirmacionDelDia, getAfirmacionTematica } from '../lib/motores/afirmaciones'
 import Compartir from '../components/Compartir'
 import Valoracion from '../components/Valoracion'
+import PageLayout from '../components/PageLayout'
 
 const HERRAMIENTA = 'afirmaciones'
 
@@ -30,12 +30,6 @@ const TEMAS = [
 type TemaId = typeof TEMAS[number]['id']
 type Vista  = 'diaria' | 'tematica' | 'practica'
 
-const bgStyle = {
-  backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
-  backgroundSize: 'cover',
-  backgroundPosition: 'center',
-}
-
 function DisclaimerIA() {
   return (
     <p className="text-white/40 text-xs text-center leading-relaxed px-2">
@@ -46,9 +40,9 @@ function DisclaimerIA() {
 }
 
 export default function Afirmaciones() {
-  const navigate    = useNavigate()
-  const userPlan    = useUserPlan()
-  const analytics   = useAnalytics(HERRAMIENTA, userPlan.esPremium)
+  const navigate  = useNavigate()
+  const userPlan  = useUserPlan()
+  const analytics = useAnalytics(HERRAMIENTA, userPlan.esPremium)
 
   const [vista,              setVista]              = useState<Vista>('diaria')
   const [temaActivo,         setTemaActivo]         = useState<TemaId>('amor')
@@ -151,11 +145,8 @@ Cada una en primera persona presente, una por línea, sin numeración ni guiones
   }
 
   return (
-    <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      {/* Overlay sólido — NUNCA semitransparente */}
-      <div className="absolute inset-0 bg-black/92" />
-
-      <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-6 py-10 gap-6">
+    <PageLayout>
+      <div className="flex flex-col gap-6">
 
         {/* Header */}
         <div className="flex items-center">
@@ -180,9 +171,7 @@ Cada una en primera persona presente, una por línea, sin numeración ni guiones
               key={id}
               onClick={() => setVista(id)}
               className={`flex-1 py-2 rounded-xl text-xs font-semibold transition ${
-                vista === id
-                  ? 'bg-purple-600 text-white'
-                  : 'text-white/50 hover:text-white/70'
+                vista === id ? 'bg-purple-600 text-white' : 'text-white/50 hover:text-white/70'
               }`}
             >
               {id === 'diaria' ? 'Diaria' : id === 'tematica' ? 'Temática' : 'Práctica'}
@@ -194,7 +183,6 @@ Cada una en primera persona presente, una por línea, sin numeración ni guiones
         {vista === 'diaria' && (
           <div className="flex flex-col gap-4">
 
-            {/* Card principal — fondo sólido oscuro, borde púrpura visible */}
             <div className="bg-[#0d0015] border border-purple-500/50 rounded-3xl p-7 text-center">
               <p className="text-purple-400 text-xs tracking-widest uppercase mb-4">
                 Tu afirmación de hoy · {signo}
@@ -204,7 +192,6 @@ Cada una en primera persona presente, una por línea, sin numeración ni guiones
               </p>
             </div>
 
-            {/* Instrucción */}
             <div className="bg-[#0d0015] border border-white/15 rounded-2xl p-4">
               <p className="text-white/70 text-sm leading-relaxed text-center">
                 Di esta afirmación en voz alta 3 veces. Coloca la mano en tu corazón.
@@ -212,7 +199,6 @@ Cada una en primera persona presente, una por línea, sin numeración ni guiones
               </p>
             </div>
 
-            {/* Botón practicar */}
             <button
               onClick={() => setVista('practica')}
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition"
@@ -220,7 +206,6 @@ Cada una en primera persona presente, una por línea, sin numeración ni guiones
               Practicar esta afirmación
             </button>
 
-            {/* Error */}
             {errorMsg && (
               <div className="bg-[#0d0015] border border-red-400/50 rounded-2xl p-4">
                 <p className="text-red-300 text-sm text-center">{errorMsg}</p>
@@ -235,7 +220,6 @@ Cada una en primera persona presente, una por línea, sin numeración ni guiones
               </div>
             )}
 
-            {/* Botón IA */}
             {!interpretacion ? (
               <button
                 onClick={generarAfirmacion}
@@ -256,13 +240,11 @@ Cada una en primera persona presente, una por línea, sin numeración ni guiones
                   </p>
                   {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
                 </div>
-
                 {interpretacion.split('\n').filter(l => l.trim()).map((linea, i) => (
                   <div key={i} className="bg-[#150020] border border-purple-500/30 rounded-2xl p-4">
                     <p className="text-white text-sm leading-relaxed italic">"{linea.trim()}"</p>
                   </div>
                 ))}
-
                 <Valoracion onValorar={handleValorar} />
                 <DisclaimerIA />
               </div>
@@ -299,7 +281,6 @@ Cada una en primera persona presente, una por línea, sin numeración ni guiones
               ))}
             </div>
 
-            {/* Card tema activo */}
             <div className="bg-[#0d0015] border border-purple-500/50 rounded-3xl p-7 text-center">
               <p className="text-purple-400 text-xs tracking-widest uppercase mb-4">
                 {TEMAS.find(t => t.id === temaActivo)?.icono}{' '}
@@ -335,14 +316,12 @@ Cada una en primera persona presente, una por línea, sin numeración ni guiones
               </p>
             </div>
 
-            {/* Afirmación activa */}
             <div className="bg-[#0d0015] border border-purple-500/50 rounded-3xl p-7 text-center w-full">
               <p className="text-white text-lg leading-relaxed font-semibold">
                 "{afirmacionPersonal || afirmacionDiaria}"
               </p>
             </div>
 
-            {/* Contador */}
             <div className="text-center">
               <p className="text-8xl font-bold text-purple-300">{repeticiones}</p>
               <p className="text-white/50 text-sm mt-1">repeticiones</p>
@@ -354,7 +333,6 @@ Cada una en primera persona presente, una por línea, sin numeración ni guiones
               )}
             </div>
 
-            {/* Botón contador */}
             <button
               onClick={() => setRepeticiones(r => r + 1)}
               className="w-24 h-24 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-2xl rounded-full hover:opacity-90 transition active:scale-95"
@@ -393,6 +371,6 @@ Cada una en primera persona presente, una por línea, sin numeración ni guiones
         )}
 
       </div>
-    </div>
+    </PageLayout>
   )
 }
