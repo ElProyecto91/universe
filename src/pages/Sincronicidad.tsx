@@ -9,6 +9,7 @@ import Compartir from '../components/Compartir'
 import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
 import PageLayout from '../components/PageLayout'
+import TextoIA from '../components/TextoIA'
 
 const HERRAMIENTA = 'sincronicidad'
 
@@ -47,8 +48,14 @@ export default function Sincronicidad() {
     try {
       const result = await llamarGemini({
         herramienta: HERRAMIENTA,
-        prompt: `Experto en sincronicidades (Jung). Nombre: ${nombre}. Coincidencia o señal: "${pregunta}". 2 párrafos reflexivos sobre el significado.`,
-        userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 200,
+        prompt: `Eres un experto en sincronicidades y psicología junguiana. Escribe en español, en texto corrido sin listas, sin asteriscos, sin markdown.
+
+El usuario se llama ${nombre}. Ha observado esta señal o coincidencia: "${pregunta}".
+
+Escribe una interpretación de 3 párrafos. Primer párrafo: qué podría estar comunicando el universo a través de esta sincronicidad y cómo conecta con la psicología junguiana. Segundo párrafo: qué aspecto de la vida de ${nombre} podría estar resonando con esta señal y qué invita a explorar. Tercer párrafo: un mensaje de cierre con una pregunta reflexiva que ayude a ${nombre} a profundizar en el significado.
+
+Escribe de forma cálida, profunda y directa. Sin títulos, sin guiones, sin asteriscos. Solo párrafos separados por línea en blanco.`,
+        userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 600,
       })
 
       if (!result.error && result.texto) {
@@ -114,7 +121,7 @@ export default function Sincronicidad() {
                 </div>
               ) : errorMsg
                 ? <p className="text-red-300 text-sm">{errorMsg}</p>
-                : <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>
+                : <TextoIA texto={interpretacion} />
               }
             </div>
             {!cargando && interpretacion && (
