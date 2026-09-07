@@ -11,6 +11,7 @@ import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
 import CtaUpsell from '../components/CtaUpsell'
 import PageLayout from '../components/PageLayout'
+import TextoIA from '../components/TextoIA'
 
 const HERRAMIENTA = 'color-oracle'
 
@@ -60,8 +61,14 @@ export default function ColorOracle() {
 
       const result = await llamarGemini({
         herramienta: HERRAMIENTA,
-        prompt: `Experto en cromoterapia simbólica. Nombre: ${nombre}, Signo: ${signo}. Color del día y su significado en tradiciones culturales. 3 párrafos.`,
-        userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 300,
+        prompt: `Eres un experto en cromoterapia simbólica. Escribe en español, en texto corrido sin listas, sin asteriscos, sin markdown.
+
+El usuario se llama ${nombre} y su signo es ${signo}. Hoy es ${fechaHoy}.
+
+Escribe una lectura de 4 párrafos sobre el color que le acompaña hoy. Primer párrafo: cuál es ese color y por qué resuena con su energía de hoy. Segundo párrafo: qué simboliza ese color en distintas tradiciones culturales y espirituales. Tercer párrafo: cómo puede usar ese color hoy de forma práctica (ropa, objetos, visualización). Cuarto párrafo: un mensaje final de cierre para ${nombre}.
+
+Escribe de forma cálida y directa. Sin títulos, sin guiones, sin asteriscos. Solo párrafos separados por línea en blanco.`,
+        userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 700,
       })
 
       if (!result.error && result.texto) {
@@ -125,7 +132,7 @@ export default function ColorOracle() {
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
-            ) : <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>}
+            ) : <TextoIA texto={interpretacion} />}
           </div>
         )}
 
