@@ -42,7 +42,7 @@ const NIVELES_CONFIG: Record<string, { label: string; color: string; bg: string;
   premium:    { label: '✨ Premium',   color: 'text-amber-300',  bg: 'bg-amber-500/20 border-amber-400/40', orden: 2 },
   top:        { label: '🔥 Top',       color: 'text-orange-300', bg: 'bg-orange-500/20 border-orange-400/40', orden: 3 },
   verificado: { label: '✓ Verificado', color: 'text-purple-300', bg: 'bg-purple-500/20 border-purple-400/40', orden: 4 },
-  nuevo:      { label: '⭐ Nuevo',     color: 'text-white/60',   bg: 'bg-white/10 border-white/20',         orden: 5 },
+  nuevo:      { label: '⭐ Nuevo',     color: 'text-white/90',   bg: 'bg-[#150020] border-white/20',         orden: 5 },
 }
 
 const ESTADO_CONFIG: Record<string, { color: string; label: string }> = {
@@ -71,7 +71,7 @@ function NivelBadge({ nivel }: { nivel: string }) {
 function EstadoBadge({ estado }: { estado: string }) {
   const cfg = ESTADO_CONFIG[estado] ?? ESTADO_CONFIG.offline
   return (
-    <div className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${estado === 'online' ? 'bg-green-500/20 text-green-300' : estado === 'ocupado' ? 'bg-amber-500/20 text-amber-300' : 'bg-white/10 text-white/40'}`}>
+    <div className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${estado === 'online' ? 'bg-green-500/20 text-green-300' : estado === 'ocupado' ? 'bg-amber-500/20 text-amber-300' : 'bg-[#150020] text-white/70'}`}>
       <div className={`w-1.5 h-1.5 rounded-full ${cfg.color}`} />
       {cfg.label}
     </div>
@@ -120,7 +120,7 @@ export default function Expertos() {
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/88" />
+      <div className="absolute inset-0 bg-[#0d0015]" />
 
       {/* Header */}
       <div className="relative z-10 px-4 pt-10 pb-2">
@@ -137,13 +137,13 @@ export default function Expertos() {
           <span className="text-2xl flex-shrink-0">🎁</span>
           <div>
             <p className="text-white font-semibold text-sm">3 minutos gratis con cada experto nuevo</p>
-            <p className="text-white/70 text-xs">Prueba la conexión antes de comprometerte.</p>
+            <p className="text-white text-xs">Prueba la conexión antes de comprometerte.</p>
           </div>
         </div>
 
         {/* Búsqueda por PIN */}
-        <div className="bg-black/60 border border-white/20 rounded-xl px-4 py-2.5 flex items-center gap-2 mb-3">
-          <span className="text-white/40 text-sm">🔍</span>
+        <div className="bg-[#0d0015] border border-white/20 rounded-xl px-4 py-2.5 flex items-center gap-2 mb-3">
+          <span className="text-white/70 text-sm">🔍</span>
           <input
             value={busquedaPin}
             onChange={e => setBusquedaPin(e.target.value)}
@@ -151,7 +151,7 @@ export default function Expertos() {
             className="flex-1 bg-transparent text-white text-sm outline-none placeholder-white/30"
           />
           {busquedaPin && (
-            <button onClick={() => setBusquedaPin('')} className="text-white/40 text-sm">✕</button>
+            <button onClick={() => setBusquedaPin('')} className="text-white/70 text-sm">✕</button>
           )}
         </div>
 
@@ -159,12 +159,12 @@ export default function Expertos() {
         <div className="flex items-center justify-between mb-2">
           <button
             onClick={() => setSoloDisponibles(!soloDisponibles)}
-            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition ${soloDisponibles ? 'bg-green-500/20 border-green-400/50 text-green-300' : 'bg-white/10 border-white/20 text-white/70'}`}>
+            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition ${soloDisponibles ? 'bg-green-500/20 border-green-400/50 text-green-300' : 'bg-[#150020] border-white/20 text-white'}`}>
             <div className={`w-2 h-2 rounded-full ${soloDisponibles ? 'bg-green-400' : 'bg-white/30'}`} />
             Solo disponibles
           </button>
           <select value={ordenPor} onChange={e => setOrdenPor(e.target.value as any)}
-            className="bg-black/60 border border-white/20 text-white text-xs rounded-xl px-3 py-1.5 outline-none">
+            className="bg-[#0d0015] border border-white/20 text-white text-xs rounded-xl px-3 py-1.5 outline-none">
             <option value="nivel" className="bg-black">💎 Por nivel</option>
             <option value="valoracion" className="bg-black">⭐ Mejor valorados</option>
             <option value="precio" className="bg-black">💰 Más económicos</option>
@@ -176,7 +176,7 @@ export default function Expertos() {
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           {TEMATICAS.map(t => (
             <button key={t} onClick={() => setTematica(t)}
-              className={`whitespace-nowrap text-xs px-3 py-1.5 rounded-full border transition flex-shrink-0 ${tematica === t ? 'bg-purple-600 border-purple-400 text-white' : 'bg-black/50 border-white/20 text-white/70'}`}>
+              className={`whitespace-nowrap text-xs px-3 py-1.5 rounded-full border transition flex-shrink-0 ${tematica === t ? 'bg-purple-600 border-purple-400 text-white' : 'bg-[#0d0015] border-white/20 text-white'}`}>
               {t}
             </button>
           ))}
@@ -187,13 +187,13 @@ export default function Expertos() {
       <div className="relative z-10 flex-1 px-4 pb-8 flex flex-col gap-3 mt-3">
 
         {cargando && [1,2,3].map(i => (
-          <div key={i} className="h-40 rounded-3xl bg-white/10 animate-pulse" />
+          <div key={i} className="h-40 rounded-3xl bg-[#150020] animate-pulse" />
         ))}
 
         {!cargando && expertosFiltrados.length === 0 && (
           <div className="text-center py-16">
             <p className="text-4xl mb-3">🔮</p>
-            <p className="text-white/70 text-sm">No hay expertos con estos filtros.</p>
+            <p className="text-white text-sm">No hay expertos con estos filtros.</p>
           </div>
         )}
 
@@ -202,7 +202,7 @@ export default function Expertos() {
           return (
             <button key={experto.id}
               onClick={() => window.location.href = `/expertos/${experto.slug}`}
-              className="w-full bg-black/65 border border-white/15 rounded-3xl p-4 text-left hover:border-purple-400/40 hover:bg-black/75 transition">
+              className="w-full bg-[#0d0015] border border-white/15 rounded-3xl p-4 text-left hover:border-purple-400/40 hover:bg-[#0d0015] transition">
 
               <div className="flex gap-4">
                 {/* Avatar */}
@@ -224,11 +224,11 @@ export default function Expertos() {
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <div className="min-w-0">
                       <p className="text-white font-bold text-base truncate">{experto.nombre_artistico}</p>
-                      <p className="text-white/50 text-xs">PIN: {experto.pin}</p>
+                      <p className="text-white/80 text-xs">PIN: {experto.pin}</p>
                     </div>
                     <div className="text-right flex-shrink-0">
                       <p className="text-white font-bold text-sm">€{experto.precio_minuto?.toFixed(2)}</p>
-                      <p className="text-white/50 text-xs">por min</p>
+                      <p className="text-white/80 text-xs">por min</p>
                     </div>
                   </div>
 
@@ -238,17 +238,17 @@ export default function Expertos() {
                     <div className="flex items-center gap-1">
                       <span className="text-amber-400 text-xs">★</span>
                       <span className="text-white text-xs">{experto.valoracion_media?.toFixed(1)}</span>
-                      <span className="text-white/40 text-xs">({experto.total_valoraciones})</span>
+                      <span className="text-white/70 text-xs">({experto.total_valoraciones})</span>
                     </div>
                   </div>
 
-                  <p className="text-white/70 text-xs leading-relaxed line-clamp-2 mb-2">{experto.bio}</p>
+                  <p className="text-white text-xs leading-relaxed line-clamp-2 mb-2">{experto.bio}</p>
 
                   {/* Especialidades temáticas */}
                   {experto.especialidad_tematica?.length > 0 && (
                     <div className="flex gap-1 flex-wrap mb-2">
                       {experto.especialidad_tematica.slice(0, 2).map(t => (
-                        <span key={t} className="text-xs bg-white/10 text-white/70 px-2 py-0.5 rounded-full">{t}</span>
+                        <span key={t} className="text-xs bg-[#150020] text-white px-2 py-0.5 rounded-full">{t}</span>
                       ))}
                     </div>
                   )}
@@ -257,7 +257,7 @@ export default function Expertos() {
 
               {/* Footer */}
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
-                <div className="flex items-center gap-3 text-xs text-white/50">
+                <div className="flex items-center gap-3 text-xs text-white/80">
                   <span>💬 {experto.total_sesiones}</span>
                   {experto.acepta_email && <span>📧 Email</span>}
                   {experto.acepta_webinar && <span>🎥 Webinar</span>}
@@ -270,9 +270,9 @@ export default function Expertos() {
         })}
 
         {/* ¿Eres experto? */}
-        <div className="bg-black/65 border border-white/15 rounded-2xl p-4 mt-2">
+        <div className="bg-[#0d0015] border border-white/15 rounded-2xl p-4 mt-2">
           <p className="text-white font-semibold text-sm mb-1">¿Eres tarotista o experto espiritual?</p>
-          <p className="text-white/70 text-xs leading-relaxed mb-3">
+          <p className="text-white text-xs leading-relaxed mb-3">
             Primer mes sin comisión · Posición prioritaria · Sin cuota de alta
           </p>
           <button onClick={() => window.location.href = '/expertos/unirse'}
