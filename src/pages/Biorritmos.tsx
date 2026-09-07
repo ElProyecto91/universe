@@ -11,6 +11,7 @@ import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
 import CtaUpsell from '../components/CtaUpsell'
 import PageLayout from '../components/PageLayout'
+import TextoIA from '../components/TextoIA'
 
 const HERRAMIENTA = 'biorritmos'
 
@@ -66,15 +67,27 @@ export default function Biorritmos() {
 
       const result = await llamarGemini({
         herramienta: HERRAMIENTA,
-        prompt: `Eres un experto en biorritmología simbólica. El usuario se llama ${nombre} y nació el ${fechaNacimiento}. Hoy analiza sus tres ciclos: físico (23 días), emocional (28 días) e intelectual (33 días). Escribe una lectura profunda y personalizada de 5-6 párrafos detallados. Incluye: en qué fase está cada ciclo hoy, qué significa para su energía, sus emociones y su mente, qué actividades favorece este momento, y un consejo práctico para aprovechar esta energía. Tono cálido, reflexivo y orientador.`,
+        prompt: `Eres un experto en biorritmología simbólica. Escribe en español, en texto corrido sin listas ni asteriscos ni markdown de ningún tipo.
+
+El usuario se llama ${nombre} y nació el ${fechaNacimiento}. Hoy es ${fechaHoy}.
+
+Escribe una lectura personal de 5 párrafos sobre sus ciclos biorrítmicos de hoy. Primer párrafo: en qué fase está su ciclo físico de 23 días y qué significa para su energía corporal. Segundo párrafo: en qué fase está su ciclo emocional de 28 días y cómo afecta a sus relaciones y estado de ánimo. Tercer párrafo: en qué fase está su ciclo intelectual de 33 días y cómo influye en su claridad mental y toma de decisiones. Cuarto párrafo: cómo interactúan los tres ciclos juntos hoy y qué tipo de jornada le espera. Quinto párrafo: un consejo práctico y concreto para aprovechar esta energía hoy.
+
+Escribe de forma cálida y directa, dirigiéndote a ${nombre}. Sin títulos, sin guiones, sin asteriscos. Solo párrafos separados por línea en blanco.`,
+        userId: userPlan.userId,
+        usarLite: false,
+        cacheable: false,
         maxTokens: 800,
-        userId: userPlan.userId, usarLite: false, cacheable: false,
+        temperatura: 0.7,
       })
 
       if (!result.error && result.texto) {
         setInterpretacion(result.texto)
         setFromCache(false)
-        supabase.from('horoscopo_cache').insert({ signo: signo.toLowerCase(), fecha: fechaHoy, tipo: HERRAMIENTA, contenido: result.texto, tokens_used: result.tokensUsados }).then(() => {})
+        supabase.from('horoscopo_cache').insert({
+          signo: signo.toLowerCase(), fecha: fechaHoy, tipo: HERRAMIENTA,
+          contenido: result.texto, tokens_used: result.tokensUsados,
+        }).then(() => {})
         if (userPlan.userId) await incrementarConsulta(userPlan.userId)
         analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: result.modelo })
         await _guardarSiPrimera(result.texto)
@@ -92,7 +105,12 @@ export default function Biorritmos() {
   const _guardarSiPrimera = async (texto: string) => {
     if (lecturaGuardadaRef.current) return
     lecturaGuardadaRef.current = true
-    await guardarLectura({ herramienta: HERRAMIENTA, titulo: `Biorritmos · ${signo} · ${fechaHoy}`, contenido: texto, metadatos: { signo, fecha: fechaHoy, nombre } })
+    await guardarLectura({
+      herramienta: HERRAMIENTA,
+      titulo: `Biorritmos · ${signo} · ${fechaHoy}`,
+      contenido: texto,
+      metadatos: { signo, fecha: fechaHoy, nombre, fechaNacimiento },
+    })
   }
 
   const handleValorar = (valor: 1 | -1) => {
@@ -131,7 +149,7 @@ export default function Biorritmos() {
           </div>
         ) : (
           <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-6">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-4">
               <p className="text-purple-400 text-xs tracking-widest uppercase">Tu lectura</p>
               {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
             </div>
@@ -141,7 +159,9 @@ export default function Biorritmos() {
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
-            ) : <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>}
+            ) : (
+              <TextoIA texto={interpretacion} />
+            )}
           </div>
         )}
 
@@ -149,7 +169,8 @@ export default function Biorritmos() {
           <div className="bg-[#0d0015] border border-red-400/50 rounded-2xl p-4">
             <p className="text-red-300 text-sm text-center">{errorMsg}</p>
             {!userPlan.esPremium && (
-              <button onClick={() => navigate('/premium')} className="mt-3 w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold py-2 rounded-full">
+              <button onClick={() => navigate('/premium')}
+                className="mt-3 w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold py-2 rounded-full">
                 Hazte Premium
               </button>
             )}
@@ -162,7 +183,8 @@ export default function Biorritmos() {
             <Valoracion onValorar={handleValorar} />
             <Compartir titulo="Biorritmos" texto={interpretacion} hashtags={['Universe', 'Biorritmos']} />
             <CtaUpsell consultasRestantes={userPlan.consultasRestantes} />
-            <button onClick={() => navigate('/guia')} className="w-full bg-[#0d0015] border border-white/15 text-white font-semibold py-4 rounded-full hover:border-purple-500/50 transition">
+            <button onClick={() => navigate('/guia')}
+              className="w-full bg-[#0d0015] border border-white/15 text-white font-semibold py-4 rounded-full hover:border-purple-500/50 transition">
               Explorar con mi Guía IA
             </button>
           </>
