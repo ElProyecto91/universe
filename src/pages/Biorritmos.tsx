@@ -113,7 +113,7 @@ export default function Biorritmos() {
         userId: userPlan.userId,
         usarLite: false,
         cacheable: false,
-        maxTokens: 800,
+        maxTokens: 1200,
         temperatura: 0.7,
       })
 
