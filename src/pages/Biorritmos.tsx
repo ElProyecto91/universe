@@ -1,4 +1,4 @@
-// src/pages/ColorOracle.tsx
+// src/pages/Biorritmos.tsx
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUserPlan, incrementarConsulta } from '../hooks/useUserPlan'
@@ -13,9 +13,29 @@ import CtaUpsell from '../components/CtaUpsell'
 import PageLayout from '../components/PageLayout'
 import TextoIA from '../components/TextoIA'
 
-const HERRAMIENTA = 'color-oracle'
+const HERRAMIENTA = 'biorritmos'
 
-export default function ColorOracle() {
+// Calcula las fases en el frontend — la IA nunca hace matemáticas
+function calcularFases(fechaNacimiento: string): { fisico: string; emocional: string; intelectual: string } {
+  const nac  = new Date(fechaNacimiento).getTime()
+  const hoy  = new Date().setHours(0, 0, 0, 0)
+  const dias = Math.floor((hoy - nac) / 86400000)
+
+  const describir = (val: number) => {
+    if (val > 0.5)  return 'alta energía'
+    if (val > 0)    return 'energía en ascenso'
+    if (val > -0.5) return 'energía en descenso'
+    return 'energía baja, momento de descanso'
+  }
+
+  return {
+    fisico:      describir(Math.sin(2 * Math.PI * dias / 23)),
+    emocional:   describir(Math.sin(2 * Math.PI * dias / 28)),
+    intelectual: describir(Math.sin(2 * Math.PI * dias / 33)),
+  }
+}
+
+export default function Biorritmos() {
   const navigate  = useNavigate()
   const userPlan  = useUserPlan()
   const analytics = useAnalytics(HERRAMIENTA, userPlan.esPremium)
@@ -28,10 +48,11 @@ export default function ColorOracle() {
   const [yaValorado,     setYaValorado]     = useState(false)
   const lecturaGuardadaRef                  = useRef(false)
 
-  const nombre   = localStorage.getItem('nombre') || 'viajero'
-  const signo    = localStorage.getItem('signo')  || 'Leo'
-  const fechaHoy = new Date().toISOString().split('T')[0]
-  const hoy      = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
+  const nombre          = localStorage.getItem('nombre')          || 'viajero'
+  const signo           = localStorage.getItem('signo')           || 'Leo'
+  const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
+  const fechaHoy        = new Date().toISOString().split('T')[0]
+  const hoy             = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
 
   useEffect(() => {
     if (!userPlan.cargando) analytics.registrarApertura()
@@ -46,7 +67,9 @@ export default function ColorOracle() {
       return
     }
 
-    setCargando(true); setGenerado(true); setErrorMsg('')
+    setCargando(true)
+    setGenerado(true)
+    setErrorMsg('')
     const t0 = Date.now()
 
     try {
@@ -54,46 +77,81 @@ export default function ColorOracle() {
         .eq('signo', signo.toLowerCase()).eq('fecha', fechaHoy).eq('tipo', HERRAMIENTA).maybeSingle()
 
       if (cached?.contenido) {
-        setInterpretacion(cached.contenido); setFromCache(true)
+        setInterpretacion(cached.contenido)
+        setFromCache(true)
         analytics.registrarLectura({ desdCache: true, tiempoMs: Date.now() - t0, modeloIa: 'cache' })
-        await _guardarSiPrimera(cached.contenido); setCargando(false); return
+        await _guardarSiPrimera(cached.contenido)
+        setCargando(false)
+        return
       }
+
+      // Las fases se calculan aquí — la IA solo interpreta en prosa
+      const fases = calcularFases(fechaNacimiento)
+
+      const prompt = [
+        'Eres un guía espiritual. Tu tarea es escribir una lectura personal en prosa, en español.',
+        'No uses listas, asteriscos, guiones, fórmulas ni ningún símbolo especial. Solo texto en párrafos.',
+        '',
+        `El usuario se llama ${nombre}. Sus ciclos de hoy ya están calculados:`,
+        `- Ciclo físico: ${fases.fisico}`,
+        `- Ciclo emocional: ${fases.emocional}`,
+        `- Ciclo intelectual: ${fases.intelectual}`,
+        '',
+        `Escribe exactamente 4 párrafos cortos dirigiéndote a ${nombre} directamente. Sin introducción genérica, empieza directo con el contenido.`,
+        `Párrafo 1: ciclo físico (${fases.fisico}) — qué significa para su cuerpo y vitalidad hoy.`,
+        `Párrafo 2: ciclo emocional (${fases.emocional}) — cómo afecta a sus relaciones y estado interior.`,
+        `Párrafo 3: ciclo intelectual (${fases.intelectual}) — qué significa para su mente y decisiones.`,
+        'Párrafo 4: un consejo práctico y concreto para sacar el máximo a este día.',
+        '',
+        'Cada párrafo máximo 3 frases cortas. Separa con línea en blanco. Termina siempre en punto. Nunca dejes una frase incompleta.',
+      ].join('\n')
 
       const result = await llamarGemini({
         herramienta: HERRAMIENTA,
-        prompt: [
-          'Eres un experto en cromoterapia simbólica. Escribe en español, en texto corrido sin listas, sin asteriscos, sin markdown.',
-          '',
-          `El usuario se llama ${nombre} y su signo es ${signo}. Hoy es ${fechaHoy}.`,
-          '',
-          `Escribe exactamente 2 párrafos cortos dirigiéndote a ${nombre} directamente. Sin introducción genérica.`,
-          `Párrafo 1: cuál es el color que le acompaña hoy, por qué resuena con su energía y qué simboliza en distintas tradiciones.`,
-          `Párrafo 2: cómo puede usar ese color hoy de forma práctica y un mensaje de cierre.`,
-          '',
-          'Cada párrafo máximo 4 frases. Separa con línea en blanco. Termina siempre en punto.',
-        ].join('\n'),
-        userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 800,
+        prompt,
+        userId: userPlan.userId,
+        usarLite: false,
+        cacheable: false,
+        maxTokens: 1500,
+        temperatura: 0.7,
       })
 
       if (!result.error && result.texto) {
-        setInterpretacion(result.texto); setFromCache(false)
-        supabase.from('horoscopo_cache').insert({ signo: signo.toLowerCase(), fecha: fechaHoy, tipo: HERRAMIENTA, contenido: result.texto, tokens_used: result.tokensUsados }).then(() => {})
+        setInterpretacion(result.texto)
+        setFromCache(false)
+        supabase.from('horoscopo_cache').insert({
+          signo: signo.toLowerCase(), fecha: fechaHoy, tipo: HERRAMIENTA,
+          contenido: result.texto, tokens_used: result.tokensUsados,
+        }).then(() => {})
         if (userPlan.userId) await incrementarConsulta(userPlan.userId)
         analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: result.modelo })
         await _guardarSiPrimera(result.texto)
-      } else { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.') }
-    } catch (err) { console.error('[ColorOracle]', err); setErrorMsg('Error inesperado.') }
-    finally { setCargando(false) }
+      } else {
+        setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.')
+      }
+    } catch (err) {
+      console.error('[Biorritmos]', err)
+      setErrorMsg('Error inesperado. Inténtalo de nuevo.')
+    } finally {
+      setCargando(false)
+    }
   }
 
   const _guardarSiPrimera = async (texto: string) => {
     if (lecturaGuardadaRef.current) return
     lecturaGuardadaRef.current = true
-    await guardarLectura({ herramienta: HERRAMIENTA, titulo: `Color Oracle · ${signo} · ${fechaHoy}`, contenido: texto, metadatos: { signo, fecha: fechaHoy, nombre } })
+    await guardarLectura({
+      herramienta: HERRAMIENTA,
+      titulo: `Biorritmos · ${signo} · ${fechaHoy}`,
+      contenido: texto,
+      metadatos: { signo, fecha: fechaHoy, nombre, fechaNacimiento },
+    })
   }
 
   const handleValorar = (valor: 1 | -1) => {
-    if (yaValorado) return; setYaValorado(true); analytics.registrarValoracion(valor)
+    if (yaValorado) return
+    setYaValorado(true)
+    analytics.registrarValoracion(valor)
   }
 
   return (
@@ -103,8 +161,8 @@ export default function ColorOracle() {
         <div className="flex items-center">
           <button onClick={() => navigate('/tradiciones')} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
-            <p className="text-white font-semibold text-sm">Color Oracle</p>
-            <p className="text-purple-300 text-xs">Cromoterapia simbólica</p>
+            <p className="text-white font-semibold text-sm">Biorritmos</p>
+            <p className="text-purple-300 text-xs">Ciclos energéticos del día</p>
           </div>
           {!userPlan.cargando && !userPlan.esPremium && (
             <p className="text-white/40 text-xs">{userPlan.consultasRestantes}/{userPlan.limiteConsultasDia}</p>
@@ -112,7 +170,7 @@ export default function ColorOracle() {
         </div>
 
         <div className="bg-[#0d0015] border border-purple-500/50 rounded-3xl p-5 text-center">
-          <p className="text-purple-400 text-xs tracking-widest uppercase mb-1">Color Oracle</p>
+          <p className="text-purple-400 text-xs tracking-widest uppercase mb-1">Biorritmos</p>
           <p className="text-white text-sm">{signo} · {hoy}</p>
         </div>
 
@@ -126,7 +184,7 @@ export default function ColorOracle() {
           </div>
         ) : (
           <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-6">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-4">
               <p className="text-purple-400 text-xs tracking-widest uppercase">Tu lectura</p>
               {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
             </div>
@@ -136,7 +194,9 @@ export default function ColorOracle() {
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
-            ) : <TextoIA texto={interpretacion} />}
+            ) : (
+              <TextoIA texto={interpretacion} />
+            )}
           </div>
         )}
 
@@ -144,7 +204,10 @@ export default function ColorOracle() {
           <div className="bg-[#0d0015] border border-red-400/50 rounded-2xl p-4">
             <p className="text-red-300 text-sm text-center">{errorMsg}</p>
             {!userPlan.esPremium && (
-              <button onClick={() => navigate('/premium')} className="mt-3 w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold py-2 rounded-full">Hazte Premium</button>
+              <button onClick={() => navigate('/premium')}
+                className="mt-3 w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold py-2 rounded-full">
+                Hazte Premium
+              </button>
             )}
           </div>
         )}
@@ -153,9 +216,10 @@ export default function ColorOracle() {
           <>
             <DisclaimerIA />
             <Valoracion onValorar={handleValorar} />
-            <Compartir titulo="Color Oracle" texto={interpretacion} hashtags={['Universe', 'ColorOracle']} />
+            <Compartir titulo="Biorritmos" texto={interpretacion} hashtags={['Universe', 'Biorritmos']} />
             <CtaUpsell consultasRestantes={userPlan.consultasRestantes} />
-            <button onClick={() => navigate('/guia')} className="w-full bg-[#0d0015] border border-white/15 text-white font-semibold py-4 rounded-full hover:border-purple-500/50 transition">
+            <button onClick={() => navigate('/guia')}
+              className="w-full bg-[#0d0015] border border-white/15 text-white font-semibold py-4 rounded-full hover:border-purple-500/50 transition">
               Explorar con mi Guía IA
             </button>
           </>
