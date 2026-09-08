@@ -20,7 +20,7 @@ export interface UserPlan {
   cargando: boolean
 }
 
-const LIMITE_FREE = 5
+const LIMITE_FREE = 3
 const LIMITE_PREMIUM = 200
 
 export function useUserPlan(): UserPlan {
