@@ -97,15 +97,13 @@ export default function Biorritmos() {
         `- Ciclo emocional: ${fases.emocional}`,
         `- Ciclo intelectual: ${fases.intelectual}`,
         '',
-        `Escribe 5 párrafos dirigiéndote a ${nombre} directamente.`,
-        `Párrafo 1: interpreta su ciclo físico (${fases.fisico}) y qué significa para su cuerpo y vitalidad hoy.`,
-        `Párrafo 2: interpreta su ciclo emocional (${fases.emocional}) y cómo afecta a sus relaciones y estado interior.`,
-        `Párrafo 3: interpreta su ciclo intelectual (${fases.intelectual}) y qué significa para su mente y decisiones.`,
-        'Párrafo 4: cómo interactúan los tres ciclos juntos y qué tipo de jornada le espera.',
-        'Párrafo 5: un consejo práctico y concreto para este día.',
+        `Escribe exactamente 4 párrafos cortos dirigiéndote a ${nombre} directamente. Sin introducción genérica, empieza directo con el contenido.`,
+        `Párrafo 1: ciclo físico (${fases.fisico}) — qué significa para su cuerpo y vitalidad hoy.`,
+        `Párrafo 2: ciclo emocional (${fases.emocional}) — cómo afecta a sus relaciones y estado interior.`,
+        `Párrafo 3: ciclo intelectual (${fases.intelectual}) — qué significa para su mente y decisiones.`,
+        'Párrafo 4: un consejo práctico y concreto para sacar el máximo a este día.',
         '',
-        'Separa los párrafos con una línea en blanco. Tono cálido y orientador.',
-        'IMPORTANTE: cada párrafo debe ser breve, máximo 3 frases. Termina siempre con punto final. Nunca dejes una frase a medias.',
+        'Cada párrafo máximo 3 frases cortas. Separa con línea en blanco. Termina siempre en punto. Nunca dejes una frase incompleta.',
       ].join('\n')
 
       const result = await llamarGemini({
@@ -114,7 +112,7 @@ export default function Biorritmos() {
         userId: userPlan.userId,
         usarLite: false,
         cacheable: false,
-        maxTokens: 1200,
+        maxTokens: 1500,
         temperatura: 0.7,
       })
 
