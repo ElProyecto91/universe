@@ -61,14 +61,18 @@ export default function ColorOracle() {
 
       const result = await llamarGemini({
         herramienta: HERRAMIENTA,
-        prompt: `Eres un experto en cromoterapia simbólica. Escribe en español, en texto corrido sin listas, sin asteriscos, sin markdown.
-
-El usuario se llama ${nombre} y su signo es ${signo}. Hoy es ${fechaHoy}.
-
-Escribe una lectura de 4 párrafos sobre el color que le acompaña hoy. Primer párrafo: cuál es ese color y por qué resuena con su energía de hoy. Segundo párrafo: qué simboliza ese color en distintas tradiciones culturales y espirituales. Tercer párrafo: cómo puede usar ese color hoy de forma práctica (ropa, objetos, visualización). Cuarto párrafo: un mensaje final de cierre para ${nombre}.
-
-Escribe de forma cálida y directa. Sin títulos, sin guiones, sin asteriscos. Solo párrafos separados por línea en blanco.`,
-        userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 700,
+        prompt: [
+          'Eres un experto en cromoterapia simbólica. Escribe en español, en texto corrido sin listas, sin asteriscos, sin markdown.',
+          '',
+          `El usuario se llama ${nombre} y su signo es ${signo}. Hoy es ${fechaHoy}.`,
+          '',
+          `Escribe exactamente 2 párrafos cortos dirigiéndote a ${nombre} directamente. Sin introducción genérica.`,
+          `Párrafo 1: cuál es el color que le acompaña hoy, por qué resuena con su energía y qué simboliza en distintas tradiciones.`,
+          `Párrafo 2: cómo puede usar ese color hoy de forma práctica y un mensaje de cierre.`,
+          '',
+          'Cada párrafo máximo 4 frases. Separa con línea en blanco. Termina siempre en punto.',
+        ].join('\n'),
+        userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 800,
       })
 
       if (!result.error && result.texto) {
