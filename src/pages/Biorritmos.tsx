@@ -105,6 +105,7 @@ export default function Biorritmos() {
         'Párrafo 5: un consejo práctico y concreto para este día.',
         '',
         'Separa los párrafos con una línea en blanco. Tono cálido y orientador.',
+        'IMPORTANTE: cada párrafo debe ser breve, máximo 3 frases. Termina siempre con punto final. Nunca dejes una frase a medias.',
       ].join('\n')
 
       const result = await llamarGemini({
