@@ -15,6 +15,26 @@ import TextoIA from '../components/TextoIA'
 
 const HERRAMIENTA = 'biorritmos'
 
+// Calcula las fases en el frontend — la IA nunca hace matemáticas
+function calcularFases(fechaNacimiento: string): { fisico: string; emocional: string; intelectual: string } {
+  const nac  = new Date(fechaNacimiento).getTime()
+  const hoy  = new Date().setHours(0, 0, 0, 0)
+  const dias = Math.floor((hoy - nac) / 86400000)
+
+  const describir = (val: number) => {
+    if (val > 0.5)  return 'alta energía'
+    if (val > 0)    return 'energía en ascenso'
+    if (val > -0.5) return 'energía en descenso'
+    return 'energía baja, momento de descanso'
+  }
+
+  return {
+    fisico:      describir(Math.sin(2 * Math.PI * dias / 23)),
+    emocional:   describir(Math.sin(2 * Math.PI * dias / 28)),
+    intelectual: describir(Math.sin(2 * Math.PI * dias / 33)),
+  }
+}
+
 export default function Biorritmos() {
   const navigate  = useNavigate()
   const userPlan  = useUserPlan()
@@ -65,20 +85,26 @@ export default function Biorritmos() {
         return
       }
 
+      // Las fases se calculan aquí — la IA solo interpreta en prosa
+      const fases = calcularFases(fechaNacimiento)
+
       const prompt = [
-        'Eres un guía espiritual experto en biorritmología. Escribe SOLO texto en prosa, en español.',
-        'Está PROHIBIDO usar fórmulas, ecuaciones, símbolos matemáticos, LaTeX, asteriscos, guiones, viñetas o cualquier markdown.',
+        'Eres un guía espiritual. Tu tarea es escribir una lectura personal en prosa, en español.',
+        'No uses listas, asteriscos, guiones, fórmulas ni ningún símbolo especial. Solo texto en párrafos.',
         '',
-        `El usuario se llama ${nombre} y nació el ${fechaNacimiento}. Hoy es ${fechaHoy}.`,
+        `El usuario se llama ${nombre}. Sus ciclos de hoy ya están calculados:`,
+        `- Ciclo físico: ${fases.fisico}`,
+        `- Ciclo emocional: ${fases.emocional}`,
+        `- Ciclo intelectual: ${fases.intelectual}`,
         '',
-        `Escribe una lectura de 5 párrafos en prosa natural dirigiéndote directamente a ${nombre}.`,
-        'Primer párrafo: cómo está su energía física hoy, si es momento de acción o de descanso y qué actividades le favorecen.',
-        'Segundo párrafo: cómo está su mundo emocional hoy, sus relaciones y su estado interior.',
-        'Tercer párrafo: cómo está su claridad mental hoy, si conviene tomar decisiones o reflexionar.',
-        'Cuarto párrafo: cómo se combinan estas tres energías hoy y qué tipo de jornada le espera.',
-        'Quinto párrafo: un consejo práctico y concreto para sacar el máximo a este día.',
+        `Escribe 5 párrafos dirigiéndote a ${nombre} directamente.`,
+        `Párrafo 1: interpreta su ciclo físico (${fases.fisico}) y qué significa para su cuerpo y vitalidad hoy.`,
+        `Párrafo 2: interpreta su ciclo emocional (${fases.emocional}) y cómo afecta a sus relaciones y estado interior.`,
+        `Párrafo 3: interpreta su ciclo intelectual (${fases.intelectual}) y qué significa para su mente y decisiones.`,
+        'Párrafo 4: cómo interactúan los tres ciclos juntos y qué tipo de jornada le espera.',
+        'Párrafo 5: un consejo práctico y concreto para este día.',
         '',
-        'Tono cálido y orientador. Párrafos separados por línea en blanco. Cero símbolos especiales.',
+        'Separa los párrafos con una línea en blanco. Tono cálido y orientador.',
       ].join('\n')
 
       const result = await llamarGemini({
