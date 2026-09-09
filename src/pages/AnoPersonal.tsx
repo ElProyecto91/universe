@@ -90,7 +90,7 @@ export default function AnoPersonal() {
 
     try {
       const { data: cached } = await supabase.from('horoscopo_cache').select('contenido')
-        .eq('signo', signo.toLowerCase()).eq('fecha', fechaHoy).eq('tipo', HERRAMIENTA).maybeSingle()
+        .eq('signo', `ap${anoPersonal.numero}`).eq('fecha', String(new Date().getFullYear())).eq('tipo', HERRAMIENTA).maybeSingle()
 
       if (cached?.contenido) {
         setInterpretacion(cached.contenido)
@@ -120,9 +120,9 @@ export default function AnoPersonal() {
         herramienta: HERRAMIENTA,
         prompt,
         userId: userPlan.userId,
-        usarLite: false,
+        usarLite: true,
         cacheable: false,
-        maxTokens: 1500,
+        maxTokens: 1000,
         temperatura: 0.7,
       })
 
@@ -130,7 +130,7 @@ export default function AnoPersonal() {
         setInterpretacion(result.texto)
         setFromCache(false)
         supabase.from('horoscopo_cache').insert({
-          signo: signo.toLowerCase(), fecha: fechaHoy, tipo: HERRAMIENTA,
+          signo: `ap${anoPersonal.numero}`, fecha: String(new Date().getFullYear()), tipo: HERRAMIENTA,
           contenido: result.texto, tokens_used: result.tokensUsados,
         }).then(() => {})
         if (userPlan.userId) await incrementarConsulta(userPlan.userId)
