@@ -13,6 +13,7 @@ import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
 import PageLayout from '../components/PageLayout'
 import TextoIA from '../components/TextoIA'
+import { CRISTALES_IMAGENES, CRISTAL_FALLBACK } from '../lib/cristales_imagenes'
 
 const HERRAMIENTA = 'cristales'
 
@@ -143,8 +144,12 @@ export default function Cristales() {
             <div className="bg-[#0d0015] border border-purple-500/50 rounded-3xl p-5">
               <p className="text-purple-400 text-xs tracking-widest uppercase mb-3">✨ Recomendado para ti</p>
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: CRISTALES[cristalRecom]?.hex, boxShadow: `0 0 20px ${CRISTALES[cristalRecom]?.hex}60` }} />
+                <img
+                  src={CRISTALES_IMAGENES[cristalRecom] || CRISTAL_FALLBACK}
+                  alt={cristalRecom}
+                  className="w-14 h-14 rounded-full flex-shrink-0 object-cover"
+                  onError={e => { (e.target as HTMLImageElement).src = CRISTAL_FALLBACK }}
+                />
                 <div className="flex-1">
                   <p className="text-white font-bold">{cristalRecom}</p>
                   <p className="text-white/60 text-xs">{CRISTALES[cristalRecom]?.keywords}</p>
@@ -161,8 +166,12 @@ export default function Cristales() {
             <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-4">
               <p className="text-white/50 text-xs tracking-widest uppercase mb-3">Cristal del día</p>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: CRISTALES[cristalDelDia]?.hex }} />
+                <img
+                  src={CRISTALES_IMAGENES[cristalDelDia] || CRISTAL_FALLBACK}
+                  alt={cristalDelDia}
+                  className="w-10 h-10 rounded-full flex-shrink-0 object-cover"
+                  onError={e => { (e.target as HTMLImageElement).src = CRISTAL_FALLBACK }}
+                />
                 <div className="flex-1">
                   <p className="text-white font-semibold text-sm">{cristalDelDia}</p>
                   <p className="text-white/50 text-xs">{CRISTALES[cristalDelDia]?.keywords}</p>
@@ -180,8 +189,12 @@ export default function Cristales() {
               {Object.entries(CRISTALES).map(([key, cristal]) => (
                 <button key={key} onClick={() => explorar(key)}
                   className="bg-[#0d0015] border border-white/15 rounded-2xl p-4 text-left hover:border-purple-500/40 transition flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: cristal.hex, boxShadow: `0 0 10px ${cristal.hex}40` }} />
+                  <img
+                    src={CRISTALES_IMAGENES[key] || CRISTAL_FALLBACK}
+                    alt={key}
+                    className="w-10 h-10 rounded-full flex-shrink-0 object-cover"
+                    onError={e => { (e.target as HTMLImageElement).src = CRISTAL_FALLBACK }}
+                  />
                   <div>
                     <p className="text-white text-sm font-semibold">{key}</p>
                     <p className="text-white/40 text-xs">{cristal.keywords.split(' · ')[0]}</p>
@@ -198,8 +211,13 @@ export default function Cristales() {
             {/* Card del cristal */}
             <div className="bg-[#0d0015] rounded-3xl p-6 flex flex-col items-center gap-4"
               style={{ border: `1px solid ${CRISTALES[cristalKey].hex}40` }}>
-              <div className="w-24 h-24 rounded-full"
-                style={{ backgroundColor: CRISTALES[cristalKey].hex, boxShadow: `0 0 40px ${CRISTALES[cristalKey].hex}60` }} />
+              <img
+                src={CRISTALES_IMAGENES[cristalKey] || CRISTAL_FALLBACK}
+                alt={cristalKey}
+                className="w-24 h-24 rounded-full object-cover"
+                style={{ boxShadow: `0 0 40px ${CRISTALES[cristalKey].hex}60` }}
+                onError={e => { (e.target as HTMLImageElement).src = CRISTAL_FALLBACK }}
+              />
               <p className="text-white text-2xl font-bold">{cristalKey}</p>
               <p className="text-sm text-center" style={{ color: CRISTALES[cristalKey].hex }}>
                 {CRISTALES[cristalKey].keywords}
