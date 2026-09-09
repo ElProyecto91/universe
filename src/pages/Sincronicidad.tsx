@@ -48,13 +48,17 @@ export default function Sincronicidad() {
     try {
       const result = await llamarGemini({
         herramienta: HERRAMIENTA,
-        prompt: `Eres un experto en sincronicidades y psicología junguiana. Escribe en español, en texto corrido sin listas, sin asteriscos, sin markdown.
-
-El usuario se llama ${nombre}. Ha observado esta señal o coincidencia: "${pregunta}".
-
-Escribe una interpretación de 3 párrafos. Primer párrafo: qué podría estar comunicando el universo a través de esta sincronicidad y cómo conecta con la psicología junguiana. Segundo párrafo: qué aspecto de la vida de ${nombre} podría estar resonando con esta señal y qué invita a explorar. Tercer párrafo: un mensaje de cierre con una pregunta reflexiva que ayude a ${nombre} a profundizar en el significado.
-
-Escribe de forma cálida, profunda y directa. Sin títulos, sin guiones, sin asteriscos. Solo párrafos separados por línea en blanco.`,
+        prompt: [
+          'Eres un experto en sincronicidades y psicología junguiana. Escribe en español, en prosa, sin listas, sin asteriscos, sin markdown.',
+          '',
+          `El usuario se llama ${nombre}. Ha observado esta señal o coincidencia: "${pregunta}".`,
+          '',
+          `Escribe exactamente 2 párrafos cortos dirigiéndote a ${nombre} directamente. Sin introducción genérica.`,
+          `Párrafo 1: qué podría estar comunicando esta sincronicidad y cómo conecta con la psicología junguiana.`,
+          `Párrafo 2: qué aspecto de su vida invita a explorar esta señal y una pregunta reflexiva de cierre.`,
+          '',
+          'Cada párrafo máximo 3 frases. Separa con línea en blanco. Termina siempre en punto.',
+        ].join('\n'),
         userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 600,
       })
 
