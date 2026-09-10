@@ -48,24 +48,26 @@ export default function MirrorOracle() {
     const t0 = Date.now()
 
     try {
+      const prompt = [
+        'Eres un coach espiritual experto en psicología junguiana.',
+        'Escribe en español, en prosa fluida y continua, como una carta personal coherente.',
+        'Sin listas, sin asteriscos, sin títulos, sin markdown.',
+        'No empieces cada párrafo con el nombre del usuario ni con Viajero.',
+        '',
+        `El usuario se llama ${nombre}, signo ${signo}.`,
+        `Su pregunta es: "${pregunta}".`,
+        '',
+        'Escribe una reflexión de 4 párrafos que fluyan como un texto continuo y coherente.',
+        'El primer párrafo explora el deseo profundo detrás de la pregunta.',
+        'El segundo párrafo profundiza en el patrón o creencia que hay debajo.',
+        'El tercer párrafo ofrece una acción o cambio de perspectiva concreto.',
+        'El cuarto párrafo cierra con una pregunta reflexiva poderosa.',
+        'Cada párrafo entre 3 y 4 frases. Separa con línea en blanco. Termina en punto.',
+      ].join('\n')
+
       const result = await llamarGemini({
         herramienta: HERRAMIENTA,
-        prompt: [
-          'Eres un coach espiritual experto en psicología junguiana.',
-          'Escribe en español, en prosa fluida y continua, como una carta personal.',
-          'Sin listas, sin asteriscos, sin títulos, sin markdown.',
-          'No empieces cada párrafo con el nombre del usuario ni con "Viajero".',
-          '',
-          `El usuario se llama ${nombre}, signo ${signo}.`,
-          `Su pregunta es: "${pregunta}".`,
-          '',
-          'Escribe una reflexión de 4 párrafos que fluyan como un texto continuo y coherente.',
-          'El primer párrafo explora el deseo profundo detrás de la pregunta.',
-          'El segundo párrafo profundiza en el patrón o creencia que hay debajo.',
-          'El tercer párrafo ofrece una acción o cambio de perspectiva concreto.',
-          'El cuarto párrafo cierra con una pregunta reflexiva poderosa.',
-          'Cada párrafo entre 3 y 4 frases. Separa con línea en blanco. Termina en punto.',
-        ].join('\n'),
+        prompt,
         userId: userPlan.userId,
         usarLite: false,
         cacheable: false,
@@ -75,18 +77,19 @@ export default function MirrorOracle() {
 
       if (!result.error && result.texto) {
         setInterpretacion(result.texto)
-
-      if (userPlan.userId) await incrementarConsulta(userPlan.userId)
-      analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: 'lite' })
-
-      if (!lecturaGuardadaRef.current) {
-        lecturaGuardadaRef.current = true
-        await guardarLectura({
-          herramienta: HERRAMIENTA,
-          titulo: `Mirror Oracle · ${fechaHoy}`,
-          contenido: `Consulta: "${pregunta}"\n\n${texto}`,
-          metadatos: { pregunta, fecha: fechaHoy, nombre, signo },
-        })
+        if (userPlan.userId) await incrementarConsulta(userPlan.userId)
+        analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: result.modelo })
+        if (!lecturaGuardadaRef.current) {
+          lecturaGuardadaRef.current = true
+          await guardarLectura({
+            herramienta: HERRAMIENTA,
+            titulo: `Mirror Oracle · ${fechaHoy}`,
+            contenido: `Consulta: "${pregunta}"\n\n${result.texto}`,
+            metadatos: { pregunta, fecha: fechaHoy, nombre, signo },
+          })
+        }
+      } else {
+        setErrorMsg(result.error || 'El universo guarda silencio. Inténtalo de nuevo.')
       }
     } catch (err) {
       console.error('[MirrorOracle]', err)
