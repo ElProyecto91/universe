@@ -49,17 +49,23 @@ export default function MirrorOracle() {
 
     try {
       const prompt = [
-        'Eres un coach espiritual experto en psicología junguiana. Escribe en español, en prosa natural, sin listas, sin asteriscos, sin markdown.',
+        'Eres un coach espiritual experto en psicología junguiana.',
+        'Escribe en español. Sin listas, sin asteriscos, sin markdown.',
         '',
-        `El usuario se llama ${nombre}, signo ${signo}. Su situación es: "${pregunta}".`,
+        `El usuario se llama ${nombre}, signo ${signo}.`,
+        `Su pregunta es: "${pregunta}".`,
         '',
-        `Escribe una reflexión de 4 párrafos completos dirigiéndote a ${nombre}. Separa cada párrafo con una línea en blanco.`,
-        `Párrafo 1: qué deseo o necesidad profunda hay detrás de esta pregunta y qué dice sobre ${nombre}. Mínimo 3 frases.`,
-        `Párrafo 2: qué patrón, creencia o historia personal podría estar alimentando esta inquietud. Mínimo 3 frases.`,
-        `Párrafo 3: qué acción concreta o cambio de perspectiva puede ayudar a ${nombre} hoy. Mínimo 3 frases.`,
-        `Párrafo 4: una pregunta reflexiva poderosa que invite a ${nombre} a explorar más profundo. Mínimo 2 frases.`,
+        'Escribe exactamente esto, en este orden:',
         '',
-        'Escribe los 4 párrafos completos. No pares antes. Termina siempre en punto.',
+        'Un párrafo sobre qué deseo profundo hay detrás de esta pregunta.',
+        '',
+        'Un párrafo sobre qué patrón o creencia personal alimenta esta inquietud.',
+        '',
+        'Un párrafo sobre qué acción o cambio de perspectiva puede ayudar hoy.',
+        '',
+        'Un párrafo con una pregunta reflexiva poderosa para explorar más profundo.',
+        '',
+        'Cada párrafo separado por línea en blanco. Cada párrafo entre 40 y 60 palabras. Termina en punto.',
       ].join('\n')
 
       const result = await llamarGemini({
