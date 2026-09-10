@@ -48,29 +48,25 @@ export default function MirrorOracle() {
     const t0 = Date.now()
 
     try {
-      const prompt = [
-        'Eres un guía de reflexión profunda. Escribe en español, en prosa simple y directa.',
-        'REGLAS ESTRICTAS: frases cortas. Máximo 15 palabras por frase. Sin subordinadas largas. Sin listas. Sin asteriscos. Sin markdown.',
-        '',
-        `El usuario se llama ${nombre} y su signo es ${signo}. Su situación es: "${pregunta}".`,
-        '',
-        `Escribe exactamente 4 párrafos cortos dirigiéndote a ${nombre} directamente. Sin introducción genérica.`,
-        `Párrafo 1: qué refleja esta situación sobre su mundo interior.`,
-        `Párrafo 2: qué patrón o creencia subyacente podría estar influyendo.`,
-        `Párrafo 3: qué puede hacer hoy para transformar esta situación desde adentro.`,
-        `Párrafo 4: una pregunta reflexiva poderosa para que ${nombre} explore en profundidad.`,
-        '',
-        'OBLIGATORIO: escribe los 4 párrafos completos. Cada párrafo exactamente 2 frases cortas. Separa con línea en blanco. Termina siempre en punto.',
-      ].join('\n')
-
       const result = await llamarGemini({
         herramienta: HERRAMIENTA,
-        prompt,
+        prompt: `Eres un coach espiritual experto en psicología junguiana y trabajo con la sombra. Escribe en español en prosa natural.
+
+El usuario se llama ${nombre}, signo ${signo}. Su situación o pregunta es: "${pregunta}".
+
+Escribe una reflexión profunda de exactamente 4 párrafos. Cada párrafo tiene entre 3 y 4 frases. Separa cada párrafo con una línea en blanco.
+
+Primer párrafo: qué deseo o necesidad más profunda hay detrás de esta pregunta y qué dice sobre ${nombre}.
+Segundo párrafo: qué patrón, creencia o historia personal podría estar alimentando esta inquietud.
+Tercer párrafo: qué acción concreta o cambio de perspectiva puede ayudar a ${nombre} hoy.
+Cuarto párrafo: una pregunta reflexiva poderosa que invite a ${nombre} a explorar más profundo.
+
+No uses listas, asteriscos, negritas ni títulos. Solo párrafos separados por línea en blanco. Termina siempre con punto.`,
         userId: userPlan.userId,
         usarLite: false,
         cacheable: false,
         maxTokens: 1200,
-        temperatura: 0.7,
+        temperatura: 0.75,
       })
 
       if (!result.error && result.texto) {
@@ -108,7 +104,8 @@ export default function MirrorOracle() {
       <div className="flex flex-col gap-6">
 
         <div className="flex items-center">
-          <button onClick={() => fase === 'resultado' ? setFase('preguntar') : navigate('/tradiciones')} className="text-purple-300 text-sm">← Volver</button>
+          <button onClick={() => fase === 'resultado' ? setFase('preguntar') : navigate('/tradiciones')}
+            className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
             <p className="text-white font-semibold text-sm">Mirror Oracle</p>
             <p className="text-purple-300 text-xs">Reflexión interior</p>
@@ -121,7 +118,7 @@ export default function MirrorOracle() {
             <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-6">
               <p className="text-purple-400 text-xs tracking-widest uppercase mb-3">Tu consulta</p>
               <textarea value={pregunta} onChange={e => setPregunta(e.target.value)}
-                placeholder="¿Qué quieres explorar?" rows={4}
+                placeholder="¿Qué situación o pregunta quieres explorar?" rows={4}
                 className="w-full bg-transparent text-white text-sm resize-none outline-none placeholder-white/30" />
             </div>
             <DisclaimerIA compact />
@@ -138,7 +135,7 @@ export default function MirrorOracle() {
               <p className="text-white/50 text-xs italic">"{pregunta}"</p>
             </div>
             <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-6">
-              <p className="text-purple-400 text-xs tracking-widest uppercase mb-3">Interpretación</p>
+              <p className="text-purple-400 text-xs tracking-widest uppercase mb-4">Interpretación</p>
               {cargando ? (
                 <div className="flex gap-2 py-2">
                   <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
