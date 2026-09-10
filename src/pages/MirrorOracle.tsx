@@ -50,6 +50,70 @@ export default function MirrorOracle() {
     try {
       const result = await llamarGemini({
         herramienta: HERRAMIENTA,
+        prompt: [
+          'Eres un coach espiritual experto en psicología junguiana. Escribe en español, en prosa natural, sin listas, sin asteriscos, sin markdown.',
+          '',
+          `El usuario se llama ${nombre}, signo ${signo}. Su situación es: "${pregunta}".`,
+          '',
+          `Escribe una reflexión de 4 párrafos completos dirigiéndote a ${nombre}. Separa cada párrafo con una línea en blanco.`,
+          `Párrafo 1: qué deseo o necesidad profunda hay detrás de esta pregunta y qué dice sobre ${nombre}. Mínimo 3 frases.`,
+          `Párrafo 2: qué patrón, creencia o historia personal podría estar alimentando esta inquietud. Mínimo 3 frases.`,
+          `Párrafo 3: qué acción concreta o cambio de perspectiva puede ayudar a ${nombre} hoy. Mínimo 3 frases.`,
+          `Párrafo 4: una pregunta reflexiva poderosa que invite a ${nombre} a explorar más profundo. Mínimo 2 frases.`,
+          '',
+          'Escribe los 4 párrafos completos. No pares antes. Termina siempre en punto.',
+        ].join('\n')tsx
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useUserPlan, incrementarConsulta } from '../hooks/useUserPlan'
+import { useAnalytics } from '../hooks/useAnalytics'
+import { guardarLectura } from '../hooks/useHistorial'
+import { llamarGemini } from '../lib/gemini'
+import Compartir from '../components/Compartir'
+import Valoracion from '../components/Valoracion'
+import DisclaimerIA from '../components/DisclaimerIA'
+import PageLayout from '../components/PageLayout'
+import TextoIA from '../components/TextoIA'
+
+const HERRAMIENTA = 'mirror-oracle'
+
+export default function MirrorOracle() {
+  const navigate  = useNavigate()
+  const userPlan  = useUserPlan()
+  const analytics = useAnalytics(HERRAMIENTA, userPlan.esPremium)
+
+  const [pregunta,       setPregunta]       = useState('')
+  const [interpretacion, setInterpretacion] = useState('')
+  const [cargando,       setCargando]       = useState(false)
+  const [fase,           setFase]           = useState<'preguntar' | 'resultado'>('preguntar')
+  const [errorMsg,       setErrorMsg]       = useState('')
+  const [yaValorado,     setYaValorado]     = useState(false)
+  const lecturaGuardadaRef                  = useRef(false)
+
+  const nombre   = localStorage.getItem('nombre') || 'viajero'
+  const signo    = localStorage.getItem('signo')  || 'Leo'
+  const fechaHoy = new Date().toISOString().split('T')[0]
+
+  useEffect(() => {
+    if (!userPlan.cargando) analytics.registrarApertura()
+  }, [userPlan.cargando])
+
+  if (!userPlan.cargando && !userPlan.esPremium) {
+    analytics.registrarPaywall()
+    navigate('/premium')
+    return null
+  }
+
+  const consultar = async () => {
+    if (!pregunta.trim()) return
+    setFase('resultado')
+    setCargando(true)
+    setErrorMsg('')
+    const t0 = Date.now()
+
+    try {
+      const result = await llamarGemini({
+        herramienta: HERRAMIENTA,
         prompt: `Eres un coach espiritual experto en psicología junguiana y trabajo con la sombra. Escribe en español en prosa natural.
 
 El usuario se llama ${nombre}, signo ${signo}. Su situación o pregunta es: "${pregunta}".
