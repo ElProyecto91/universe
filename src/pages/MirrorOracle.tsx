@@ -48,51 +48,38 @@ export default function MirrorOracle() {
     const t0 = Date.now()
 
     try {
-      const prompt = [
-        'Eres un coach espiritual experto en psicología junguiana.',
-        'Escribe en español. Sin listas, sin asteriscos, sin markdown.',
-        '',
-        `El usuario se llama ${nombre}, signo ${signo}.`,
-        `Su pregunta es: "${pregunta}".`,
-        '',
-        'Escribe exactamente esto, en este orden:',
-        '',
-        'Un párrafo sobre qué deseo profundo hay detrás de esta pregunta.',
-        '',
-        'Un párrafo sobre qué patrón o creencia personal alimenta esta inquietud.',
-        '',
-        'Un párrafo sobre qué acción o cambio de perspectiva puede ayudar hoy.',
-        '',
-        'Un párrafo con una pregunta reflexiva poderosa para explorar más profundo.',
-        '',
-        'Cada párrafo separado por línea en blanco. Cada párrafo entre 40 y 60 palabras. Termina en punto.',
-      ].join('\n')
+      const contexto = `Eres un coach espiritual. El usuario se llama ${nombre}, signo ${signo}. Su pregunta es: "${pregunta}". Escribe en español, en prosa, sin listas ni asteriscos. Exactamente 3 frases. Termina en punto.`
 
-      const result = await llamarGemini({
-        herramienta: HERRAMIENTA,
-        prompt,
-        userId: userPlan.userId,
-        usarLite: false,
-        cacheable: false,
-        maxTokens: 1200,
-        temperatura: 0.75,
-      })
+      const [r1, r2, r3, r4] = await Promise.all([
+        llamarGemini({ herramienta: HERRAMIENTA, prompt: `${contexto} Escribe un párrafo sobre qué deseo profundo hay detrás de esta pregunta y qué dice sobre ${nombre}.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 200 }),
+        llamarGemini({ herramienta: HERRAMIENTA, prompt: `${contexto} Escribe un párrafo sobre qué patrón o creencia personal de ${nombre} podría estar alimentando esta inquietud.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 200 }),
+        llamarGemini({ herramienta: HERRAMIENTA, prompt: `${contexto} Escribe un párrafo sobre qué acción concreta o cambio de perspectiva puede ayudar a ${nombre} hoy.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 200 }),
+        llamarGemini({ herramienta: HERRAMIENTA, prompt: `${contexto} Escribe un párrafo con una pregunta reflexiva poderosa que invite a ${nombre} a explorar más profundo.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 150 }),
+      ])
 
-      if (!result.error && result.texto) {
-        setInterpretacion(result.texto)
-        if (userPlan.userId) await incrementarConsulta(userPlan.userId)
-        analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: result.modelo })
-        if (!lecturaGuardadaRef.current) {
-          lecturaGuardadaRef.current = true
-          await guardarLectura({
-            herramienta: HERRAMIENTA,
-            titulo: `Mirror Oracle · ${fechaHoy}`,
-            contenido: `Consulta: "${pregunta}"\n\n${result.texto}`,
-            metadatos: { pregunta, fecha: fechaHoy, nombre, signo },
-          })
-        }
-      } else {
-        setErrorMsg(result.error || 'El universo guarda silencio. Inténtalo de nuevo.')
+      if (r1.error || r2.error || r3.error || r4.error) {
+        setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.')
+        return
+      }
+
+      const texto = [r1.texto, r2.texto, r3.texto, r4.texto]
+        .map(t => t.trim())
+        .filter(Boolean)
+        .join('\n\n')
+
+      setInterpretacion(texto)
+
+      if (userPlan.userId) await incrementarConsulta(userPlan.userId)
+      analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: 'lite' })
+
+      if (!lecturaGuardadaRef.current) {
+        lecturaGuardadaRef.current = true
+        await guardarLectura({
+          herramienta: HERRAMIENTA,
+          titulo: `Mirror Oracle · ${fechaHoy}`,
+          contenido: `Consulta: "${pregunta}"\n\n${texto}`,
+          metadatos: { pregunta, fecha: fechaHoy, nombre, signo },
+        })
       }
     } catch (err) {
       console.error('[MirrorOracle]', err)
