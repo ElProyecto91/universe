@@ -57,7 +57,7 @@ export default function MirrorOracle() {
         `Párrafo 1: qué refleja esta situación sobre su mundo interior y qué invita a observar.`,
         `Párrafo 2: qué puede hacer hoy para transformar esta situación desde adentro, con una pregunta reflexiva de cierre.`,
         '',
-        'Cada párrafo máximo 3 frases. Separa con línea en blanco. Termina siempre en punto. Sin predicciones absolutas.'
+        'IMPORTANTE: cada párrafo máximo 2 frases cortas. Separa con línea en blanco. Termina siempre en punto. Nunca dejes una frase incompleta. Sin predicciones absolutas.'
       ].join('\n')
 
       const result = await llamarGemini({
@@ -66,7 +66,7 @@ export default function MirrorOracle() {
         userId: userPlan.userId,
         usarLite: false,
         cacheable: false,
-        maxTokens: 1000,
+        maxTokens: 800,
         temperatura: 0.8,
       })
 
