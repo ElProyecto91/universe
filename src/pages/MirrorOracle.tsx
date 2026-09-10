@@ -48,53 +48,49 @@ export default function MirrorOracle() {
     const t0 = Date.now()
 
     try {
-      const prompt = [
-        'Eres un coach espiritual experto en psicología junguiana.',
-        'Escribe en español, como si fuera una carta personal íntima y continua.',
-        'Sin listas, sin asteriscos, sin títulos, sin markdown.',
-        'No uses "Viajero" ni el nombre del usuario al inicio de cada párrafo.',
-        'Cada párrafo debe ser una continuación natural del anterior, como si fuera un solo texto fluido.',
-        '',
-        `El usuario se llama ${nombre}, signo ${signo}.`,
-        `Su pregunta o situación es: "${pregunta}".`,
-        '',
-        'Escribe exactamente 3 párrafos que progresen así:',
-        'Párrafo 1: identifica el deseo o necesidad más profunda detrás de esta pregunta.',
-        'Párrafo 2: conectando con lo anterior, profundiza en el patrón o creencia que lo origina.',
-        'Párrafo 3: conectando con los dos anteriores, ofrece una perspectiva transformadora y cierra con una pregunta reflexiva poderosa.',
-        '',
-        'Los párrafos deben leerse como una sola carta coherente. No repitas ideas entre párrafos.',
-        'Cada párrafo entre 3 y 4 frases. Separa con línea en blanco. Termina en punto.',
-      ].join('\n')
+      const base = `Eres un coach espiritual. El usuario se llama ${nombre}, signo ${signo}. Su pregunta: "${pregunta}". Escribe en español, en prosa, sin listas ni asteriscos. Exactamente 3 frases seguidas. Sin saludar ni usar el nombre al inicio.`
 
-      const result = await llamarGemini({
+      // Párrafo 1
+      const r1 = await llamarGemini({
         herramienta: HERRAMIENTA,
-        prompt,
-        userId: userPlan.userId,
-        usarLite: false,
-        cacheable: false,
-        maxTokens: 1200,
-        temperatura: 0.75,
+        prompt: `${base} Escribe un párrafo que identifique el deseo o necesidad más profunda detrás de esta pregunta.`,
+        userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250,
       })
+      if (r1.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
 
-      console.log('[MirrorOracle] tokens usados:', result.tokensUsados, '| modelo:', result.modelo, '| error:', result.error)
-      console.log('[MirrorOracle] texto length:', result.texto?.length, '| texto:', result.texto?.substring(0, 100))
+      // Párrafo 2 — recibe el párrafo 1 como contexto
+      const r2 = await llamarGemini({
+        herramienta: HERRAMIENTA,
+        prompt: `${base} Ya escribiste este primer párrafo: "${r1.texto.trim()}". Ahora escribe el siguiente párrafo que continúe naturalmente desde ahí, profundizando en el patrón o creencia que origina esa necesidad.`,
+        userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250,
+      })
+      if (r2.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
 
-      if (!result.error && result.texto) {
-        setInterpretacion(result.texto)
-        if (userPlan.userId) await incrementarConsulta(userPlan.userId)
-        analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: result.modelo })
-        if (!lecturaGuardadaRef.current) {
-          lecturaGuardadaRef.current = true
-          await guardarLectura({
-            herramienta: HERRAMIENTA,
-            titulo: `Mirror Oracle · ${fechaHoy}`,
-            contenido: `Consulta: "${pregunta}"\n\n${result.texto}`,
-            metadatos: { pregunta, fecha: fechaHoy, nombre, signo },
-          })
-        }
-      } else {
-        setErrorMsg(result.error || 'El universo guarda silencio. Inténtalo de nuevo.')
+      // Párrafo 3 — recibe los dos anteriores como contexto
+      const r3 = await llamarGemini({
+        herramienta: HERRAMIENTA,
+        prompt: `${base} Ya escribiste estos párrafos: "${r1.texto.trim()} ${r2.texto.trim()}". Ahora escribe el párrafo final que continúe naturalmente, ofreciendo una perspectiva transformadora y cerrando con una pregunta reflexiva poderosa.`,
+        userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250,
+      })
+      if (r3.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
+
+      const texto = [r1.texto, r2.texto, r3.texto]
+        .map(t => t.trim())
+        .filter(Boolean)
+        .join('\n\n')
+
+      setInterpretacion(texto)
+      if (userPlan.userId) await incrementarConsulta(userPlan.userId)
+      analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: 'lite' })
+
+      if (!lecturaGuardadaRef.current) {
+        lecturaGuardadaRef.current = true
+        await guardarLectura({
+          herramienta: HERRAMIENTA,
+          titulo: `Mirror Oracle · ${fechaHoy}`,
+          contenido: `Consulta: "${pregunta}"\n\n${texto}`,
+          metadatos: { pregunta, fecha: fechaHoy, nombre, signo },
+        })
       }
     } catch (err) {
       console.error('[MirrorOracle]', err)
