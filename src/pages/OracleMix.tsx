@@ -54,7 +54,11 @@ export default function OracleMix() {
       if (r2.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
 
       await new Promise(r => setTimeout(r, 500))
-      const r3 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Ya escribiste: "${r1.texto.trim()} ${r2.texto.trim()}". Cierra con un párrafo desde la numerología: qué número vibra en este momento y un consejo integrador de las tres perspectivas. Exactamente 3 frases.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
+      const hoy = new Date()
+      const sumaFecha = String(hoy.getDate()) + String(hoy.getMonth() + 1) + String(hoy.getFullYear())
+      let numHoy = sumaFecha.split('').reduce((a: number, b: string) => a + parseInt(b), 0)
+      while (numHoy > 9) { numHoy = String(numHoy).split('').reduce((a: number, b: string) => a + parseInt(b), 0) }
+      const r3 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Ya escribiste: "${r1.texto.trim()} ${r2.texto.trim()}". Cierra con un párrafo desde la numerología: hoy vibra el número ${numHoy}. Interpreta ese número para esta pregunta y da un consejo integrador de las tres perspectivas. No hagas cálculos. Exactamente 3 frases.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
       if (r3.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
 
       const texto = [r1.texto, r2.texto, r3.texto].map(t => t.trim()).filter(Boolean).join('\n\n')
