@@ -77,6 +77,9 @@ export default function MirrorOracle() {
         temperatura: 0.75,
       })
 
+      console.log('[MirrorOracle] tokens usados:', result.tokensUsados, '| modelo:', result.modelo, '| error:', result.error)
+      console.log('[MirrorOracle] texto length:', result.texto?.length, '| texto:', result.texto?.substring(0, 100))
+
       if (!result.error && result.texto) {
         setInterpretacion(result.texto)
         if (userPlan.userId) await incrementarConsulta(userPlan.userId)
