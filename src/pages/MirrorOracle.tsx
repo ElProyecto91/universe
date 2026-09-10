@@ -66,7 +66,7 @@ export default function MirrorOracle() {
         userId: userPlan.userId,
         usarLite: false,
         cacheable: false,
-        maxTokens: 700,
+        maxTokens: 1000,
         temperatura: 0.8,
       })
 
