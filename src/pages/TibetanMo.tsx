@@ -1,75 +1,81 @@
-import { useState, useEffect } from 'react'
+// src/pages/TibetanMo.tsx
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useUserPlan, incrementarConsulta } from '../hooks/useUserPlan'
+import { useAnalytics } from '../hooks/useAnalytics'
+import { guardarLectura } from '../hooks/useHistorial'
+import { llamarGemini } from '../lib/gemini'
 import Compartir from '../components/Compartir'
-import Paywall from '../components/Paywall'
 import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
-import { llamarGemini } from '../lib/gemini'
-import { useUserPlan } from '../hooks/useUserPlan'
-import { useAnalytics } from '../hooks/useAnalytics'
-import { supabase } from '../lib/supabase'
+import PageLayout from '../components/PageLayout'
+import TextoIA from '../components/TextoIA'
+
+const HERRAMIENTA = 'tibetan-mo'
 
 export default function TibetanMo() {
-  const [pregunta, setPregunta] = useState('')
-  const [interpretacion, setInterpretacion] = useState('')
-  const [cargando, setCargando] = useState(false)
-  const [fase, setFase] = useState<'preguntar' | 'resultado'>('preguntar')
-  const [errorMsg, setErrorMsg] = useState('')
-  const [fromCache, setFromCache] = useState(false)
-  const [tiempoInicio, setTiempoInicio] = useState(0)
+  const navigate  = useNavigate()
+  const userPlan  = useUserPlan()
+  const analytics = useAnalytics(HERRAMIENTA, userPlan.esPremium)
 
-  const nombre = localStorage.getItem('nombre') || 'viajero'
-  const signo = localStorage.getItem('signo') || 'Leo'
-  const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
-  const añoActual = new Date().getFullYear()
-  const { esPremium, userId, cargando: cargandoPlan } = useUserPlan()
-  const { registrarApertura, registrarLectura, registrarPaywall, registrarValoracion } = useAnalytics('tibetan-mo', esPremium)
+  const [pregunta,       setPregunta]       = useState('')
+  const [interpretacion, setInterpretacion] = useState('')
+  const [cargando,       setCargando]       = useState(false)
+  const [fase,           setFase]           = useState<'preguntar' | 'resultado'>('preguntar')
+  const [errorMsg,       setErrorMsg]       = useState('')
+  const [yaValorado,     setYaValorado]     = useState(false)
+  const lecturaGuardadaRef                  = useRef(false)
+
+  const nombre   = localStorage.getItem('nombre') || 'viajero'
+  const signo    = localStorage.getItem('signo')  || 'Leo'
+  const fechaHoy = new Date().toISOString().split('T')[0]
 
   useEffect(() => {
-    registrarApertura()
-  }, [])
+    if (!userPlan.cargando) analytics.registrarApertura()
+  }, [userPlan.cargando])
 
-  // Mostrar paywall si no es premium
-  if (!cargandoPlan && !esPremium) {
-    registrarPaywall()
-    return <Paywall motivo="herramienta" herramienta="Tibetan Mo" />
+  if (!userPlan.cargando && !userPlan.esPremium) {
+    analytics.registrarPaywall(); navigate('/premium'); return null
   }
-
-  
 
   const consultar = async () => {
     if (!pregunta.trim()) return
-    setFase('resultado')
-    setCargando(true)
-    setErrorMsg('')
-    setTiempoInicio(Date.now())
+    setFase('resultado'); setCargando(true); setErrorMsg('')
+    const t0 = Date.now()
 
-    
+    try {
+      const base = `Eres un maestro del oráculo Mo tibetano. El usuario se llama ${nombre}. Su pregunta: "${pregunta}". Escribe en español, en prosa directa y sabia, sin listas ni asteriscos. Sin saludar ni usar el nombre al inicio.`
 
-    const result = await llamarGemini({
-      herramienta: 'tibetan-mo',
-      prompt: `Experto en el oráculo Mo tibetano. Nombre: ${nombre}. Pregunta: "${pregunta}". Respuesta en el estilo del Mo: directa, con consejo práctico.`,
-      userId, usarLite: true, cacheable: false, maxTokens: 200,
-    })
+      const r1 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Escribe un párrafo con la respuesta directa del Mo: qué dice el oráculo sobre esta situación. Exactamente 3 frases.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
+      if (r1.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
 
-    const tiempoMs = Date.now() - tiempoInicio
+      await new Promise(r => setTimeout(r, 500))
+      const r2 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Ya escribiste: "${r1.texto.trim()}". Continúa con un párrafo sobre qué obstáculos o apoyos señala el Mo en el camino. Exactamente 3 frases.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
+      if (r2.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
 
-    if (result.error) {
-      setErrorMsg(result.error)
-    } else {
-      setInterpretacion(result.texto)
-      setFromCache(false)
-      registrarLectura({ desdCache: false, tiempoMs, modeloIa: result.modelo })
-      
-    }
-    setCargando(false)
+      await new Promise(r => setTimeout(r, 500))
+      const r3 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Ya escribiste: "${r1.texto.trim()} ${r2.texto.trim()}". Cierra con un párrafo de consejo práctico budista para actuar sabiamente. Exactamente 3 frases.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
+      if (r3.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
+
+      const texto = [r1.texto, r2.texto, r3.texto].map(t => t.trim()).filter(Boolean).join('\n\n')
+      setInterpretacion(texto)
+      if (userPlan.userId) await incrementarConsulta(userPlan.userId)
+      analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: 'lite' })
+      if (!lecturaGuardadaRef.current) {
+        lecturaGuardadaRef.current = true
+        await guardarLectura({ herramienta: HERRAMIENTA, titulo: `Tibetan Mo · ${fechaHoy}`, contenido: `Consulta: "${pregunta}"\n\n${texto}`, metadatos: { pregunta, fecha: fechaHoy, nombre } })
+      }
+    } catch (err) { console.error('[TibetanMo]', err); setErrorMsg('Error inesperado.') }
+    finally { setCargando(false) }
   }
 
+  const handleValorar = (valor: 1 | -1) => { if (yaValorado) return; setYaValorado(true); analytics.registrarValoracion(valor) }
+
   return (
-    <div className="min-h-screen text-white flex flex-col relative" style={{ backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
-      <div className="absolute inset-0 bg-black/75" />
-      <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-6 py-10 gap-6">
+    <PageLayout>
+      <div className="flex flex-col gap-6">
         <div className="flex items-center">
-          <button onClick={() => { if (fase === 'resultado') setFase('preguntar'); else window.location.href = '/tradiciones' }} className="text-purple-300 text-sm">← Volver</button>
+          <button onClick={() => fase === 'resultado' ? setFase('preguntar') : navigate('/tradiciones')} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
             <p className="text-white font-semibold text-sm">Tibetan Mo</p>
             <p className="text-purple-300 text-xs">Oráculo tibetano</p>
@@ -77,48 +83,42 @@ export default function TibetanMo() {
           <span className="text-purple-400 text-xs border border-purple-400/30 rounded-full px-2 py-0.5">✨ Premium</span>
         </div>
         {fase === 'preguntar' && (
-          <div className="flex flex-col gap-6">
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
-              <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Tu pregunta o situación</p>
+          <div className="flex flex-col gap-4">
+            <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-6">
+              <p className="text-purple-400 text-xs tracking-widest uppercase mb-3">Tu consulta</p>
               <textarea value={pregunta} onChange={e => setPregunta(e.target.value)} placeholder="¿Qué quieres explorar?" rows={4} className="w-full bg-transparent text-white text-sm resize-none outline-none placeholder-white/30" />
             </div>
             <DisclaimerIA compact />
-            <button onClick={consultar} disabled={!pregunta.trim()} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full disabled:opacity-40">Consultar</button>
+            <button onClick={consultar} disabled={!pregunta.trim()} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition disabled:opacity-40">Consultar</button>
           </div>
         )}
         {fase === 'resultado' && (
-          <div className="flex flex-col gap-5">
-            <div className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 backdrop-blur">
-              <p className="text-white/40 text-xs italic">"{pregunta}"</p>
+          <div className="flex flex-col gap-4">
+            <div className="bg-[#0d0015] border border-white/15 rounded-2xl px-4 py-3">
+              <p className="text-white/50 text-xs italic">"{pregunta}"</p>
             </div>
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-purple-300 text-xs tracking-widest uppercase">Interpretación</p>
-                {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
-              </div>
+            <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-6">
+              <p className="text-purple-400 text-xs tracking-widest uppercase mb-4">El Mo responde</p>
               {cargando ? (
                 <div className="flex gap-2 py-2">
                   <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                   <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                   <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
-              ) : errorMsg ? <p className="text-red-400 text-sm">{errorMsg}</p>
-              : <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>}
+              ) : errorMsg ? <p className="text-red-300 text-sm">{errorMsg}</p> : <TextoIA texto={interpretacion} />}
             </div>
             {!cargando && interpretacion && (
               <>
                 <DisclaimerIA />
-                <Valoracion onValorar={registrarValoracion} />
+                <Valoracion onValorar={handleValorar} />
                 <Compartir titulo="Tibetan Mo" texto={interpretacion} hashtags={['Universe', 'TibetanMo']} />
-                <div className="flex flex-col gap-3">
-                  <button onClick={() => window.location.href = '/guia'} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full">Explorar con mi Guía IA</button>
-                  <button onClick={() => { setFase('preguntar'); setInterpretacion(''); setErrorMsg('') }} className="w-full text-purple-300/60 text-sm py-2">Nueva consulta</button>
-                </div>
+                <button onClick={() => navigate('/guia')} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition">Explorar con mi Guía IA</button>
+                <button onClick={() => { setFase('preguntar'); setInterpretacion(''); setErrorMsg(''); lecturaGuardadaRef.current = false }} className="w-full text-purple-300/60 text-sm py-2">Nueva consulta</button>
               </>
             )}
           </div>
         )}
       </div>
-    </div>
+    </PageLayout>
   )
 }
