@@ -49,7 +49,7 @@ export default function MirrorOracle() {
 
     try {
       const prompt = [
-        'Eres un guía de reflexión profunda. Escribe en español, en prosa, sin listas, sin asteriscos, sin markdown.',
+        'Eres un guía de reflexión. Escribe en español, en frases cortas y simples, sin subordinadas largas, sin listas, sin asteriscos, sin markdown.',
         '',
         `El usuario se llama ${nombre} y su signo es ${signo}. Su situación es: \"${pregunta}\".`,
         '',
@@ -64,9 +64,9 @@ export default function MirrorOracle() {
         herramienta: HERRAMIENTA,
         prompt,
         userId: userPlan.userId,
-        usarLite: false,
+        usarLite: true,
         cacheable: false,
-        maxTokens: 800,
+        maxTokens: 600,
         temperatura: 0.8,
       })
 
