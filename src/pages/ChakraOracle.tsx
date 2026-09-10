@@ -57,6 +57,7 @@ export default function ChakraOracle() {
       })
       if (r1.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
 
+      await new Promise(r => setTimeout(r, 500))
       const r2 = await llamarGemini({
         herramienta: HERRAMIENTA,
         prompt: `${base} Ya escribiste: "${r1.texto.trim()}". Continúa con un párrafo sobre qué bloqueo o desequilibrio podría estar presente en ese chakra y cómo se manifiesta en la vida de ${nombre}.`,
@@ -64,6 +65,7 @@ export default function ChakraOracle() {
       })
       if (r2.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
 
+      await new Promise(r => setTimeout(r, 500))
       const r3 = await llamarGemini({
         herramienta: HERRAMIENTA,
         prompt: `${base} Ya escribiste: "${r1.texto.trim()} ${r2.texto.trim()}". Cierra con un párrafo sobre una práctica concreta (respiración, visualización, movimiento o afirmación) para equilibrar ese chakra hoy, y una pregunta reflexiva de cierre.`,
