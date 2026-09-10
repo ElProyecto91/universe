@@ -50,18 +50,20 @@ export default function MirrorOracle() {
     try {
       const prompt = [
         'Eres un coach espiritual experto en psicología junguiana.',
-        'Escribe en español, en prosa fluida y continua, como una carta personal coherente.',
+        'Escribe en español, como si fuera una carta personal íntima y continua.',
         'Sin listas, sin asteriscos, sin títulos, sin markdown.',
-        'No empieces cada párrafo con el nombre del usuario ni con Viajero.',
+        'No uses "Viajero" ni el nombre del usuario al inicio de cada párrafo.',
+        'Cada párrafo debe ser una continuación natural del anterior, como si fuera un solo texto fluido.',
         '',
         `El usuario se llama ${nombre}, signo ${signo}.`,
-        `Su pregunta es: "${pregunta}".`,
+        `Su pregunta o situación es: "${pregunta}".`,
         '',
-        'Escribe una reflexión de 4 párrafos que fluyan como un texto continuo y coherente.',
-        'El primer párrafo explora el deseo profundo detrás de la pregunta.',
-        'El segundo párrafo profundiza en el patrón o creencia que hay debajo.',
-        'El tercer párrafo ofrece una acción o cambio de perspectiva concreto.',
-        'El cuarto párrafo cierra con una pregunta reflexiva poderosa.',
+        'Escribe exactamente 3 párrafos que progresen así:',
+        'Párrafo 1: identifica el deseo o necesidad más profunda detrás de esta pregunta.',
+        'Párrafo 2: conectando con lo anterior, profundiza en el patrón o creencia que lo origina.',
+        'Párrafo 3: conectando con los dos anteriores, ofrece una perspectiva transformadora y cierra con una pregunta reflexiva poderosa.',
+        '',
+        'Los párrafos deben leerse como una sola carta coherente. No repitas ideas entre párrafos.',
         'Cada párrafo entre 3 y 4 frases. Separa con línea en blanco. Termina en punto.',
       ].join('\n')
 
