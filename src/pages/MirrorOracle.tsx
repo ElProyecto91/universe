@@ -49,25 +49,28 @@ export default function MirrorOracle() {
 
     try {
       const prompt = [
-        'Eres un guía de reflexión. Escribe en español, en frases cortas y simples, sin subordinadas largas, sin listas, sin asteriscos, sin markdown.',
+        'Eres un guía de reflexión profunda. Escribe en español, en prosa simple y directa.',
+        'REGLAS ESTRICTAS: frases cortas. Máximo 15 palabras por frase. Sin subordinadas largas. Sin listas. Sin asteriscos. Sin markdown.',
         '',
-        `El usuario se llama ${nombre} y su signo es ${signo}. Su situación es: \"${pregunta}\".`,
+        `El usuario se llama ${nombre} y su signo es ${signo}. Su situación es: "${pregunta}".`,
         '',
-        `Escribe exactamente 2 párrafos dirigiéndote a ${nombre} directamente. Sin introducción genérica.`,
-        `Párrafo 1: qué refleja esta situación sobre su mundo interior y qué invita a observar.`,
-        `Párrafo 2: qué puede hacer hoy para transformar esta situación desde adentro, con una pregunta reflexiva de cierre.`,
+        `Escribe exactamente 4 párrafos cortos dirigiéndote a ${nombre} directamente. Sin introducción genérica.`,
+        `Párrafo 1: qué refleja esta situación sobre su mundo interior.`,
+        `Párrafo 2: qué patrón o creencia subyacente podría estar influyendo.`,
+        `Párrafo 3: qué puede hacer hoy para transformar esta situación desde adentro.`,
+        `Párrafo 4: una pregunta reflexiva poderosa para que ${nombre} explore en profundidad.`,
         '',
-        'IMPORTANTE: cada párrafo máximo 2 frases cortas. Separa con línea en blanco. Termina siempre en punto. Nunca dejes una frase incompleta. Sin predicciones absolutas.'
+        'Cada párrafo exactamente 2 frases. Frases cortas. Termina siempre en punto. Nunca dejes una frase incompleta.',
       ].join('\n')
 
       const result = await llamarGemini({
         herramienta: HERRAMIENTA,
         prompt,
         userId: userPlan.userId,
-        usarLite: true,
+        usarLite: false,
         cacheable: false,
-        maxTokens: 600,
-        temperatura: 0.8,
+        maxTokens: 1500,
+        temperatura: 0.7,
       })
 
       if (!result.error && result.texto) {
