@@ -15,9 +15,9 @@ import TextoIA from '../components/TextoIA'
 const HERRAMIENTA = 'wheel-of-year'
 
 export default function WheelOfYear() {
-  const navigate  = useNavigate()
-  const userPlan  = useUserPlan()
-  const analytics = useAnalytics(HERRAMIENTA, userPlan.esPremium)
+  const navigate   = useNavigate()
+  const userPlan   = useUserPlan()
+  const analytics  = useAnalytics(HERRAMIENTA, userPlan.esPremium)
 
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando,       setCargando]       = useState(false)
@@ -25,56 +25,63 @@ export default function WheelOfYear() {
   const [fromCache,      setFromCache]      = useState(false)
   const lecturaGuardadaRef                  = useRef(false)
 
-  const nombre      = localStorage.getItem('nombre') || 'viajero'
+  const nombre       = localStorage.getItem('nombre') || 'viajero'
   const sabbatActual = getSabbatActual()
-  const cacheKey    = `sabbat-${sabbatActual.nombre.toLowerCase().replace(/ /g, '-')}`
-  const fechaHoy    = new Date().toISOString().split('T')[0]
+  const cacheKey     = `sabbat-${sabbatActual.nombre.toLowerCase().replace(/ /g, '-')}-${$new Date().getFullYear()}`
+  const fechaHoy     = new Date().toISOString().split('T')[0]
 
   useEffect(() => {
     if (!userPlan.cargando) analytics.registrarApertura()
   }, [userPlan.cargando])
 
   const generarLectura = async () => {
-    setCargando(true); setGenerado(true)
+    setCargando(true)
+    setGenerado(true)
     const t0 = Date.now()
 
     try {
+      // Caché permanente por Sabbat
       const { data: cached } = await supabase.from('ai_cache').select('respuesta').eq('cache_key', cacheKey).maybeSingle()
       if (cached?.respuesta) {
-        setInterpretacion(cached.respuesta); setFromCache(true)
+        setInterpretacion(cached.respuesta)
+        setFromCache(true)
         analytics.registrarLectura({ desdCache: true, tiempoMs: Date.now() - t0, modeloIa: 'cache' })
-        setCargando(false); return
+        setCargando(false)
+        return
       }
 
-      const prompt = [
-        'Eres una guía experta en la Rueda del Año y las tradiciones paganas estacionales.',
-        'Escribe en español, en prosa natural, sin listas, sin asteriscos, sin markdown.',
-        '',
-        `Sabbat: ${sabbatActual.nombre}. Fecha: ${sabbatActual.fecha}.`,
-        `Descripción: ${sabbatActual.descripcion}. Temas: ${sabbatActual.temas.join(', ')}.`,
-        '',
-        'Escribe una guía estacional de 3 párrafos que fluyan como un texto continuo.',
-        'Párrafo 1: qué energía trae este momento del año y qué significa cosmológicamente.',
-        'Párrafo 2: qué están siendo llamadas a honrar, soltar o celebrar las personas en esta época.',
-        'Párrafo 3: dos acciones concretas para alinearse con esta energía estacional.',
-        '',
-        'Tono reflexivo y simbólico. Separa párrafos con línea en blanco. Termina en punto.',
-      ].join('\n')
+      const base = `Eres una guía experta en la Rueda del Año. Sabbat: ${sabbatActual.nombre} (${sabbatActual.fecha}). Temas: ${sabbatActual.temas.join(', ')}. Escribe en español, en prosa natural, sin listas ni asteriscos. Exactamente 3 frases. Sin saludar ni usar nombres al inicio.`
 
-      const result = await llamarGemini({ herramienta: HERRAMIENTA, prompt, userId: userPlan.userId, usarLite: false, cacheable: false, maxTokens: 800 })
+      const r1 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Escribe un párrafo sobre qué energía trae este Sabbat y qué significa cosmológicamente en el ciclo de la naturaleza.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
+      if (r1.error) { setInterpretacion('La rueda guarda silencio. Inténtalo de nuevo.'); return }
 
-      if (!result.error && result.texto) {
-        setInterpretacion(result.texto); setFromCache(false)
-        supabase.from('ai_cache').insert({ cache_key: cacheKey, herramienta: HERRAMIENTA, prompt_hash: cacheKey, respuesta: result.texto, tokens_used: result.tokensUsados, expires_at: null }).then(() => {})
-        if (userPlan.userId) await incrementarConsulta(userPlan.userId)
-        analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: result.modelo })
-        if (!lecturaGuardadaRef.current) {
-          lecturaGuardadaRef.current = true
-          await guardarLectura({ herramienta: HERRAMIENTA, titulo: `${sabbatActual.nombre} · ${fechaHoy}`, contenido: result.texto, metadatos: { sabbat: sabbatActual.nombre, fecha: fechaHoy, nombre } })
-        }
-      } else { setInterpretacion('La rueda guarda silencio. Inténtalo de nuevo.') }
-    } catch (err) { console.error('[WheelOfYear]', err); setInterpretacion('Error inesperado.') }
-    finally { setCargando(false) }
+      await new Promise(r => setTimeout(r, 500))
+      const r2 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Ya escribiste: "${r1.texto.trim()}". Continúa con un párrafo sobre qué están siendo llamadas a honrar, soltar o celebrar las personas en esta época del año.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
+      if (r2.error) { setInterpretacion('La rueda guarda silencio. Inténtalo de nuevo.'); return }
+
+      await new Promise(r => setTimeout(r, 500))
+      const r3 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Ya escribiste: "${r1.texto.trim()} ${r2.texto.trim()}". Cierra con un párrafo con dos acciones concretas y sencillas para alinearse con esta energía estacional hoy.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
+      if (r3.error) { setInterpretacion('La rueda guarda silencio. Inténtalo de nuevo.'); return }
+
+      const texto = [r1.texto, r2.texto, r3.texto].map(t => t.trim()).filter(Boolean).join('\n\n')
+      setInterpretacion(texto)
+      setFromCache(false)
+
+      // Guardar en caché permanente
+      supabase.from('ai_cache').insert({ cache_key: cacheKey, herramienta: HERRAMIENTA, prompt_hash: cacheKey, respuesta: texto, tokens_used: 0, expires_at: null }).then(() => {})
+      if (userPlan.userId) await incrementarConsulta(userPlan.userId)
+      analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: 'lite' })
+
+      if (!lecturaGuardadaRef.current) {
+        lecturaGuardadaRef.current = true
+        await guardarLectura({ herramienta: HERRAMIENTA, titulo: `${sabbatActual.nombre} · ${fechaHoy}`, contenido: texto, metadatos: { sabbat: sabbatActual.nombre, fecha: fechaHoy, nombre } })
+      }
+    } catch (err) {
+      console.error('[WheelOfYear]', err)
+      setInterpretacion('La rueda guarda silencio. Inténtalo de nuevo.')
+    } finally {
+      setCargando(false)
+    }
   }
 
   return (
