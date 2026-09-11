@@ -1,109 +1,132 @@
-import { useState, useEffect } from 'react'
+// src/pages/LunaOracle.tsx
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { getFaseLunar } from '../lib/motores/luna'
-import { getFaseLunarAPI } from '../lib/apis'
-import Compartir from '../components/Compartir'
-import { supabase } from '../lib/supabase'
+import { useUserPlan, incrementarConsulta } from '../hooks/useUserPlan'
+import { useAnalytics } from '../hooks/useAnalytics'
+import { guardarLectura } from '../hooks/useHistorial'
 import { llamarGemini } from '../lib/gemini'
+import { supabase } from '../lib/supabase'
+import Compartir from '../components/Compartir'
+import Valoracion from '../components/Valoracion'
+import DisclaimerIA from '../components/DisclaimerIA'
+import CtaUpsell from '../components/CtaUpsell'
+import PageLayout from '../components/PageLayout'
+import TextoIA from '../components/TextoIA'
+
+const HERRAMIENTA = 'luna-oracle'
 
 export default function LunaOracle() {
+  const navigate  = useNavigate()
+  const userPlan  = useUserPlan()
+  const analytics = useAnalytics(HERRAMIENTA, userPlan.esPremium)
+
   const [interpretacion, setInterpretacion] = useState('')
-  const [cargando, setCargando] = useState(false)
-  const [generado, setGenerado] = useState(false)
-  const [fromCache, setFromCache] = useState(false)
-  const [iluminacion, setIluminacion] = useState<number | null>(null)
+  const [cargando,       setCargando]       = useState(false)
+  const [generado,       setGenerado]       = useState(false)
+  const [fromCache,      setFromCache]      = useState(false)
+  const [errorMsg,       setErrorMsg]       = useState('')
+  const [yaValorado,     setYaValorado]     = useState(false)
+  const lecturaGuardadaRef                  = useRef(false)
 
-  const nombre = localStorage.getItem('nombre') || 'viajero'
-  const signo = localStorage.getItem('signo') || 'Leo'
+  const nombre   = localStorage.getItem('nombre') || 'viajero'
+  const signo    = localStorage.getItem('signo')  || 'Leo'
+  const fechaHoy = new Date().toISOString().split('T')[0]
+  const hoy      = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
   const faseLunar = getFaseLunar()
-  const hoy = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
-  const cacheKey = `luna-${faseLunar.nombre.toLowerCase().replace(/ /g, '-')}-${signo.toLowerCase()}`
-  const userId = null
-
-  const bgStyle = { backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }
 
   useEffect(() => {
-    getFaseLunarAPI().then(data => { if (data?.illumination) setIluminacion(Math.round(data.illumination * 100)) })
-  }, [])
+    if (!userPlan.cargando) analytics.registrarApertura()
+  }, [userPlan.cargando])
 
   const generarLectura = async () => {
-    setCargando(true)
-    setGenerado(true)
+    if (userPlan.cargando) return
+    if (!userPlan.puedeConsultar) { analytics.registrarPaywall(); navigate('/premium'); return }
+    if (!userPlan.esPremium && userPlan.consultasRestantes <= 0) {
+      analytics.registrarLimite()
+      setErrorMsg(`Has alcanzado tu límite diario de ${userPlan.limiteConsultasDia} consultas gratuitas.`)
+      return
+    }
+
+    setCargando(true); setGenerado(true); setErrorMsg('')
+    const t0 = Date.now()
 
     try {
-      const { data: cached } = await supabase.from('ai_cache').select('respuesta')
-        .eq('cache_key', cacheKey)
-        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
-        .maybeSingle()
-      if (cached?.respuesta) {
-        setInterpretacion(`${nombre}, ${cached.respuesta}`)
-        setFromCache(true)
-        setCargando(false)
-        return
+      const { data: cached } = await supabase.from('horoscopo_cache').select('contenido')
+        .eq('signo', `${signo.toLowerCase()}-${faseLunar.fase}`)
+        .eq('fecha', fechaHoy).eq('tipo', HERRAMIENTA).maybeSingle()
+
+      if (cached?.contenido) {
+        setInterpretacion(cached.contenido); setFromCache(true)
+        analytics.registrarLectura({ desdCache: true, tiempoMs: Date.now() - t0, modeloIa: 'cache' })
+        setCargando(false); return
       }
-    } catch (err) { console.warn('[LunaOracle] Error caché:', err) }
 
-    const result = await llamarGemini({
-      herramienta: 'luna-oracle',
-      prompt: `Experta en astrología lunar y rituales de luna.
+      const prompt = [
+        'Eres una guía lunar experta en astrología y ciclos de la luna.',
+        'Escribe en español, en prosa fluida y continua. Sin asteriscos, sin guiones, sin markdown.',
+        '',
+        `El usuario se llama ${nombre}, signo ${signo}. Fase lunar actual: ${faseLunar.fase} (${faseLunar.descripcion}).`,
+        '',
+        'Escribe una guía lunar de 3 párrafos que fluyan naturalmente.',
+        'Párrafo 1: qué energía trae esta fase lunar y cómo afecta a este signo en particular.',
+        'Párrafo 2: qué áreas de vida están activadas y qué invita a trabajar esta luna.',
+        'Párrafo 3: una práctica concreta para trabajar con esta energía lunar hoy.',
+        '',
+        'Tono poético y orientador. Separa párrafos con línea en blanco. Termina en punto.',
+      ].join('\n')
 
-Signo: ${signo} · Fase: ${faseLunar.nombre} ${faseLunar.simbolo}
-Días para luna llena: ${faseLunar.diasHastaLunaLlena}
-Iluminación: ${iluminacion !== null ? iluminacion + '%' : '~50%'}
-Energía: ${faseLunar.energia}
+      const result = await llamarGemini({ herramienta: HERRAMIENTA, prompt, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 600 })
 
-3 párrafos: energía de la fase lunar y su significado cosmológico, cómo amplifica o desafía la energía de ${signo}, 3 prácticas o rituales específicos. Reflexivo, simbólico. Máximo 220 palabras.`,
-      userId, usarLite: false, cacheable: false, maxTokens: 400,
-    })
-
-    if (!result.error && result.texto) {
-      setInterpretacion(`${nombre}, ${result.texto}`)
-      setFromCache(false)
-      const expira = new Date()
-      expira.setDate(expira.getDate() + 7)
-      supabase.from('ai_cache').insert({ cache_key: cacheKey, herramienta: 'luna-oracle', prompt_hash: cacheKey, respuesta: result.texto, tokens_used: result.tokensUsados, expires_at: expira.toISOString() }).then(() => {})
-    } else setInterpretacion('La luna guarda silencio. Inténtalo de nuevo.')
-    setCargando(false)
+      if (!result.error && result.texto) {
+        setInterpretacion(result.texto); setFromCache(false)
+        supabase.from('horoscopo_cache').insert({ signo: `${signo.toLowerCase()}-${faseLunar.fase}`, fecha: fechaHoy, tipo: HERRAMIENTA, contenido: result.texto, tokens_used: result.tokensUsados }).then(() => {})
+        if (userPlan.userId) await incrementarConsulta(userPlan.userId)
+        analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: result.modelo })
+        if (!lecturaGuardadaRef.current) {
+          lecturaGuardadaRef.current = true
+          await guardarLectura({ herramienta: HERRAMIENTA, titulo: `Luna ${faseLunar.fase} · ${signo} · ${fechaHoy}`, contenido: result.texto, metadatos: { signo, fase: faseLunar.fase, fecha: fechaHoy, nombre } })
+        }
+      } else { setErrorMsg('La luna guarda silencio. Inténtalo de nuevo.') }
+    } catch (err) { console.error('[LunaOracle]', err); setErrorMsg('Error inesperado.') }
+    finally { setCargando(false) }
   }
 
+  const handleValorar = (valor: 1 | -1) => { if (yaValorado) return; setYaValorado(true); analytics.registrarValoracion(valor) }
+
   return (
-    <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/75" />
-      <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-6 py-10 gap-6">
+    <PageLayout>
+      <div className="flex flex-col gap-6">
         <div className="flex items-center">
-          <button onClick={() => window.location.href = '/tradiciones'} className="text-purple-300 text-sm">← Volver</button>
+          <button onClick={() => navigate('/tradiciones')} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
-            <p className="text-white font-semibold text-sm">Oracle Lunar</p>
-            <p className="text-purple-300 text-xs capitalize">{hoy}</p>
+            <p className="text-white font-semibold text-sm">Luna Oracle</p>
+            <p className="text-purple-300 text-xs">Ciclos lunares</p>
           </div>
-        </div>
-        <div className="bg-white/8 border border-white/20 rounded-3xl p-8 backdrop-blur flex flex-col items-center gap-4" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
-          <p className="text-8xl" style={{ filter: 'drop-shadow(0 0 20px rgba(255,255,200,0.5))' }}>{faseLunar.simbolo}</p>
-          <p className="text-2xl font-bold">{faseLunar.nombre}</p>
-          {iluminacion !== null && (
-            <div className="w-full">
-              <div className="flex justify-between text-xs text-white/40 mb-1"><span>Iluminación</span><span>{iluminacion}%</span></div>
-              <div className="h-2 bg-white/10 rounded-full">
-                <div className="h-2 bg-gradient-to-r from-yellow-300 to-white rounded-full transition-all" style={{ width: `${iluminacion}%` }} />
-              </div>
-            </div>
+          {!userPlan.cargando && !userPlan.esPremium && (
+            <p className="text-white/40 text-xs">{userPlan.consultasRestantes}/{userPlan.limiteConsultasDia}</p>
           )}
-          <p className="text-white/60 text-sm text-center">{faseLunar.energia}</p>
-          <p className="text-purple-300 text-xs">{faseLunar.diasHastaLunaLlena} días para luna llena</p>
         </div>
-        <div className="bg-white/8 border border-white/20 rounded-3xl p-5 backdrop-blur" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
-          <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Energía de la fase</p>
-          <p className="text-white/80 text-sm leading-relaxed">{faseLunar.mensaje}</p>
+
+        <div className="bg-[#0d0015] border border-purple-500/50 rounded-3xl p-6 text-center">
+          <p className="text-5xl mb-3">{faseLunar.emoji}</p>
+          <p className="text-purple-400 text-xs tracking-widest uppercase mb-1">{faseLunar.fase}</p>
+          <p className="text-white font-semibold text-sm">{signo} · {hoy}</p>
+          <p className="text-white/50 text-xs mt-2">{faseLunar.descripcion}</p>
         </div>
-        <div className="bg-white/8 border border-white/20 rounded-2xl p-4 backdrop-blur" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
-          <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Práctica recomendada</p>
-          <p className="text-white/70 text-sm leading-relaxed">{faseLunar.practica}</p>
-        </div>
+
         {!generado ? (
-          <button onClick={generarLectura} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition">Mi guía lunar personalizada</button>
+          <div className="flex flex-col gap-3">
+            <DisclaimerIA compact />
+            <button onClick={generarLectura} disabled={userPlan.cargando}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition disabled:opacity-40">
+              Mi guía lunar
+            </button>
+          </div>
         ) : (
-          <div className="bg-white/8 border border-white/20 rounded-3xl p-6 backdrop-blur" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+          <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-6">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-purple-300 text-xs tracking-widest uppercase">Tu guía lunar</p>
+              <p className="text-purple-400 text-xs tracking-widest uppercase">Tu guía lunar</p>
               {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
             </div>
             {cargando ? (
@@ -112,12 +135,27 @@ Energía: ${faseLunar.energia}
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
-            ) : <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>}
+            ) : <TextoIA texto={interpretacion} />}
           </div>
         )}
-        {!cargando && interpretacion && <Compartir titulo={`Oracle Lunar: ${faseLunar.nombre}`} texto={interpretacion} hashtags={['OracleLunar', 'Universe', faseLunar.nombre.replace(' ', ''), 'Luna']} />}
-        {generado && !cargando && <button onClick={() => window.location.href = '/guia'} className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full">Explorar con mi Guía IA</button>}
+
+        {errorMsg && (
+          <div className="bg-[#0d0015] border border-red-400/50 rounded-2xl p-4">
+            <p className="text-red-300 text-sm text-center">{errorMsg}</p>
+            {!userPlan.esPremium && <button onClick={() => navigate('/premium')} className="mt-3 w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold py-2 rounded-full">Hazte Premium</button>}
+          </div>
+        )}
+
+        {!cargando && interpretacion && (
+          <>
+            <DisclaimerIA />
+            <Valoracion onValorar={handleValorar} />
+            <Compartir titulo={`Luna ${faseLunar.fase} · ${signo}`} texto={interpretacion} hashtags={['LunaOracle', 'Universe', signo]} />
+            <CtaUpsell consultasRestantes={userPlan.consultasRestantes} />
+            <button onClick={() => navigate('/guia')} className="w-full bg-[#0d0015] border border-white/15 text-white font-semibold py-4 rounded-full hover:border-purple-500/50 transition">Explorar con mi Guía IA</button>
+          </>
+        )}
       </div>
-    </div>
+    </PageLayout>
   )
 }
