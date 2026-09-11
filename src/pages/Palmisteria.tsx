@@ -13,25 +13,11 @@ import TextoIA from '../components/TextoIA'
 
 const HERRAMIENTA = 'palmisteria'
 
-// Convierte imagen a base64
-async function imagenABase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      const result = reader.result as string
-      resolve(result.split(',')[1]) // solo el base64 sin el prefijo
-    }
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
-}
-
 export default function Palmisteria() {
   const navigate  = useNavigate()
   const userPlan  = useUserPlan()
   const analytics = useAnalytics(HERRAMIENTA, userPlan.esPremium)
 
-  const [imagen,         setImagen]         = useState<File | null>(null)
   const [preview,        setPreview]        = useState<string | null>(null)
   const [pregunta,       setPregunta]       = useState('')
   const [interpretacion, setInterpretacion] = useState('')
@@ -58,7 +44,6 @@ export default function Palmisteria() {
   const handleImagen = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    setImagen(file)
     setPreview(URL.createObjectURL(file))
   }
 
@@ -68,77 +53,23 @@ export default function Palmisteria() {
     const t0 = Date.now()
 
     try {
-      let resultado = ''
+      // Lectura basada en la consulta escrita — 3 llamadas encadenadas
+      const base = `Eres un experto en palmistería. El usuario se llama ${nombre}, signo ${signo}, nacido el ${fechaNacimiento}. Área de vida: "${pregunta}". Responde SOLO con texto en español, en prosa continua. Sin asteriscos, sin guiones, sin markdown. Exactamente 3 frases terminadas en punto.`
 
-      if (imagen) {
-        // Modo imagen — Gemini Vision analiza la palma
-        const base64 = await imagenABase64(imagen)
-        const mimeType = imagen.type as 'image/jpeg' | 'image/png' | 'image/webp'
+      const r1 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Describe qué revela la línea principal relacionada con esta área y qué energía dominante muestra.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
+      if (r1.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
 
-        const promptImagen = [
-          'Eres un experto en palmistería. Analiza esta imagen de la palma de la mano.',
-          'Responde SOLO con texto en español, en prosa continua. Sin asteriscos, sin guiones, sin markdown.',
-          '',
-          `El usuario se llama ${nombre}, signo ${signo}, nacido el ${fechaNacimiento}.`,
-          pregunta.trim() ? `Área de interés: "${pregunta}".` : '',
-          '',
-          'Escribe una lectura de 3 párrafos basada en lo que ves en la imagen.',
-          'Párrafo 1: describe las líneas principales visibles (vida, corazón, cabeza) y su significado.',
-          'Párrafo 2: qué revelan sobre la personalidad y el camino de vida de esta persona.',
-          'Párrafo 3: un consejo práctico y una pregunta reflexiva de cierre.',
-          '',
-          'Si la imagen no es clara o no puedes ver las líneas, indícalo con amabilidad y da una lectura general.',
-          'Separa párrafos con línea en blanco. Termina en punto.',
-        ].filter(Boolean).join('\n')
+      await new Promise(r => setTimeout(r, 500))
+      const r2 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Continuando desde: "${r1.texto.trim()}" — describe qué matices o líneas secundarias complementan esta lectura.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
+      if (r2.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
 
-        const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`
+      await new Promise(r => setTimeout(r, 500))
+      const r3 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Continuando desde: "${r1.texto.trim()} ${r2.texto.trim()}" — da un consejo práctico y una pregunta reflexiva de cierre.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
+      if (r3.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
 
-        const response = await fetch(GEMINI_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: promptImagen },
-                { inline_data: { mime_type: mimeType, data: base64 } },
-              ]
-            }],
-            generationConfig: { temperature: 0.75, maxOutputTokens: 800 },
-          }),
-        })
+      const resultado = [r1.texto, r2.texto, r3.texto].map(t => t.trim()).filter(Boolean).join('\n\n')
 
-        if (!response.ok) {
-          setErrorMsg('No se pudo analizar la imagen. Inténtalo de nuevo.')
-          return
-        }
-
-        const data = await response.json()
-        resultado = data.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
-
-        // Descartar imagen de memoria
-        URL.revokeObjectURL(preview!)
-        setImagen(null)
-        setPreview(null)
-
-      } else {
-        // Modo texto — 3 llamadas encadenadas
-        const base = `Eres un experto en palmistería. El usuario se llama ${nombre}, signo ${signo}, nacido el ${fechaNacimiento}. Área de vida: "${pregunta}". Responde SOLO con texto en español, en prosa continua. Sin asteriscos, sin guiones, sin markdown. Exactamente 3 frases terminadas en punto.`
-
-        const r1 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Describe qué revela la línea principal relacionada con esta área y qué energía dominante muestra.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
-        if (r1.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
-
-        await new Promise(r => setTimeout(r, 500))
-        const r2 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Continuando desde: "${r1.texto.trim()}" — describe qué matices o líneas secundarias complementan esta lectura.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
-        if (r2.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
-
-        await new Promise(r => setTimeout(r, 500))
-        const r3 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Continuando desde: "${r1.texto.trim()} ${r2.texto.trim()}" — da un consejo práctico y una pregunta reflexiva de cierre.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
-        if (r3.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
-
-        resultado = [r1.texto, r2.texto, r3.texto].map(t => t.trim()).filter(Boolean).join('\n\n')
-      }
-
-      setInterpretacion(resultado)
+            setInterpretacion(resultado)
       if (userPlan.userId) await incrementarConsulta(userPlan.userId)
       analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: 'flash' })
 
@@ -163,7 +94,7 @@ export default function Palmisteria() {
 
   const resetear = () => {
     setFase('preguntar'); setInterpretacion(''); setErrorMsg('')
-    setImagen(null); setPreview(null); setPregunta('')
+    setPreview(null); setPregunta('')
     lecturaGuardadaRef.current = false
     if (inputFileRef.current) inputFileRef.current.value = ''
   }
@@ -235,10 +166,10 @@ export default function Palmisteria() {
 
             <button
               onClick={consultar}
-              disabled={!imagen && !pregunta.trim()}
+              disabled={!pregunta.trim()}
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition disabled:opacity-40"
             >
-              {imagen ? '📸 Leer mi palma' : 'Consultar'}
+              Consultar
             </button>
           </div>
         )}
