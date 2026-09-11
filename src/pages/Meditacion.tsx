@@ -31,6 +31,14 @@ export default function Meditacion() {
   const nombre   = localStorage.getItem('nombre') || 'viajero'
   const signo    = localStorage.getItem('signo')  || 'Leo'
   const fechaHoy = new Date().toISOString().split('T')[0]
+
+  // Día del cuatrimestre (1-122) — mismo día cada 4 meses
+  const diaCuatrimestre = (() => {
+    const hoy = new Date()
+    const inicio = new Date(hoy.getFullYear(), 0, 1)
+    const diaAnio = Math.floor((hoy.getTime() - inicio.getTime()) / 86400000) + 1
+    return ((diaAnio - 1) % 122) + 1
+  })()
   const hoy      = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
 
   useEffect(() => {
@@ -51,7 +59,7 @@ export default function Meditacion() {
 
     try {
       const { data: cached } = await supabase.from('horoscopo_cache').select('contenido')
-        .eq('signo', signo.toLowerCase()).eq('fecha', fechaHoy).eq('tipo', HERRAMIENTA).maybeSingle()
+        .eq('signo', signo.toLowerCase()).eq('fecha', `dia-${diaCuatrimestre}`).eq('tipo', HERRAMIENTA).maybeSingle()
 
       if (cached?.contenido) {
         setInterpretacion(cached.contenido); setFromCache(true)
@@ -77,7 +85,7 @@ export default function Meditacion() {
 
       if (!result.error && result.texto) {
         setInterpretacion(result.texto); setFromCache(false)
-        supabase.from('horoscopo_cache').insert({ signo: signo.toLowerCase(), fecha: fechaHoy, tipo: HERRAMIENTA, contenido: result.texto, tokens_used: result.tokensUsados }).then(() => {})
+        supabase.from('horoscopo_cache').insert({ signo: signo.toLowerCase(), fecha: `dia-${diaCuatrimestre}`, tipo: HERRAMIENTA, contenido: result.texto, tokens_used: result.tokensUsados }).then(() => {})
         if (userPlan.userId) await incrementarConsulta(userPlan.userId)
         analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: result.modelo })
         if (!lecturaGuardadaRef.current) {
