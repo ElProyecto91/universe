@@ -13,6 +13,20 @@ import TextoIA from '../components/TextoIA'
 
 const HERRAMIENTA = 'ogham-oracle'
 
+
+const OGHAM_IMAGENES: Record<string, string> = {
+  'Beith':  '/ogham/Celtic_knot_carved_on_birch_20260911214738.jpeg',
+  'Luis':   '/ogham/Rowan_wood_with_carved_knot_20260911214736.jpeg',
+  'Fearn':  '/ogham/Alder_wood_with_glowing_symbol_20260911214734.jpeg',
+  'Sail':   '/ogham/Willow_wood_with_glowing_knot_20260911214732.jpeg',
+  'Nion':   '/ogham/Ash_tree_bark_carving_20260911214731.jpeg',
+  'Huath':  '/ogham/Hawthorn_wood_with_celtic_knot_20260911214729.jpeg',
+  'Dair':   '/ogham/Oak_bark_with_celtic_knot_20260911214727.jpeg',
+  'Tinne':  '/ogham/Holly_with_berries_and_celtic_20260911214725.jpeg',
+  'Coll':   '/ogham/Hazelnut_wood_with_celtic_knot_20260911214723.jpeg',
+  'Quert':  '/ogham/Apple_wood_with_glowing_rose_20260911214721.jpeg',
+}
+
 const OGHAM = [
   { letra: 'ᚁ', nombre: 'Beith', arbol: 'Abedul', keywords: 'Nuevos comienzos · Purificación' },
   { letra: 'ᚂ', nombre: 'Luis', arbol: 'Serbal', keywords: 'Protección · Clarividencia' },
@@ -117,9 +131,9 @@ export default function OghamOracle() {
             </button>
             <div className="grid grid-cols-5 gap-2">
               {OGHAM.map(o => (
-                <div key={o.nombre} className="bg-[#0d0015] border border-white/15 rounded-xl p-3 text-center">
-                  <p className="text-purple-300 text-xl">{o.letra}</p>
-                  <p className="text-white/40 text-xs mt-1">{o.nombre}</p>
+                <div key={o.nombre} className="bg-[#0d0015] border border-white/15 rounded-xl overflow-hidden">
+                  <img src={OGHAM_IMAGENES[o.nombre]} alt={o.nombre} className="w-full aspect-square object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                  <p className="text-white/60 text-xs text-center py-1">{o.nombre}</p>
                 </div>
               ))}
             </div>
@@ -129,7 +143,7 @@ export default function OghamOracle() {
         {fase === 'preguntar' && oghamSeleccionado && (
           <div className="flex flex-col gap-4">
             <div className="bg-[#0d0015] border border-purple-500/50 rounded-3xl p-6 text-center">
-              <p className="text-purple-300 text-5xl mb-2">{oghamSeleccionado.letra}</p>
+              <img src={OGHAM_IMAGENES[oghamSeleccionado.nombre]} alt={oghamSeleccionado.nombre} className="w-32 h-32 object-cover rounded-2xl mx-auto mb-3" />
               <p className="text-white text-xl font-bold">{oghamSeleccionado.nombre}</p>
               <p className="text-purple-400 text-sm mt-1">{oghamSeleccionado.arbol}</p>
               <p className="text-white/50 text-xs mt-2">{oghamSeleccionado.keywords}</p>
@@ -145,7 +159,7 @@ export default function OghamOracle() {
         {fase === 'resultado' && oghamSeleccionado && (
           <div className="flex flex-col gap-4">
             <div className="bg-[#0d0015] border border-purple-500/30 rounded-2xl p-4 flex items-center gap-3">
-              <span className="text-purple-300 text-3xl">{oghamSeleccionado.letra}</span>
+              <img src={OGHAM_IMAGENES[oghamSeleccionado.nombre]} alt={oghamSeleccionado.nombre} className="w-12 h-12 object-cover rounded-xl" />
               <div>
                 <p className="text-white font-semibold text-sm">{oghamSeleccionado.nombre} · {oghamSeleccionado.arbol}</p>
                 <p className="text-white/40 text-xs">{oghamSeleccionado.keywords}</p>
