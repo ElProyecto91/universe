@@ -54,7 +54,7 @@ export default function Palmisteria() {
 
     try {
       // Lectura basada en la consulta escrita — 3 llamadas encadenadas
-      const base = `Eres un experto en palmistería. El usuario se llama ${nombre}, signo ${signo}, nacido el ${fechaNacimiento}. Área de vida: "${pregunta}". Responde SOLO con texto en español, en prosa continua. Sin asteriscos, sin guiones, sin markdown. Exactamente 3 frases terminadas en punto.`
+      const base = `Eres un experto en palmistería. El usuario se llama ${nombre}, signo ${signo}, nacido el ${fechaNacimiento}. Área de vida: "${pregunta}". Responde SOLO con texto en español, en prosa continua y directa. Sin asteriscos, sin guiones, sin markdown. Escribe frases cortas de máximo 20 palabras cada una. Termina siempre en punto.`
 
       const r1 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Describe qué revela la línea principal relacionada con esta área y qué energía dominante muestra.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
       if (r1.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
