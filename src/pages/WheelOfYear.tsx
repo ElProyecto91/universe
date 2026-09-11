@@ -1,114 +1,98 @@
+// src/pages/WheelOfYear.tsx
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { getSabbatActual, SABBATS } from '../lib/motores/ruedaDelAno'
-import { useState } from 'react'
-import Compartir from '../components/Compartir'
+import { useUserPlan, incrementarConsulta } from '../hooks/useUserPlan'
+import { useAnalytics } from '../hooks/useAnalytics'
+import { guardarLectura } from '../hooks/useHistorial'
+import { llamarGemini } from '../lib/gemini'
 import { supabase } from '../lib/supabase'
+import Compartir from '../components/Compartir'
+import DisclaimerIA from '../components/DisclaimerIA'
+import PageLayout from '../components/PageLayout'
+import TextoIA from '../components/TextoIA'
+
+const HERRAMIENTA = 'wheel-of-year'
 
 export default function WheelOfYear() {
+  const navigate  = useNavigate()
+  const userPlan  = useUserPlan()
+  const analytics = useAnalytics(HERRAMIENTA, userPlan.esPremium)
+
   const [interpretacion, setInterpretacion] = useState('')
-  const [cargando, setCargando] = useState(false)
-  const [generado, setGenerado] = useState(false)
-  const [fromCache, setFromCache] = useState(false)
+  const [cargando,       setCargando]       = useState(false)
+  const [generado,       setGenerado]       = useState(false)
+  const [fromCache,      setFromCache]      = useState(false)
+  const lecturaGuardadaRef                  = useRef(false)
 
+  const nombre      = localStorage.getItem('nombre') || 'viajero'
   const sabbatActual = getSabbatActual()
-  const nombre = localStorage.getItem('nombre') || 'viajero'
+  const cacheKey    = `sabbat-${sabbatActual.nombre.toLowerCase().replace(/ /g, '-')}`
+  const fechaHoy    = new Date().toISOString().split('T')[0]
 
-  // 8 Sabbats al año — caché permanente por nombre del Sabbat
-  const cacheKey = `sabbat-${sabbatActual.nombre.toLowerCase().replace(/ /g, '-')}`
-
-  const bgStyle = {
-    backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-  }
+  useEffect(() => {
+    if (!userPlan.cargando) analytics.registrarApertura()
+  }, [userPlan.cargando])
 
   const generarLectura = async () => {
-    setCargando(true)
-    setGenerado(true)
+    setCargando(true); setGenerado(true)
+    const t0 = Date.now()
 
-    // ── 1. Buscar en caché permanente ──────────────────────
     try {
-      const { data: cached } = await supabase
-        .from('ai_cache')
-        .select('respuesta')
-        .eq('cache_key', cacheKey)
-        .maybeSingle()
-
+      const { data: cached } = await supabase.from('ai_cache').select('respuesta').eq('cache_key', cacheKey).maybeSingle()
       if (cached?.respuesta) {
-        setInterpretacion(`${nombre}, ${cached.respuesta}`)
-        setFromCache(true)
-        setCargando(false)
-        return
+        setInterpretacion(cached.respuesta); setFromCache(true)
+        analytics.registrarLectura({ desdCache: true, tiempoMs: Date.now() - t0, modeloIa: 'cache' })
+        setCargando(false); return
       }
-    } catch (err) {
-      console.warn('[WheelOfYear] Error leyendo caché:', err)
-    }
 
-    // ── 2. Fallback: Gemini ────────────────────────────────
-    const prompt = `Eres una guía experta en la Rueda del Año y las tradiciones paganas estacionales.
+      const prompt = [
+        'Eres una guía experta en la Rueda del Año y las tradiciones paganas estacionales.',
+        'Escribe en español, en prosa natural, sin listas, sin asteriscos, sin markdown.',
+        '',
+        `Sabbat: ${sabbatActual.nombre}. Fecha: ${sabbatActual.fecha}.`,
+        `Descripción: ${sabbatActual.descripcion}. Temas: ${sabbatActual.temas.join(', ')}.`,
+        '',
+        'Escribe una guía estacional de 3 párrafos que fluyan como un texto continuo.',
+        'Párrafo 1: qué energía trae este momento del año y qué significa cosmológicamente.',
+        'Párrafo 2: qué están siendo llamadas a honrar, soltar o celebrar las personas en esta época.',
+        'Párrafo 3: dos acciones concretas para alinearse con esta energía estacional.',
+        '',
+        'Tono reflexivo y simbólico. Separa párrafos con línea en blanco. Termina en punto.',
+      ].join('\n')
 
-Sabbat: ${sabbatActual.nombre}
-Fecha: ${sabbatActual.fecha}
-Descripción: ${sabbatActual.descripcion}
-Temas: ${sabbatActual.temas.join(', ')}
+      const result = await llamarGemini({ herramienta: HERRAMIENTA, prompt, userId: userPlan.userId, usarLite: false, cacheable: false, maxTokens: 800 })
 
-Escribe una guía estacional de 3 párrafos para este Sabbat.
-Primero describe la energía de este momento del año y qué significa cosmológicamente.
-Luego explica qué están siendo llamadas a honrar, soltar o celebrar las personas en esta época.
-Termina con dos acciones concretas que cualquiera podría hacer para alinearse con esta energía estacional.
-Tono: reflexivo, simbólico, nunca predictivo ni alarmante. Máximo 220 palabras. Solo el texto, sin título.`
-
-    try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          }),
+      if (!result.error && result.texto) {
+        setInterpretacion(result.texto); setFromCache(false)
+        supabase.from('ai_cache').insert({ cache_key: cacheKey, herramienta: HERRAMIENTA, prompt_hash: cacheKey, respuesta: result.texto, tokens_used: result.tokensUsados, expires_at: null }).then(() => {})
+        if (userPlan.userId) await incrementarConsulta(userPlan.userId)
+        analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: result.modelo })
+        if (!lecturaGuardadaRef.current) {
+          lecturaGuardadaRef.current = true
+          await guardarLectura({ herramienta: HERRAMIENTA, titulo: `${sabbatActual.nombre} · ${fechaHoy}`, contenido: result.texto, metadatos: { sabbat: sabbatActual.nombre, fecha: fechaHoy, nombre } })
         }
-      )
-      const data = await res.json()
-      const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-      const tokens = data.usageMetadata?.totalTokenCount ?? 0
-
-      setInterpretacion(`${nombre}, ${texto}`)
-      setFromCache(false)
-
-      // Caché permanente — el Sabbat es el mismo para todos cada año
-      supabase.from('ai_cache').insert({
-        cache_key: cacheKey,
-        herramienta: 'wheel-of-year',
-        prompt_hash: cacheKey,
-        respuesta: texto,
-        tokens_used: tokens,
-        expires_at: null,
-      }).then(() => {})
-
-    } catch {
-      setInterpretacion('La rueda guarda silencio. Inténtalo de nuevo.')
-    }
-    setCargando(false)
+      } else { setInterpretacion('La rueda guarda silencio. Inténtalo de nuevo.') }
+    } catch (err) { console.error('[WheelOfYear]', err); setInterpretacion('Error inesperado.') }
+    finally { setCargando(false) }
   }
 
   return (
-    <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/75" />
-
-      <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-6 py-10 gap-6">
+    <PageLayout>
+      <div className="flex flex-col gap-6">
 
         <div className="flex items-center">
-          <button onClick={() => window.location.href = '/tradiciones'} className="text-purple-300 text-sm">← Volver</button>
+          <button onClick={() => navigate('/tradiciones')} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
             <p className="text-white font-semibold text-sm">Rueda del Año</p>
-            <p className="text-purple-300 text-xs">Ciclo estacional · Tradición pagana moderna</p>
+            <p className="text-purple-300 text-xs">Ciclo estacional · Tradición pagana</p>
           </div>
         </div>
 
-        <div className="bg-white/5 border border-purple-500/30 rounded-3xl p-6 backdrop-blur">
-          <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Próximo Sabbat</p>
+        <div className="bg-[#0d0015] border border-purple-500/50 rounded-3xl p-6">
+          <p className="text-purple-400 text-xs tracking-widest uppercase mb-2">Próximo Sabbat</p>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-2xl font-bold">{sabbatActual.nombre}</h2>
+            <h2 className="text-white text-2xl font-bold">{sabbatActual.nombre}</h2>
             <span className="text-purple-300 text-sm">{sabbatActual.diasHasta}d</span>
           </div>
           <p className="text-white/50 text-xs mb-3">{sabbatActual.fecha}</p>
@@ -121,27 +105,27 @@ Tono: reflexivo, simbólico, nunca predictivo ni alarmante. Máximo 220 palabras
           ))}
         </div>
 
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur">
-          <p className="text-purple-300 text-xs tracking-widest uppercase mb-4">Conexiones simbólicas</p>
+        <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-5">
+          <p className="text-purple-400 text-xs tracking-widest uppercase mb-4">Conexiones simbólicas</p>
           <div className="flex flex-col gap-2">
             <div className="flex justify-between">
               <span className="text-white/40 text-xs uppercase">Tarot</span>
-              <span className="text-white/80 text-sm">{sabbatActual.tarot}</span>
+              <span className="text-white text-sm">{sabbatActual.tarot}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-white/40 text-xs uppercase">Runa</span>
-              <span className="text-white/80 text-sm">{sabbatActual.runa}</span>
+              <span className="text-white text-sm">{sabbatActual.runa}</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur">
-          <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Práctica estacional</p>
-          <p className="text-white/80 text-sm leading-relaxed">{sabbatActual.practica}</p>
+        <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-5">
+          <p className="text-purple-400 text-xs tracking-widest uppercase mb-3">Práctica estacional</p>
+          <p className="text-white text-sm leading-relaxed">{sabbatActual.practica}</p>
         </div>
 
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur">
-          <p className="text-purple-300 text-xs tracking-widest uppercase mb-4">La Rueda completa</p>
+        <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-5">
+          <p className="text-purple-400 text-xs tracking-widest uppercase mb-4">La Rueda completa</p>
           <div className="flex flex-col gap-2">
             {SABBATS.map(s => (
               <div key={s.nombre} className={`flex justify-between items-center py-2 border-b border-white/5 last:border-0 ${s.nombre === sabbatActual.nombre ? 'text-purple-300' : 'text-white/50'}`}>
@@ -153,16 +137,14 @@ Tono: reflexivo, simbólico, nunca predictivo ni alarmante. Máximo 220 palabras
         </div>
 
         {!generado ? (
-          <button
-            onClick={generarLectura}
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition"
-          >
+          <button onClick={generarLectura} disabled={userPlan.cargando}
+            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition disabled:opacity-40">
             Mi guía estacional personal
           </button>
         ) : (
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
+          <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-6">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-purple-300 text-xs tracking-widest uppercase">Tu guía personal</p>
+              <p className="text-purple-400 text-xs tracking-widest uppercase">Tu guía personal</p>
               {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
             </div>
             {cargando ? (
@@ -171,27 +153,24 @@ Tono: reflexivo, simbólico, nunca predictivo ni alarmante. Máximo 220 palabras
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
-            ) : (
-              <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>
-            )}
+            ) : <TextoIA texto={interpretacion} />}
           </div>
         )}
 
         {!cargando && interpretacion && (
-          <Compartir
-            titulo={`${sabbatActual.nombre} · Rueda del Año`}
-            texto={interpretacion}
-            hashtags={['RuedaDelAno', 'Universe', sabbatActual.nombre, 'Pagan']}
-          />
+          <>
+            <DisclaimerIA />
+            <Compartir titulo={`${sabbatActual.nombre} · Rueda del Año`} texto={interpretacion} hashtags={['RuedaDelAno', 'Universe', sabbatActual.nombre]} />
+          </>
         )}
 
         {generado && !cargando && (
-          <button onClick={() => window.location.href = '/guia'} className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full">
+          <button onClick={() => navigate('/guia')} className="w-full bg-[#0d0015] border border-white/15 text-white font-semibold py-4 rounded-full hover:border-purple-500/50 transition">
             Explorar con mi Guía IA
           </button>
         )}
 
       </div>
-    </div>
+    </PageLayout>
   )
 }
