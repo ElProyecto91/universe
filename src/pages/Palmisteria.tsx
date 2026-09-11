@@ -48,7 +48,7 @@ export default function Palmisteria() {
   }
 
   const consultar = async () => {
-    if (!imagen && !pregunta.trim()) return
+    if (!pregunta.trim()) return
     setFase('resultado'); setCargando(true); setErrorMsg('')
     const t0 = Date.now()
 
