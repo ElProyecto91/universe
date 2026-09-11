@@ -46,15 +46,15 @@ export default function TestArquetipo() {
     try {
       const base = `Eres un experto en arquetipos junguianos. El usuario se llama ${nombre}, signo ${signo}. Su situación: "${pregunta}". Responde en español. Prosa directa. Sin asteriscos, sin guiones, sin markdown, sin inglés, sin etiquetas. Frases cortas. Termina en punto.`
 
-      const r1 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Identifica el arquetipo junguiano dominante en esta situación y describe brevemente su naturaleza y energía.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
+      const r1 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Identifica el arquetipo junguiano dominante en esta situación y describe brevemente su naturaleza y energía.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 180 })
       if (r1.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
 
       await new Promise(r => setTimeout(r, 500))
-      const r2 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Continuando desde: "${r1.texto.trim()}" — describe cómo este arquetipo se manifiesta específicamente en la vida de ${nombre} y qué sombra o desafío trae consigo.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
+      const r2 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Continuando desde: "${r1.texto.trim()}" — describe cómo este arquetipo se manifiesta específicamente en la vida de ${nombre} y qué sombra o desafío trae consigo.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 180 })
       if (r2.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
 
       await new Promise(r => setTimeout(r, 500))
-      const r3 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Continuando desde: "${r1.texto.trim()} ${r2.texto.trim()}" — describe qué mensaje o tarea evolutiva trae este arquetipo para ${nombre} y una pregunta reflexiva de cierre.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
+      const r3 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Continuando desde: "${r1.texto.trim()} ${r2.texto.trim()}" — describe qué mensaje o tarea evolutiva trae este arquetipo para ${nombre} y una pregunta reflexiva de cierre.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 180 })
       if (r3.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
 
       const texto = [r1.texto, r2.texto, r3.texto].map(t => t.trim()).filter(Boolean).join('\n\n')
