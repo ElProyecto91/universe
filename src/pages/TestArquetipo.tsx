@@ -44,7 +44,7 @@ export default function TestArquetipo() {
     const t0 = Date.now()
 
     try {
-      const base = `Eres un experto en arquetipos junguianos. El usuario se llama ${nombre}, signo ${signo}. Su situación: "${pregunta}". Responde SOLO con texto en español, en prosa continua. Sin asteriscos, sin guiones, sin markdown. Exactamente 3 frases terminadas en punto.`
+      const base = `Eres un experto en arquetipos junguianos. El usuario se llama ${nombre}, signo ${signo}. Su situación: "${pregunta}". Responde en español. Prosa directa. Sin asteriscos, sin guiones, sin markdown, sin inglés, sin etiquetas. Frases cortas. Termina en punto.`
 
       const r1 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Identifica el arquetipo junguiano dominante en esta situación y describe brevemente su naturaleza y energía.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
       if (r1.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
