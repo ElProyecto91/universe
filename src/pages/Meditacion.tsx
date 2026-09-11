@@ -1,98 +1,124 @@
-import { useState, useEffect } from 'react'
+// src/pages/Meditacion.tsx
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useUserPlan, incrementarConsulta } from '../hooks/useUserPlan'
+import { useAnalytics } from '../hooks/useAnalytics'
+import { guardarLectura } from '../hooks/useHistorial'
+import { llamarGemini } from '../lib/gemini'
+import { supabase } from '../lib/supabase'
 import Compartir from '../components/Compartir'
-import CtaUpsell from '../components/CtaUpsell'
 import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
-import { llamarGemini } from '../lib/gemini'
-import { useUserPlan } from '../hooks/useUserPlan'
-import { useAnalytics } from '../hooks/useAnalytics'
-import { supabase } from '../lib/supabase'
+import CtaUpsell from '../components/CtaUpsell'
+import PageLayout from '../components/PageLayout'
+import TextoIA from '../components/TextoIA'
+
+const HERRAMIENTA = 'meditacion'
 
 export default function Meditacion() {
+  const navigate  = useNavigate()
+  const userPlan  = useUserPlan()
+  const analytics = useAnalytics(HERRAMIENTA, userPlan.esPremium)
+
   const [interpretacion, setInterpretacion] = useState('')
-  const [cargando, setCargando] = useState(false)
-  const [generado, setGenerado] = useState(false)
-  const [fromCache, setFromCache] = useState(false)
-  const [tiempoInicio, setTiempoInicio] = useState(0)
+  const [cargando,       setCargando]       = useState(false)
+  const [generado,       setGenerado]       = useState(false)
+  const [fromCache,      setFromCache]      = useState(false)
+  const [errorMsg,       setErrorMsg]       = useState('')
+  const [yaValorado,     setYaValorado]     = useState(false)
+  const lecturaGuardadaRef                  = useRef(false)
 
-  const nombre = localStorage.getItem('nombre') || 'viajero'
-  const signo = localStorage.getItem('signo') || 'Leo'
-  const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
+  const nombre   = localStorage.getItem('nombre') || 'viajero'
+  const signo    = localStorage.getItem('signo')  || 'Leo'
   const fechaHoy = new Date().toISOString().split('T')[0]
-  const { esPremium, userId, consultasRestantes } = useUserPlan()
-  const { registrarApertura, registrarLectura, registrarValoracion } = useAnalytics('meditacion', esPremium)
+  const hoy      = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
 
-  useEffect(() => { registrarApertura() }, [])
+  useEffect(() => {
+    if (!userPlan.cargando) analytics.registrarApertura()
+  }, [userPlan.cargando])
 
   const generarLectura = async () => {
-    setCargando(true)
-    setGenerado(true)
-    setTiempoInicio(Date.now())
+    if (userPlan.cargando) return
+    if (!userPlan.puedeConsultar) { analytics.registrarPaywall(); navigate('/premium'); return }
+    if (!userPlan.esPremium && userPlan.consultasRestantes <= 0) {
+      analytics.registrarLimite()
+      setErrorMsg(`Has alcanzado tu límite diario de ${userPlan.limiteConsultasDia} consultas gratuitas.`)
+      return
+    }
+
+    setCargando(true); setGenerado(true); setErrorMsg('')
+    const t0 = Date.now()
 
     try {
-      const { data: cached } = await supabase.from('horoscopo_cache')
-        .select('contenido')
-        .eq('signo', signo.toLowerCase())
-        .eq('fecha', fechaHoy)
-        .eq('tipo', 'meditacion')
-        .maybeSingle()
+      const { data: cached } = await supabase.from('horoscopo_cache').select('contenido')
+        .eq('signo', signo.toLowerCase()).eq('fecha', fechaHoy).eq('tipo', HERRAMIENTA).maybeSingle()
+
       if (cached?.contenido) {
-        setInterpretacion(`${nombre}, ${cached.contenido}`)
-        setFromCache(true)
-        setCargando(false)
-        registrarLectura({ desdCache: true, tiempoMs: Date.now() - tiempoInicio, modeloIa: 'cache' })
-        return
+        setInterpretacion(cached.contenido); setFromCache(true)
+        analytics.registrarLectura({ desdCache: true, tiempoMs: Date.now() - t0, modeloIa: 'cache' })
+        setCargando(false); return
       }
-    } catch (err) { console.warn('[Meditacion]', err) }
 
-    const result = await llamarGemini({
-      herramienta: 'meditacion',
-      prompt: `Guía de meditación. Nombre: ${nombre}, Signo: ${signo}. Guía de meditación de hoy adaptada a la energía del signo. 4 pasos breves y concretos.`,
-      userId, usarLite: true, cacheable: false, maxTokens: 200,
-    })
+      const prompt = [
+        'Eres un guía de meditación espiritual. Responde SOLO con texto en español, en prosa continua.',
+        'Sin asteriscos, sin guiones, sin numeración, sin markdown. Sin títulos.',
+        '',
+        `El usuario se llama ${nombre} y su signo es ${signo}. Hoy es ${fechaHoy}.`,
+        '',
+        'Escribe una guía de meditación de 3 párrafos adaptada a la energía de este signo hoy.',
+        'Párrafo 1: describe el estado mental y energético ideal para comenzar y cómo llegar a él.',
+        'Párrafo 2: describe la visualización o enfoque de la meditación de hoy.',
+        'Párrafo 3: describe cómo cerrar la práctica y llevar esa energía al resto del día.',
+        '',
+        'Tono cálido y guiado. Separa párrafos con línea en blanco. Termina en punto.',
+      ].join('\n')
 
-    const tiempoMs = Date.now() - tiempoInicio
+      const result = await llamarGemini({ herramienta: HERRAMIENTA, prompt, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 700 })
 
-    if (!result.error && result.texto) {
-      setInterpretacion(`${nombre}, ${result.texto}`)
-      setFromCache(false)
-      registrarLectura({ desdCache: false, tiempoMs, modeloIa: result.modelo })
-      supabase.from('horoscopo_cache').insert({
-        signo: signo.toLowerCase(), fecha: fechaHoy, tipo: 'meditacion',
-        contenido: result.texto, tokens_used: result.tokensUsados
-      }).then(() => {})
-    } else {
-      setInterpretacion('El universo guarda silencio. Inténtalo de nuevo.')
-    }
-    setCargando(false)
+      if (!result.error && result.texto) {
+        setInterpretacion(result.texto); setFromCache(false)
+        supabase.from('horoscopo_cache').insert({ signo: signo.toLowerCase(), fecha: fechaHoy, tipo: HERRAMIENTA, contenido: result.texto, tokens_used: result.tokensUsados }).then(() => {})
+        if (userPlan.userId) await incrementarConsulta(userPlan.userId)
+        analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: result.modelo })
+        if (!lecturaGuardadaRef.current) {
+          lecturaGuardadaRef.current = true
+          await guardarLectura({ herramienta: HERRAMIENTA, titulo: `Meditación · ${signo} · ${fechaHoy}`, contenido: result.texto, metadatos: { signo, fecha: fechaHoy, nombre } })
+        }
+      } else { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.') }
+    } catch (err) { console.error('[Meditacion]', err); setErrorMsg('Error inesperado.') }
+    finally { setCargando(false) }
   }
 
-  const bgStyle = { backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)', backgroundSize: 'cover' as const, backgroundPosition: 'center' as const }
+  const handleValorar = (valor: 1 | -1) => { if (yaValorado) return; setYaValorado(true); analytics.registrarValoracion(valor) }
 
   return (
-    <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/75" />
-      <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-6 py-10 gap-6">
+    <PageLayout>
+      <div className="flex flex-col gap-6">
         <div className="flex items-center">
-          <button onClick={() => window.location.href = '/tradiciones'} className="text-purple-300 text-sm">← Volver</button>
+          <button onClick={() => navigate('/tradiciones')} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
             <p className="text-white font-semibold text-sm">Meditación</p>
             <p className="text-purple-300 text-xs">Práctica diaria</p>
           </div>
+          {!userPlan.cargando && !userPlan.esPremium && (
+            <p className="text-white/40 text-xs">{userPlan.consultasRestantes}/{userPlan.limiteConsultasDia}</p>
+          )}
         </div>
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur text-center">
-          <p className="text-purple-300 text-xs tracking-widest uppercase mb-1">Meditación</p>
-          <p className="text-white/60 text-sm">{signo} · {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+
+        <div className="bg-[#0d0015] border border-purple-500/50 rounded-3xl p-5 text-center">
+          <p className="text-purple-400 text-xs tracking-widest uppercase mb-1">Meditación</p>
+          <p className="text-white text-sm">{signo} · {hoy}</p>
         </div>
+
         {!generado ? (
           <div className="flex flex-col gap-3">
             <DisclaimerIA compact />
-            <button onClick={generarLectura} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition">Generar mi lectura</button>
+            <button onClick={generarLectura} disabled={userPlan.cargando} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition disabled:opacity-40">Generar mi meditación</button>
           </div>
         ) : (
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
+          <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-6">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-purple-300 text-xs tracking-widest uppercase">Tu lectura</p>
+              <p className="text-purple-400 text-xs tracking-widest uppercase">Tu meditación</p>
               {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
             </div>
             {cargando ? (
@@ -101,19 +127,27 @@ export default function Meditacion() {
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
-            ) : <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>}
+            ) : <TextoIA texto={interpretacion} />}
           </div>
         )}
+
+        {errorMsg && (
+          <div className="bg-[#0d0015] border border-red-400/50 rounded-2xl p-4">
+            <p className="text-red-300 text-sm text-center">{errorMsg}</p>
+            {!userPlan.esPremium && <button onClick={() => navigate('/premium')} className="mt-3 w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold py-2 rounded-full">Hazte Premium</button>}
+          </div>
+        )}
+
         {!cargando && interpretacion && (
           <>
             <DisclaimerIA />
-            <Valoracion onValorar={registrarValoracion} />
+            <Valoracion onValorar={handleValorar} />
             <Compartir titulo="Meditación" texto={interpretacion} hashtags={['Universe', 'Meditacion']} />
-            <CtaUpsell consultasRestantes={consultasRestantes} />
-            <button onClick={() => window.location.href = '/guia'} className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full">Explorar con mi Guía IA</button>
+            <CtaUpsell consultasRestantes={userPlan.consultasRestantes} />
+            <button onClick={() => navigate('/guia')} className="w-full bg-[#0d0015] border border-white/15 text-white font-semibold py-4 rounded-full hover:border-purple-500/50 transition">Explorar con mi Guía IA</button>
           </>
         )}
       </div>
-    </div>
+    </PageLayout>
   )
 }
