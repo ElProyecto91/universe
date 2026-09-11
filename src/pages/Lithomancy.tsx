@@ -10,16 +10,17 @@ import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
 import PageLayout from '../components/PageLayout'
 import TextoIA from '../components/TextoIA'
+import { CRISTALES_IMAGENES } from '../lib/cristales_imagenes'
+
+const PIEDRAS_IMG: Record<string, string> = {
+  'Cuarzo':      CRISTALES_IMAGENES['Cuarzo Transparente'],
+  'Amatista':    CRISTALES_IMAGENES['Amatista'],
+  'Obsidiana':   CRISTALES_IMAGENES['Obsidiana'],
+  'Citrino':     CRISTALES_IMAGENES['Citrino'],
+  'Lapislázuli': CRISTALES_IMAGENES['Lapislázuli'],
+}
 
 const HERRAMIENTA = 'lithomancy'
-
-const PIEDRAS_IMAGENES: Record<string, string> = {
-  'Cuarzo':      '/cristales/Cuarzo_transparente_abarca_toda_…_20260910084954.jpeg',
-  'Amatista':    '/cristales/Amatista_abarque_toda_imagen_20260909205930.jpeg',
-  'Obsidiana':   '/cristales/Natural_obsidian_filling_the_image_20260909210312.jpeg',
-  'Citrino':     '/cristales/Ahora_citrino_natural_abarque_im…_20260909210426.jpeg',
-  'Lapislázuli': '/cristales/Lapislázuli_abarque_toda_la_imagen_20260909210535.jpeg',
-}
 
 const PIEDRAS = [
   { nombre: 'Cuarzo', color: '#e8e8e8', posicion: 'Norte', significado: 'Claridad y verdad' },
@@ -128,7 +129,7 @@ export default function Lithomancy() {
             <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-5 flex flex-col gap-3">
               {tirada.map((p, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <img src={PIEDRAS_IMAGENES[p.nombre]} alt={p.nombre} className="w-10 h-10 rounded-full object-cover flex-shrink-0" onError={e => { (e.target as HTMLImageElement).style.display='none' }} />
+                  <img src={PIEDRAS_IMG[p.nombre]} alt={p.nombre} className="w-10 h-10 rounded-full object-cover flex-shrink-0" onError={e => { (e.target as HTMLImageElement).style.display='none' }} />
                   <div className="flex-1">
                     <p className="text-white text-sm font-semibold">{p.nombre}</p>
                     <p className="text-white/40 text-xs">{p.posicion} · {p.significado}</p>
