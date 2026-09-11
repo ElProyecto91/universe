@@ -50,17 +50,17 @@ export default function WheelOfYear() {
         return
       }
 
-      const base = `Eres una guía experta en la Rueda del Año. Sabbat: ${sabbatActual.nombre} (${sabbatActual.fecha}). Temas: ${sabbatActual.temas.join(', ')}. Escribe en español, en prosa natural, sin listas ni asteriscos. Exactamente 3 frases. Sin saludar ni usar nombres al inicio.`
+      const base = `Eres una guía espiritual de la Rueda del Año. Sabbat actual: ${sabbatActual.nombre}, fecha: ${sabbatActual.fecha}, temas: ${sabbatActual.temas.join(', ')}. Responde SOLO con el texto en español, en prosa continua. Sin asteriscos, sin guiones, sin markdown, sin etiquetas, sin títulos. Exactamente 3 frases seguidas terminadas en punto.`
 
-      const r1 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Escribe un párrafo sobre qué energía trae este Sabbat y qué significa cosmológicamente en el ciclo de la naturaleza.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
+      const r1 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Habla sobre qué energía trae este Sabbat y qué significa en el ciclo de la naturaleza.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
       if (r1.error) { setInterpretacion('La rueda guarda silencio. Inténtalo de nuevo.'); return }
 
       await new Promise(r => setTimeout(r, 500))
-      const r2 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Ya escribiste: "${r1.texto.trim()}". Continúa con un párrafo sobre qué están siendo llamadas a honrar, soltar o celebrar las personas en esta época del año.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
+      const r2 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Continuando desde: "${r1.texto.trim()}" — habla sobre qué están siendo llamadas a honrar, soltar o celebrar las personas en esta época.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
       if (r2.error) { setInterpretacion('La rueda guarda silencio. Inténtalo de nuevo.'); return }
 
       await new Promise(r => setTimeout(r, 500))
-      const r3 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Ya escribiste: "${r1.texto.trim()} ${r2.texto.trim()}". Cierra con un párrafo con dos acciones concretas y sencillas para alinearse con esta energía estacional hoy.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
+      const r3 = await llamarGemini({ herramienta: HERRAMIENTA, prompt: `${base} Continuando desde: "${r1.texto.trim()} ${r2.texto.trim()}" — nombra dos acciones concretas y sencillas para alinearse con esta energía hoy.`, userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250 })
       if (r3.error) { setInterpretacion('La rueda guarda silencio. Inténtalo de nuevo.'); return }
 
       const texto = [r1.texto, r2.texto, r3.texto].map(t => t.trim()).filter(Boolean).join('\n\n')
