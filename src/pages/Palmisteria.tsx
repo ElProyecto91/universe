@@ -91,7 +91,7 @@ export default function Palmisteria() {
           'Separa párrafos con línea en blanco. Termina en punto.',
         ].filter(Boolean).join('\n')
 
-        const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`
+        const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`
 
         const response = await fetch(GEMINI_URL, {
           method: 'POST',
