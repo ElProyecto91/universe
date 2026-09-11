@@ -27,7 +27,7 @@ export default function WheelOfYear() {
 
   const nombre       = localStorage.getItem('nombre') || 'viajero'
   const sabbatActual = getSabbatActual()
-  const cacheKey     = `sabbat-${sabbatActual.nombre.toLowerCase().replace(/ /g, '-')}-${$new Date().getFullYear()}`
+  const cacheKey     = `sabbat-${sabbatActual.nombre.toLowerCase().replace(/ /g, '-')}-${new Date().getFullYear()}`
   const fechaHoy     = new Date().toISOString().split('T')[0]
 
   useEffect(() => {
