@@ -1,98 +1,188 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useUserPlan, incrementarConsulta } from '../hooks/useUserPlan'
+import { useAnalytics } from '../hooks/useAnalytics'
+import { guardarLectura } from '../hooks/useHistorial'
+import { llamarGemini } from '../lib/gemini'
 import Compartir from '../components/Compartir'
 import CtaUpsell from '../components/CtaUpsell'
 import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
-import { llamarGemini } from '../lib/gemini'
-import { useUserPlan } from '../hooks/useUserPlan'
-import { useAnalytics } from '../hooks/useAnalytics'
+import PageLayout from '../components/PageLayout'
+import TextoIA from '../components/TextoIA'
 import { supabase } from '../lib/supabase'
 
+const HERRAMIENTA = 'numerologia-universal'
+
+function reducirNumerologia(n: number): number {
+  while (n > 9 && n !== 11 && n !== 22 && n !== 33) {
+    n = String(n).split('').reduce((acc, d) => acc + parseInt(d), 0)
+  }
+  return n
+}
+
+function calcularNumeroDia(fecha: Date): number {
+  const dd   = fecha.getDate()
+  const mm   = fecha.getMonth() + 1
+  const aaaa = fecha.getFullYear()
+  const suma = String(dd).split('').reduce((a, d) => a + parseInt(d), 0)
+             + String(mm).split('').reduce((a, d) => a + parseInt(d), 0)
+             + String(aaaa).split('').reduce((a, d) => a + parseInt(d), 0)
+  return reducirNumerologia(suma)
+}
+
+function calcularAnoPersonal(fechaNacimiento: string, añoActual: number): number {
+  const [, mm, dd] = fechaNacimiento.split('-')
+  const suma = String(parseInt(dd)).split('').reduce((a, d) => a + parseInt(d), 0)
+             + String(parseInt(mm)).split('').reduce((a, d) => a + parseInt(d), 0)
+             + String(añoActual).split('').reduce((a, d) => a + parseInt(d), 0)
+  return reducirNumerologia(suma)
+}
+
 export default function NumerologiaUniversal() {
+  const navigate  = useNavigate()
+  const userPlan  = useUserPlan()
+  const analytics = useAnalytics(HERRAMIENTA, userPlan.esPremium)
+
   const [interpretacion, setInterpretacion] = useState('')
-  const [cargando, setCargando] = useState(false)
-  const [generado, setGenerado] = useState(false)
-  const [fromCache, setFromCache] = useState(false)
-  const [tiempoInicio, setTiempoInicio] = useState(0)
+  const [cargando,       setCargando]       = useState(false)
+  const [generado,       setGenerado]       = useState(false)
+  const [fromCache,      setFromCache]      = useState(false)
+  const [errorMsg,       setErrorMsg]       = useState('')
+  const [yaValorado,     setYaValorado]     = useState(false)
+  const lecturaGuardadaRef                  = useRef(false)
 
-  const nombre = localStorage.getItem('nombre') || 'viajero'
-  const signo = localStorage.getItem('signo') || 'Leo'
+  const nombre          = localStorage.getItem('nombre') || 'viajero'
+  const signo           = (localStorage.getItem('signo') || 'Leo').toLowerCase()
   const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
-  const fechaHoy = new Date().toISOString().split('T')[0]
-  const { esPremium, userId, consultasRestantes } = useUserPlan()
-  const { registrarApertura, registrarLectura, registrarValoracion } = useAnalytics('numerologia-universal', esPremium)
+  const hoy             = new Date()
+  const fechaHoy        = hoy.toISOString().split('T')[0]
+  const añoActual       = hoy.getFullYear()
 
-  useEffect(() => { registrarApertura() }, [])
+  const numeroDia  = calcularNumeroDia(hoy)
+  const anoPersonal = calcularAnoPersonal(fechaNacimiento, añoActual)
+
+  useEffect(() => {
+    if (!userPlan.cargando) analytics.registrarApertura()
+  }, [userPlan.cargando])
 
   const generarLectura = async () => {
-    setCargando(true)
-    setGenerado(true)
-    setTiempoInicio(Date.now())
+    setCargando(true); setGenerado(true); setErrorMsg('')
+    const t0 = Date.now()
 
     try {
       const { data: cached } = await supabase.from('horoscopo_cache')
         .select('contenido')
-        .eq('signo', signo.toLowerCase())
+        .eq('signo', signo)
         .eq('fecha', fechaHoy)
-        .eq('tipo', 'numerologia-universal')
+        .eq('tipo', HERRAMIENTA)
         .maybeSingle()
+
       if (cached?.contenido) {
-        setInterpretacion(`${nombre}, ${cached.contenido}`)
+        setInterpretacion(cached.contenido)
         setFromCache(true)
+        analytics.registrarLectura({ desdCache: true, tiempoMs: Date.now() - t0, modeloIa: 'cache' })
         setCargando(false)
-        registrarLectura({ desdCache: true, tiempoMs: Date.now() - tiempoInicio, modeloIa: 'cache' })
         return
       }
-    } catch (err) { console.warn('[NumerologiaUniversal]', err) }
 
-    const result = await llamarGemini({
-      herramienta: 'numerologia-universal',
-      prompt: `Experta en numerología universal. Signo: ${signo}, fecha: hoy. Día Universal y Año Personal. 3 párrafos: energía del día, consejos, afirmación.`,
-      userId, usarLite: true, cacheable: false, maxTokens: 300,
-    })
+      const prompt = [
+        'Eres una experta en numerología universal y personal.',
+        'Responde SOLO con texto en español, en prosa continua. Sin asteriscos, sin guiones, sin cursivas, sin negritas, sin numeración, sin markdown.',
+        'No empieces nunca el texto con el nombre del usuario ni con saludos.',
+        'Cada párrafo tiene máximo 3 frases cortas. Es obligatorio completar los 3 párrafos.',
+        '',
+        `El usuario se llama ${nombre}, su signo es ${signo}.`,
+        `Hoy es ${fechaHoy}. El Número Universal del Día es ${numeroDia}.`,
+        `El Año Personal de ${nombre} este año (${añoActual}) es ${anoPersonal}.`,
+        '',
+        'Escribe exactamente 3 párrafos separados por línea en blanco.',
+        `Párrafo 1: la energía y significado del Número Universal del Día ${numeroDia} hoy.`,
+        `Párrafo 2: cómo interactúa el Número Universal ${numeroDia} con el Año Personal ${anoPersonal} de ${nombre}.`,
+        'Párrafo 3: una afirmación o intención concreta para aprovechar esta energía numerológica hoy.',
+        '',
+        'Tono cálido y evocador. Termina en punto.',
+      ].join('\n')
 
-    const tiempoMs = Date.now() - tiempoInicio
+      const result = await llamarGemini({
+        herramienta: HERRAMIENTA, prompt,
+        userId: userPlan.userId, usarLite: true,
+        cacheable: false, maxTokens: 400,
+      })
 
-    if (!result.error && result.texto) {
-      setInterpretacion(`${nombre}, ${result.texto}`)
-      setFromCache(false)
-      registrarLectura({ desdCache: false, tiempoMs, modeloIa: result.modelo })
-      supabase.from('horoscopo_cache').insert({
-        signo: signo.toLowerCase(), fecha: fechaHoy, tipo: 'numerologia-universal',
-        contenido: result.texto, tokens_used: result.tokensUsados
-      }).then(() => {})
-    } else {
-      setInterpretacion('El universo guarda silencio. Inténtalo de nuevo.')
+      if (!result.error && result.texto) {
+        setInterpretacion(result.texto)
+        setFromCache(false)
+        if (userPlan.userId) await incrementarConsulta(userPlan.userId)
+        analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: result.modelo })
+        supabase.from('horoscopo_cache').insert({
+          signo, fecha: fechaHoy, tipo: HERRAMIENTA,
+          contenido: result.texto, tokens_used: result.tokensUsados,
+        }).then(() => {})
+        if (!lecturaGuardadaRef.current) {
+          lecturaGuardadaRef.current = true
+          await guardarLectura({
+            herramienta: HERRAMIENTA,
+            titulo: `Numerología del Día · ${fechaHoy}`,
+            contenido: result.texto,
+            metadatos: { fecha: fechaHoy, nombre, signo, numeroDia, anoPersonal },
+          })
+        }
+      } else {
+        setErrorMsg(result.error || 'El universo guarda silencio. Inténtalo de nuevo.')
+      }
+    } catch (err) {
+      console.error('[NumerologiaUniversal]', err)
+      setErrorMsg('Error inesperado.')
+    } finally {
+      setCargando(false)
     }
-    setCargando(false)
   }
 
-  const bgStyle = { backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)', backgroundSize: 'cover' as const, backgroundPosition: 'center' as const }
+  const handleValorar = (valor: 1 | -1) => {
+    if (yaValorado) return
+    setYaValorado(true)
+    analytics.registrarValoracion(valor)
+  }
 
   return (
-    <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/75" />
-      <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-6 py-10 gap-6">
+    <PageLayout>
+      <div className="flex flex-col gap-6">
         <div className="flex items-center">
-          <button onClick={() => window.location.href = '/tradiciones'} className="text-purple-300 text-sm">← Volver</button>
+          <button onClick={() => navigate('/tradiciones')} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
             <p className="text-white font-semibold text-sm">Numerología del Día</p>
             <p className="text-purple-300 text-xs">Energía universal de hoy</p>
           </div>
         </div>
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur text-center">
-          <p className="text-purple-300 text-xs tracking-widest uppercase mb-1">Numerología del Día</p>
-          <p className="text-white/60 text-sm">{signo} · {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+
+        <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-5 text-center">
+          <p className="text-purple-400 text-xs tracking-widest uppercase mb-3">Números de hoy</p>
+          <div className="flex justify-center gap-8">
+            <div>
+              <p className="text-white text-3xl font-bold">{numeroDia}</p>
+              <p className="text-white/40 text-xs mt-1">Día Universal</p>
+            </div>
+            <div className="border-l border-white/10" />
+            <div>
+              <p className="text-purple-300 text-3xl font-bold">{anoPersonal}</p>
+              <p className="text-white/40 text-xs mt-1">Año Personal</p>
+            </div>
+          </div>
+          <p className="text-white/40 text-xs mt-3">
+            {signo.charAt(0).toUpperCase() + signo.slice(1)} · {hoy.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </p>
         </div>
+
         {!generado ? (
           <div className="flex flex-col gap-3">
             <DisclaimerIA compact />
             <button onClick={generarLectura} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition">Generar mi lectura</button>
           </div>
         ) : (
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
+          <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-6">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-purple-300 text-xs tracking-widest uppercase">Tu lectura</p>
+              <p className="text-purple-400 text-xs tracking-widest uppercase">Tu lectura</p>
               {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
             </div>
             {cargando ? (
@@ -101,19 +191,23 @@ export default function NumerologiaUniversal() {
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
-            ) : <p className="text-white/90 text-sm leading-relaxed whitespace-pre-wrap">{interpretacion}</p>}
+            ) : errorMsg
+              ? <p className="text-red-300 text-sm">{errorMsg}</p>
+              : <TextoIA texto={interpretacion} />
+            }
           </div>
         )}
+
         {!cargando && interpretacion && (
           <>
             <DisclaimerIA />
-            <Valoracion onValorar={registrarValoracion} />
+            <Valoracion onValorar={handleValorar} />
             <Compartir titulo="Numerología del Día" texto={interpretacion} hashtags={['Universe', 'NumerologiaUniversal']} />
-            <CtaUpsell consultasRestantes={consultasRestantes} />
-            <button onClick={() => window.location.href = '/guia'} className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full">Explorar con mi Guía IA</button>
+            <CtaUpsell consultasRestantes={userPlan.consultasRestantes} />
+            <button onClick={() => navigate('/guia')} className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full">Explorar con mi Guía IA</button>
           </>
         )}
       </div>
-    </div>
+    </PageLayout>
   )
 }
