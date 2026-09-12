@@ -1,75 +1,105 @@
-import { useState, useEffect } from 'react'
-import PageLayout from '../components/PageLayout'
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useUserPlan, incrementarConsulta } from '../hooks/useUserPlan'
+import { useAnalytics } from '../hooks/useAnalytics'
+import { guardarLectura } from '../hooks/useHistorial'
+import { llamarGemini } from '../lib/gemini'
 import Compartir from '../components/Compartir'
 import Paywall from '../components/Paywall'
 import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
+import PageLayout from '../components/PageLayout'
 import TextoIA from '../components/TextoIA'
-import { llamarGemini } from '../lib/gemini'
-import { useUserPlan } from '../hooks/useUserPlan'
-import { useAnalytics } from '../hooks/useAnalytics'
+
+const HERRAMIENTA = 'animal-oracle'
 
 export default function AnimalOracle() {
-  const [pregunta, setPregunta] = useState('')
+  const navigate  = useNavigate()
+  const userPlan  = useUserPlan()
+  const analytics = useAnalytics(HERRAMIENTA, userPlan.esPremium)
+
+  const [pregunta,       setPregunta]       = useState('')
   const [interpretacion, setInterpretacion] = useState('')
-  const [cargando, setCargando] = useState(false)
-  const [fase, setFase] = useState<'preguntar' | 'resultado'>('preguntar')
-  const [errorMsg, setErrorMsg] = useState('')
-  const [tiempoInicio, setTiempoInicio] = useState(0)
+  const [cargando,       setCargando]       = useState(false)
+  const [fase,           setFase]           = useState<'preguntar' | 'resultado'>('preguntar')
+  const [errorMsg,       setErrorMsg]       = useState('')
+  const [yaValorado,     setYaValorado]     = useState(false)
+  const lecturaGuardadaRef                  = useRef(false)
 
-  const nombre = localStorage.getItem('nombre') || 'viajero'
-  const signo = localStorage.getItem('signo') || 'Leo'
+  const nombre   = localStorage.getItem('nombre') || 'viajero'
+  const signo    = localStorage.getItem('signo')  || 'Leo'
+  const fechaHoy = new Date().toISOString().split('T')[0]
 
-  const { esPremium, userId, cargando: cargandoPlan } = useUserPlan()
-  const { registrarApertura, registrarLectura, registrarPaywall, registrarValoracion } = useAnalytics('animal-oracle', esPremium)
+  useEffect(() => {
+    if (!userPlan.cargando) analytics.registrarApertura()
+  }, [userPlan.cargando])
 
-  useEffect(() => { registrarApertura() }, [])
-
-  if (!cargandoPlan && !esPremium) {
-    registrarPaywall()
-    return <Paywall motivo="herramienta" herramienta="Simbolismo Animal" />
+  if (!userPlan.cargando && !userPlan.esPremium) {
+    analytics.registrarPaywall(); navigate('/premium'); return null
   }
 
   const consultar = async () => {
     if (!pregunta.trim()) return
-    setFase('resultado')
-    setCargando(true)
-    setErrorMsg('')
-    setTiempoInicio(Date.now())
+    setFase('resultado'); setCargando(true); setErrorMsg('')
+    const t0 = Date.now()
 
-    const result = await llamarGemini({
-      herramienta: 'animal-oracle',
-      prompt: [
-        'Escribe en español, en prosa, sin listas, sin asteriscos, sin markdown.',
-        'No uses saludos ni introducciones. Ve directo al contenido.',
-        'Escribe exactamente 3 párrafos de 4 a 5 frases cada uno. No cortes ningún párrafo a la mitad.',
-        `Eres un experto en simbolismo animal en tradiciones espirituales de todo el mundo.`,
-        `El usuario se llama ${nombre} y su signo es ${signo}.`,
-        `El usuario escribe: "${pregunta}"`,
-        'Párrafo 1: el simbolismo del animal o situación mencionada en distintas tradiciones espirituales.',
+    try {
+      const prompt = [
+        'Eres un experto en simbolismo animal en tradiciones espirituales de todo el mundo.',
+        'Responde SOLO con texto en español, en prosa continua. Sin asteriscos, sin guiones, sin numeración, sin markdown.',
+        '',
+        `El usuario se llama ${nombre}, su signo es ${signo}. Escribe: "${pregunta}"`,
+        '',
+        'Escribe exactamente 3 párrafos que fluyan naturalmente.',
+        'Párrafo 1: el simbolismo del animal o situación en distintas tradiciones espirituales.',
         'Párrafo 2: el mensaje concreto que ese animal trae para este momento vital.',
         'Párrafo 3: una práctica o invitación concreta para trabajar con esta energía animal.',
-      ].join('\n'),
-      userId, usarLite: true, cacheable: false, maxTokens: 600,
-    })
+        '',
+        'Tono cálido y evocador. Separa párrafos con línea en blanco. Termina en punto.',
+      ].join('\n')
 
-    const tiempoMs = Date.now() - tiempoInicio
+      const result = await llamarGemini({
+        herramienta: HERRAMIENTA, prompt,
+        userId: userPlan.userId, usarLite: true,
+        cacheable: false, maxTokens: 700,
+      })
 
-    if (result.error) {
-      setErrorMsg(result.error)
-    } else {
-      setInterpretacion(result.texto)
-      registrarLectura({ desdCache: false, tiempoMs, modeloIa: result.modelo })
+      if (!result.error && result.texto) {
+        setInterpretacion(result.texto)
+        if (userPlan.userId) await incrementarConsulta(userPlan.userId)
+        analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: result.modelo })
+        if (!lecturaGuardadaRef.current) {
+          lecturaGuardadaRef.current = true
+          await guardarLectura({
+            herramienta: HERRAMIENTA,
+            titulo: `Simbolismo Animal · ${fechaHoy}`,
+            contenido: `Consulta: "${pregunta}"\n\n${result.texto}`,
+            metadatos: { pregunta, fecha: fechaHoy, nombre, signo },
+          })
+        }
+      } else {
+        setErrorMsg(result.error || 'El universo guarda silencio. Inténtalo de nuevo.')
+      }
+    } catch (err) {
+      console.error('[AnimalOracle]', err)
+      setErrorMsg('Error inesperado.')
+    } finally {
+      setCargando(false)
     }
-    setCargando(false)
+  }
+
+  const handleValorar = (valor: 1 | -1) => {
+    if (yaValorado) return
+    setYaValorado(true)
+    analytics.registrarValoracion(valor)
   }
 
   return (
     <PageLayout>
-      <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-6 py-10 gap-6">
+      <div className="flex flex-col gap-6">
         <div className="flex items-center">
           <button
-            onClick={() => { if (fase === 'resultado') { setFase('preguntar'); setInterpretacion(''); setErrorMsg('') } else window.location.href = '/tradiciones' }}
+            onClick={() => fase === 'resultado' ? setFase('preguntar') : navigate('/tradiciones')}
             className="text-purple-300 text-sm"
           >← Volver</button>
           <div className="flex-1 text-center">
@@ -80,9 +110,9 @@ export default function AnimalOracle() {
         </div>
 
         {fase === 'preguntar' && (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4">
             <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-6">
-              <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Animal o situación</p>
+              <p className="text-purple-400 text-xs tracking-widest uppercase mb-3">Animal o situación</p>
               <textarea
                 value={pregunta}
                 onChange={e => setPregunta(e.target.value)}
@@ -95,18 +125,18 @@ export default function AnimalOracle() {
             <button
               onClick={consultar}
               disabled={!pregunta.trim()}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full disabled:opacity-40"
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition disabled:opacity-40"
             >Consultar</button>
           </div>
         )}
 
         {fase === 'resultado' && (
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-4">
             <div className="bg-[#0d0015] border border-white/15 rounded-2xl px-4 py-3">
-              <p className="text-white/40 text-xs italic">"{pregunta}"</p>
+              <p className="text-white/50 text-xs italic">"{pregunta}"</p>
             </div>
             <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-6">
-              <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Interpretación</p>
+              <p className="text-purple-400 text-xs tracking-widest uppercase mb-4">Interpretación</p>
               {cargando ? (
                 <div className="flex gap-2 py-2">
                   <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -114,19 +144,17 @@ export default function AnimalOracle() {
                   <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
               ) : errorMsg
-                ? <p className="text-red-400 text-sm">{errorMsg}</p>
+                ? <p className="text-red-300 text-sm">{errorMsg}</p>
                 : <TextoIA texto={interpretacion} />
               }
             </div>
             {!cargando && interpretacion && (
               <>
                 <DisclaimerIA />
-                <Valoracion onValorar={registrarValoracion} />
+                <Valoracion onValorar={handleValorar} />
                 <Compartir titulo="Simbolismo Animal" texto={interpretacion} hashtags={['Universe', 'AnimalOracle']} />
-                <div className="flex flex-col gap-3">
-                  <button onClick={() => window.location.href = '/guia'} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full">Explorar con mi Guía IA</button>
-                  <button onClick={() => { setFase('preguntar'); setInterpretacion(''); setErrorMsg('') }} className="w-full text-purple-300/60 text-sm py-2">Nueva consulta</button>
-                </div>
+                <button onClick={() => navigate('/guia')} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition">Explorar con mi Guía IA</button>
+                <button onClick={() => { setFase('preguntar'); setInterpretacion(''); setErrorMsg(''); lecturaGuardadaRef.current = false }} className="w-full text-purple-300/60 text-sm py-2">Nueva consulta</button>
               </>
             )}
           </div>
