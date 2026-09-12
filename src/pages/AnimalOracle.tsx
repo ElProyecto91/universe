@@ -61,7 +61,7 @@ export default function AnimalOracle() {
       const result = await llamarGemini({
         herramienta: HERRAMIENTA, prompt,
         userId: userPlan.userId, usarLite: true,
-        cacheable: false, maxTokens: 700,
+        cacheable: false, maxTokens: 400,
       })
 
       if (!result.error && result.texto) {
