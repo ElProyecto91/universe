@@ -20,7 +20,7 @@ export default function AnimalOracle() {
   const nombre = localStorage.getItem('nombre') || 'viajero'
   const signo = localStorage.getItem('signo') || 'Leo'
 
-  const { esPremium, userId, cargando: cargandoPlan, incrementarConsulta } = useUserPlan()
+  const { esPremium, userId, cargando: cargandoPlan } = useUserPlan()
   const { registrarApertura, registrarLectura, registrarPaywall, registrarValoracion } = useAnalytics('animal-oracle', esPremium)
 
   useEffect(() => { registrarApertura() }, [])
@@ -37,8 +37,6 @@ export default function AnimalOracle() {
     setErrorMsg('')
     setTiempoInicio(Date.now())
 
-    await incrementarConsulta()
-
     const result = await llamarGemini({
       herramienta: 'animal-oracle',
       prompt: [
@@ -52,7 +50,7 @@ export default function AnimalOracle() {
         'Párrafo 2: el mensaje concreto que ese animal trae para este momento vital.',
         'Párrafo 3: una práctica o invitación concreta para trabajar con esta energía animal.',
       ].join('\n'),
-      userId, usarLite: false, cacheable: false, maxTokens: 500,
+      userId, usarLite: true, cacheable: false, maxTokens: 600,
     })
 
     const tiempoMs = Date.now() - tiempoInicio
