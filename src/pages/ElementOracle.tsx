@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-'
+import { useNavigate } from 'react-router-dom'
 import { useUserPlan, incrementarConsulta } from '../hooks/useUserPlan'
 import { useAnalytics } from '../hooks/useAnalytics'
 import { guardarLectura } from '../hooks/useHistorial'
@@ -12,18 +12,23 @@ import PageLayout from '../components/PageLayout'
 import TextoIA from '../components/TextoIA'
 import { supabase } from '../lib/supabase'
 
-const ELEMENTO_POR_SIGNO: Record<string, string> = {
-  aries: 'Fuego', tauro: 'Tierra', geminis: 'Aire', cancer: 'Agua',
-  leo: 'Fuego', virgo: 'Tierra', libra: 'Aire', escorpio: 'Agua',
-  sagitario: 'Fuego', capricornio: 'Tierra', acuario: 'Aire', piscis: 'Agua',
-}
-
-const ELEMENTO_DEL_DIA: Record<number, string> = {
-  0: 'Agua', 1: 'Fuego', 2: 'Tierra', 3: 'Aire',
-  4: 'Fuego', 5: 'Agua', 6: 'Tierra',
-}
-
 const HERRAMIENTA = 'element-oracle'
+
+const ELEMENTOS: Record<number, { nombre: string; imagen: string; descripcion: string }> = {
+  0: { nombre: 'Fuego',  imagen: '/elementos/fuego.jpeg',  descripcion: 'Pasión · Transformación · Energía' },
+  1: { nombre: 'Madera', imagen: '/elementos/madera.jpeg', descripcion: 'Crecimiento · Flexibilidad · Vida' },
+  2: { nombre: 'Fuego',  imagen: '/elementos/fuego.jpeg',  descripcion: 'Pasión · Transformación · Energía' },
+  3: { nombre: 'Tierra', imagen: '/elementos/tierra.jpeg', descripcion: 'Estabilidad · Nutrición · Raíces' },
+  4: { nombre: 'Metal',  imagen: '/elementos/metal.jpeg',  descripcion: 'Claridad · Precisión · Fortaleza' },
+  5: { nombre: 'Agua',   imagen: '/elementos/agua.jpeg',   descripcion: 'Fluidez · Intuición · Profundidad' },
+  6: { nombre: 'Madera', imagen: '/elementos/madera.jpeg', descripcion: 'Crecimiento · Flexibilidad · Vida' },
+}
+
+const ELEMENTO_SIGNO: Record<string, string> = {
+  aries: 'Fuego', tauro: 'Tierra', geminis: 'Metal', cancer: 'Agua',
+  leo: 'Fuego', virgo: 'Tierra', libra: 'Metal', escorpio: 'Agua',
+  sagitario: 'Madera', capricornio: 'Tierra', acuario: 'Metal', piscis: 'Agua',
+}
 
 export default function ElementOracle() {
   const navigate  = useNavigate()
@@ -38,13 +43,13 @@ export default function ElementOracle() {
   const [yaValorado,     setYaValorado]     = useState(false)
   const lecturaGuardadaRef                  = useRef(false)
 
-  const nombre   = localStorage.getItem('nombre') || 'viajero'
-  const signo    = (localStorage.getItem('signo') || 'Leo').toLowerCase()
-  const fechaHoy = new Date().toISOString().split('T')[0]
+  const nombre    = localStorage.getItem('nombre') || 'viajero'
+  const signo     = (localStorage.getItem('signo') || 'Leo').toLowerCase()
+  const fechaHoy  = new Date().toISOString().split('T')[0]
   const diaSemana = new Date().getDay()
 
-  const elementoSigno    = ELEMENTO_POR_SIGNO[signo] ?? 'Fuego'
-  const elementoPrincipal = ELEMENTO_DEL_DIA[diaSemana] ?? 'Fuego'
+  const elementoDia   = ELEMENTOS[diaSemana]
+  const elementoSigno = ELEMENTO_SIGNO[signo] ?? 'Fuego'
 
   useEffect(() => {
     if (!userPlan.cargando) analytics.registrarApertura()
@@ -71,18 +76,18 @@ export default function ElementOracle() {
       }
 
       const prompt = [
-        'Eres un experto en simbolismo elemental — Fuego, Agua, Tierra, Aire — en tradiciones espirituales de todo el mundo.',
-        'Responde SOLO con texto en español, en prosa continua. Sin asteriscos, sin guiones, sin numeración, sin markdown.',
-        'No empieces el texto con el nombre del usuario.',
-        'Cada párrafo tiene exactamente 3 frases. No más.',
+        'Eres un experto en los cinco elementos de la tradición china — Fuego, Agua, Tierra, Madera y Metal.',
+        'Responde SOLO con texto en español, en prosa continua. Sin asteriscos, sin guiones, sin cursivas, sin negritas, sin numeración, sin markdown.',
+        'No empieces nunca el texto con el nombre del usuario ni con saludos.',
+        'Cada párrafo tiene máximo 3 frases cortas. Es obligatorio completar los 3 párrafos.',
         '',
         `El usuario se llama ${nombre}, su signo es ${signo} (elemento natal: ${elementoSigno}).`,
-        `Hoy el elemento dominante del día es: ${elementoPrincipal}.`,
+        `Hoy el elemento dominante del día es: ${elementoDia.nombre}.`,
         '',
         'Escribe exactamente 3 párrafos separados por línea en blanco.',
-        `Párrafo 1: la energía y cualidades del elemento ${elementoPrincipal} hoy.`,
-        `Párrafo 2: cómo interactúa el elemento ${elementoPrincipal} de hoy con el elemento natal ${elementoSigno} de ${nombre}.`,
-        'Párrafo 3: una práctica o invitación concreta para trabajar con esta energía elemental durante el día.',
+        `Párrafo 1: la energía y cualidades del elemento ${elementoDia.nombre} según la tradición china hoy.`,
+        `Párrafo 2: cómo interactúa el elemento ${elementoDia.nombre} de hoy con el elemento natal ${elementoSigno} de ${nombre}.`,
+        'Párrafo 3: una práctica concreta y sencilla para trabajar con esta energía elemental durante el día.',
         '',
         'Tono cálido y evocador. Termina en punto.',
       ].join('\n')
@@ -108,7 +113,7 @@ export default function ElementOracle() {
             herramienta: HERRAMIENTA,
             titulo: `Oracle Elemental · ${fechaHoy}`,
             contenido: result.texto,
-            metadatos: { fecha: fechaHoy, nombre, signo, elementoPrincipal, elementoSigno },
+            metadatos: { fecha: fechaHoy, nombre, signo, elemento: elementoDia.nombre },
           })
         }
       } else {
@@ -135,15 +140,30 @@ export default function ElementOracle() {
           <button onClick={() => navigate('/tradiciones')} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
             <p className="text-white font-semibold text-sm">Oracle Elemental</p>
-            <p className="text-purple-300 text-xs">Los cuatro elementos</p>
+            <p className="text-purple-300 text-xs">Los cinco elementos</p>
           </div>
         </div>
 
-        <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-5 text-center">
-          <p className="text-purple-400 text-xs tracking-widest uppercase mb-1">Elemento de hoy</p>
-          <p className="text-white text-2xl font-bold mb-1">{elementoPrincipal}</p>
+        {/* Imagen del elemento */}
+        <div className="relative rounded-3xl overflow-hidden h-48">
+          <img
+            src={elementoDia.imagen}
+            alt={elementoDia.nombre}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.45)' }} />
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <p className="text-white text-3xl font-bold">{elementoDia.nombre}</p>
+            <p className="text-white/70 text-xs mt-1">{elementoDia.descripcion}</p>
+          </div>
+        </div>
+
+        <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-4 text-center">
           <p className="text-white/50 text-xs">
-            {signo.charAt(0).toUpperCase() + signo.slice(1)} · {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+            {signo.charAt(0).toUpperCase() + signo.slice(1)} · elemento natal: <span className="text-purple-300">{elementoSigno}</span>
+          </p>
+          <p className="text-white/40 text-xs mt-1">
+            {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
           </p>
         </div>
 
