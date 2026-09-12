@@ -43,12 +43,16 @@ export default function AnimalOracle() {
       herramienta: 'animal-oracle',
       prompt: [
         'Escribe en español, en prosa, sin listas, sin asteriscos, sin markdown.',
+        'No uses saludos ni introducciones. Ve directo al contenido.',
+        'Escribe exactamente 3 párrafos de 4 a 5 frases cada uno. No cortes ningún párrafo a la mitad.',
         `Eres un experto en simbolismo animal en tradiciones espirituales de todo el mundo.`,
-        `Nombre: ${nombre}. Signo: ${signo}.`,
+        `El usuario se llama ${nombre} y su signo es ${signo}.`,
         `El usuario escribe: "${pregunta}"`,
-        'Escribe 3 párrafos: primero el simbolismo del animal o situación mencionada, luego el mensaje que trae para este momento, y por último una práctica o invitación concreta.',
+        'Párrafo 1: el simbolismo del animal o situación mencionada en distintas tradiciones espirituales.',
+        'Párrafo 2: el mensaje concreto que ese animal trae para este momento vital.',
+        'Párrafo 3: una práctica o invitación concreta para trabajar con esta energía animal.',
       ].join('\n'),
-      userId, usarLite: true, cacheable: false, maxTokens: 350,
+      userId, usarLite: true, cacheable: false, maxTokens: 600,
     })
 
     const tiempoMs = Date.now() - tiempoInicio
