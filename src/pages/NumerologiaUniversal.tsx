@@ -14,6 +14,21 @@ import { supabase } from '../lib/supabase'
 
 const HERRAMIENTA = 'numerologia-universal'
 
+const COLOR_NUMERO: Record<number, string> = {
+  1: 'text-red-400',
+  2: 'text-blue-300',
+  3: 'text-yellow-400',
+  4: 'text-green-400',
+  5: 'text-orange-400',
+  6: 'text-pink-400',
+  7: 'text-violet-400',
+  8: 'text-amber-400',
+  9: 'text-teal-400',
+  11: 'text-indigo-300',
+  22: 'text-purple-300',
+  33: 'text-rose-300',
+}
+
 function reducirNumerologia(n: number): number {
   while (n > 9 && n !== 11 && n !== 22 && n !== 33) {
     n = String(n).split('').reduce((acc, d) => acc + parseInt(d), 0)
@@ -158,12 +173,12 @@ export default function NumerologiaUniversal() {
           <p className="text-purple-400 text-xs tracking-widest uppercase mb-3">Números de hoy</p>
           <div className="flex justify-center gap-8">
             <div>
-              <p className="text-white text-3xl font-bold">{numeroDia}</p>
+              <p className={`text-3xl font-bold ${COLOR_NUMERO[numeroDia] ?? 'text-white'}`}>{numeroDia}</p>
               <p className="text-white/40 text-xs mt-1">Día Universal</p>
             </div>
             <div className="border-l border-white/10" />
             <div>
-              <p className="text-purple-300 text-3xl font-bold">{anoPersonal}</p>
+              <p className={`text-3xl font-bold ${COLOR_NUMERO[anoPersonal] ?? 'text-white'}`}>{anoPersonal}</p>
               <p className="text-white/40 text-xs mt-1">Año Personal</p>
             </div>
           </div>
