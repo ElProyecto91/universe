@@ -52,7 +52,7 @@ export default function AnimalOracle() {
         'Párrafo 2: el mensaje concreto que ese animal trae para este momento vital.',
         'Párrafo 3: una práctica o invitación concreta para trabajar con esta energía animal.',
       ].join('\n'),
-      userId, usarLite: true, cacheable: false, maxTokens: 600,
+      userId, usarLite: true, cacheable: false, maxTokens: 500,
     })
 
     const tiempoMs = Date.now() - tiempoInicio
