@@ -59,7 +59,7 @@ export default function NumerologiaUniversal() {
   const fechaHoy        = hoy.toISOString().split('T')[0]
   const añoActual       = hoy.getFullYear()
 
-  const numeroDia  = calcularNumeroDia(hoy)
+  const numeroDia   = calcularNumeroDia(hoy)
   const anoPersonal = calcularAnoPersonal(fechaNacimiento, añoActual)
 
   useEffect(() => {
@@ -73,7 +73,6 @@ export default function NumerologiaUniversal() {
     try {
       const { data: cached } = await supabase.from('horoscopo_cache')
         .select('contenido')
-        .eq('signo', signo)
         .eq('fecha', fechaHoy)
         .eq('tipo', HERRAMIENTA)
         .maybeSingle()
@@ -92,14 +91,13 @@ export default function NumerologiaUniversal() {
         'No empieces nunca el texto con el nombre del usuario ni con saludos.',
         'Cada párrafo tiene máximo 3 frases cortas. Es obligatorio completar los 3 párrafos.',
         '',
-        `El usuario se llama ${nombre}, su signo es ${signo}.`,
         `Hoy es ${fechaHoy}. El Número Universal del Día es ${numeroDia}.`,
-        `El Año Personal de ${nombre} este año (${añoActual}) es ${anoPersonal}.`,
+        `El Año Personal del usuario este año (${añoActual}) es ${anoPersonal}.`,
         '',
         'Escribe exactamente 3 párrafos separados por línea en blanco.',
         `Párrafo 1: la energía y significado del Número Universal del Día ${numeroDia} hoy.`,
-        `Párrafo 2: cómo interactúa el Número Universal ${numeroDia} con el Año Personal ${anoPersonal} de ${nombre}.`,
-        'Párrafo 3: una afirmación o intención concreta para aprovechar esta energía numerológica hoy.',
+        `Párrafo 2: cómo interactúa el Número Universal ${numeroDia} con el Año Personal ${anoPersonal}.`,
+        'Párrafo 3: una afirmación en primera persona para aprovechar esta energía numerológica hoy.',
         '',
         'Tono cálido y evocador. Termina en punto.',
       ].join('\n')
@@ -116,7 +114,7 @@ export default function NumerologiaUniversal() {
         if (userPlan.userId) await incrementarConsulta(userPlan.userId)
         analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: result.modelo })
         supabase.from('horoscopo_cache').insert({
-          signo, fecha: fechaHoy, tipo: HERRAMIENTA,
+          fecha: fechaHoy, tipo: HERRAMIENTA,
           contenido: result.texto, tokens_used: result.tokensUsados,
         }).then(() => {})
         if (!lecturaGuardadaRef.current) {
@@ -125,7 +123,7 @@ export default function NumerologiaUniversal() {
             herramienta: HERRAMIENTA,
             titulo: `Numerología del Día · ${fechaHoy}`,
             contenido: result.texto,
-            metadatos: { fecha: fechaHoy, nombre, signo, numeroDia, anoPersonal },
+            metadatos: { fecha: fechaHoy, nombre, numeroDia, anoPersonal },
           })
         }
       } else {
