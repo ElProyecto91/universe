@@ -6,7 +6,6 @@ import { guardarLectura } from '../hooks/useHistorial'
 import { llamarGemini } from '../lib/gemini'
 import { lanzar3Dados } from '../lib/motores/dados'
 import Compartir from '../components/Compartir'
-import Paywall from '../components/Paywall'
 import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
 import PageLayout from '../components/PageLayout'
@@ -57,8 +56,8 @@ export default function DiceOracle() {
         prompt: [
           'Eres un intérprete experto en cleromancia y oráculos de dados.',
           'Responde SOLO con texto en español, en prosa continua. Sin asteriscos, sin guiones, sin cursivas, sin negritas, sin numeración, sin markdown.',
-          'No empieces nunca con saludos ni con el nombre del usuario.',
-          'Cada párrafo tiene máximo 3 frases cortas. Es obligatorio completar los 2 párrafos.',
+          'PROHIBIDO empezar con saludos, con "Saludos", con el nombre del usuario o con cualquier introducción. Empieza DIRECTAMENTE con la interpretación.',
+          'Cada párrafo tiene MÁXIMO 3 frases cortas. No escribas párrafos largos. Obligatorio.',
           '',
           `El usuario se llama ${nombre}.`,
           `Pregunta: "${pregunta}"`,
