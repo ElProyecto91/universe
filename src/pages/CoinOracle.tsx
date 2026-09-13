@@ -49,7 +49,7 @@ export default function CoinOracle() {
 
     try {
       const interpretacionBase = getInterpretacion(resultado)
-      const caras = resultado.filter(m => m === 'cara').length
+      const caras  = resultado.filter(m => m === 'cara').length
       const cruces = resultado.filter(m => m === 'cruz').length
 
       const result = await llamarGemini({
@@ -58,7 +58,7 @@ export default function CoinOracle() {
           'Eres un intérprete experto en oráculos de monedas y cleromancia.',
           'Responde SOLO con texto en español, en prosa continua. Sin asteriscos, sin guiones, sin cursivas, sin negritas, sin numeración, sin markdown.',
           'PROHIBIDO empezar con saludos, con el nombre del usuario o con cualquier introducción. Empieza DIRECTAMENTE con la interpretación.',
-          'Cada párrafo tiene MÁXIMO 3 frases cortas. Obligatorio.',
+          'IMPORTANTE: Máximo 3 frases por párrafo. Si escribes más de 3 frases en un párrafo, el resultado es incorrecto.',
           '',
           `El usuario se llama ${nombre}.`,
           `Pregunta: "${pregunta}"`,
@@ -72,7 +72,7 @@ export default function CoinOracle() {
           'Sin predicciones absolutas. Tono evocador y directo. Termina en punto.',
         ].join('\n'),
         userId: userPlan.userId, usarLite: true,
-        cacheable: false, maxTokens: 300,
+        cacheable: false, maxTokens: 200,
       })
 
       if (!result.error && result.texto) {
@@ -158,7 +158,11 @@ export default function CoinOracle() {
             <div className="flex justify-center gap-6 py-4">
               {monedas.map((m, i) => (
                 <div key={i} className="flex flex-col items-center gap-2">
-                  <div className={`w-16 h-16 rounded-full border-2 flex items-center justify-center text-2xl font-bold ${m === 'cara' ? 'border-amber-400 bg-amber-400/10 text-amber-300' : 'border-white/30 bg-white/5 text-white/50'}`}>
+                  <div className={`w-16 h-16 rounded-full border-2 flex items-center justify-center text-2xl font-bold ${
+                    m === 'cara'
+                      ? 'border-amber-400 bg-amber-400/10 text-amber-300'
+                      : 'border-white/30 bg-white/5 text-white/50'
+                  }`}>
                     {m === 'cara' ? '☀' : '☽'}
                   </div>
                   <p className="text-white/50 text-xs capitalize">{m}</p>
