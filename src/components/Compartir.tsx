@@ -5,14 +5,23 @@ interface Props {
 }
 
 export default function Compartir({ titulo, texto, hashtags = [] }: Props) {
+  const appUrl = 'https://universe-three-alpha.vercel.app'
   const url = window.location.href
-  const tags = hashtags.length > 0 ? '\n\n' + hashtags.map(h => `#${h}`).join(' ') : ''
-  const textoCompleto = `${titulo}\n\n${texto}${tags}\n\n🌌 universe-three-alpha.vercel.app`
+  const tags = hashtags.length > 0 ? ' ' + hashtags.map(h => `#${h}`).join(' ') : ''
+
+  // Texto corto para WhatsApp y nativo — solo gancho + enlace
+  const textoCorto = `${titulo} 🌌\n\n${texto.substring(0, 120)}...\n\n✨ Descubre el tuyo en ${appUrl}${tags}`
+
+  // Texto completo para copiar e Instagram
+  const textoCompleto = `${titulo}\n\n${texto}${tags ? '\n\n' + tags : ''}\n\n🌌 ${appUrl}`
+
+  // Tweet — máx 280 chars
+  const tweet = `${titulo} 🌌\n\n${texto.substring(0, 180)}...\n\n${appUrl}${tags}`
 
   const compartirNativo = async () => {
     if (navigator.share) {
       try {
-        await navigator.share({ title: titulo, text: textoCompleto, url })
+        await navigator.share({ title: titulo, text: textoCorto, url: appUrl })
       } catch {}
     }
   }
@@ -22,11 +31,10 @@ export default function Compartir({ titulo, texto, hashtags = [] }: Props) {
   }
 
   const compartirWhatsApp = () => {
-    window.open(`https://wa.me/?text=${encodeURIComponent(textoCompleto)}`, '_blank')
+    window.open(`https://wa.me/?text=${encodeURIComponent(textoCorto)}`, '_blank')
   }
 
   const compartirTwitter = () => {
-    const tweet = texto.substring(0, 200) + '...\n\n🌌 universe-three-alpha.vercel.app'
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(tweet)}`, '_blank')
   }
 
@@ -36,7 +44,7 @@ export default function Compartir({ titulo, texto, hashtags = [] }: Props) {
   }
 
   return (
-    <div className="w-full bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur">
+    <div className="w-full bg-[#0d0015] border border-white/15 rounded-3xl p-5">
       <p className="text-purple-300 text-xs tracking-widest uppercase mb-4">Compartir lectura</p>
 
       {navigator.share ? (
