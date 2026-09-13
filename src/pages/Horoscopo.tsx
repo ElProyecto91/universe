@@ -4,8 +4,8 @@ import { useUserPlan, incrementarConsulta } from '../hooks/useUserPlan'
 import { useAnalytics } from '../hooks/useAnalytics'
 import { guardarLectura } from '../hooks/useHistorial'
 import { llamarGemini } from '../lib/gemini'
-import { getSignoSolar } from '../lib/motores/horoscopo'
 import { supabase } from '../lib/supabase'
+import { getHoroscopoDiario, getSignoSolar, SIGNOS_INFO } from '../lib/motores/horoscopo'
 import Compartir from '../components/Compartir'
 import CtaUpsell from '../components/CtaUpsell'
 import Valoracion from '../components/Valoracion'
@@ -20,9 +20,10 @@ export default function Horoscopo() {
   const userPlan  = useUserPlan()
   const analytics = useAnalytics(HERRAMIENTA, userPlan.esPremium)
 
+  const [vistaActual,    setVistaActual]    = useState<'mi-signo' | 'todos'>('mi-signo')
+  const [signoViendo,    setSignoViendo]    = useState<string | null>(null)
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando,       setCargando]       = useState(false)
-  const [generado,       setGenerado]       = useState(false)
   const [fromCache,      setFromCache]      = useState(false)
   const [errorMsg,       setErrorMsg]       = useState('')
   const [yaValorado,     setYaValorado]     = useState(false)
@@ -30,7 +31,10 @@ export default function Horoscopo() {
 
   const nombre          = localStorage.getItem('nombre') || 'viajero'
   const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
-  const signo           = getSignoSolar(fechaNacimiento)
+  const signoUsuario    = getSignoSolar(fechaNacimiento)
+  const signoActual     = signoViendo || signoUsuario
+  const horoscopo       = getHoroscopoDiario(signoActual)
+  const infoSigno       = SIGNOS_INFO[signoActual]
   const fechaHoy        = new Date().toISOString().split('T')[0]
   const hoy             = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
 
@@ -38,14 +42,14 @@ export default function Horoscopo() {
     if (!userPlan.cargando) analytics.registrarApertura()
   }, [userPlan.cargando])
 
-  const generarLectura = async () => {
-    setCargando(true); setGenerado(true); setErrorMsg('')
+  const generarIA = async () => {
+    setCargando(true); setErrorMsg('')
     const t0 = Date.now()
 
     try {
       const { data: cached } = await supabase.from('horoscopo_cache')
         .select('contenido')
-        .eq('signo', signo.toLowerCase())
+        .eq('signo', signoActual.toLowerCase())
         .eq('fecha', fechaHoy)
         .eq('tipo', HERRAMIENTA)
         .maybeSingle()
@@ -66,7 +70,8 @@ export default function Horoscopo() {
           'PROHIBIDO empezar con saludos, con el nombre del usuario o con cualquier introducción. Empieza DIRECTAMENTE con el horóscopo.',
           'Cada párrafo tiene MÁXIMO 3 frases cortas. Obligatorio.',
           '',
-          `Signo: ${signo}. Fecha: ${fechaHoy}.`,
+          `Signo: ${signoActual}. Fecha: ${fechaHoy}.`,
+          `Contexto base: ${horoscopo.energia}`,
           '',
           'Escribe exactamente 3 párrafos separados por línea en blanco.',
           'Párrafo 1: la energía general del día para este signo.',
@@ -85,16 +90,16 @@ export default function Horoscopo() {
         if (userPlan.userId) await incrementarConsulta(userPlan.userId)
         analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: result.modelo })
         supabase.from('horoscopo_cache').insert({
-          signo: signo.toLowerCase(), fecha: fechaHoy, tipo: HERRAMIENTA,
+          signo: signoActual.toLowerCase(), fecha: fechaHoy, tipo: HERRAMIENTA,
           contenido: result.texto, tokens_used: result.tokensUsados,
         }).then(() => {})
         if (!lecturaGuardadaRef.current) {
           lecturaGuardadaRef.current = true
           await guardarLectura({
             herramienta: HERRAMIENTA,
-            titulo: `Horóscopo ${signo} · ${fechaHoy}`,
+            titulo: `Horóscopo ${signoActual} · ${fechaHoy}`,
             contenido: result.texto,
-            metadatos: { signo, fecha: fechaHoy, nombre },
+            metadatos: { signo: signoActual, fecha: fechaHoy, nombre },
           })
         }
       } else {
@@ -118,58 +123,133 @@ export default function Horoscopo() {
     <PageLayout>
       <div className="flex flex-col gap-6">
         <div className="flex items-center">
-          <button onClick={() => navigate('/universo')} className="text-purple-300 text-sm">← Volver</button>
+          <button
+            onClick={() => signoViendo ? setSignoViendo(null) : navigate('/universo')}
+            className="text-purple-300 text-sm"
+          >← {signoViendo ? `Volver a mi signo (${signoUsuario})` : 'Volver'}</button>
           <div className="flex-1 text-center">
-            <p className="text-white font-semibold text-sm">Horóscopo Diario</p>
+            <p className="text-white font-semibold text-sm">Horóscopo</p>
             <p className="text-purple-300 text-xs capitalize">{hoy}</p>
           </div>
         </div>
 
-        <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-5 text-center">
-          <p className="text-purple-400 text-xs tracking-widest uppercase mb-1">Tu signo</p>
-          <p className="text-white text-2xl font-bold">{signo}</p>
-          <p className="text-white/40 text-xs mt-1">{fechaHoy}</p>
-        </div>
-
-        {!generado ? (
-          <div className="flex flex-col gap-3">
-            <DisclaimerIA compact />
-            <button
-              onClick={generarLectura}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition"
-            >Ver mi horóscopo</button>
-          </div>
-        ) : (
-          <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-6">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-purple-400 text-xs tracking-widest uppercase">Tu horóscopo</p>
-              {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
-            </div>
-            {cargando ? (
-              <div className="flex gap-2 py-2">
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-              </div>
-            ) : errorMsg
-              ? <p className="text-red-300 text-sm">{errorMsg}</p>
-              : <TextoIA texto={interpretacion} />
-            }
+        {/* Tabs */}
+        {!signoViendo && (
+          <div className="flex gap-1 bg-white/5 border border-white/10 rounded-2xl p-1">
+            {(['mi-signo', 'todos'] as const).map(v => (
+              <button
+                key={v}
+                onClick={() => setVistaActual(v)}
+                className={`flex-1 py-2 rounded-xl text-xs font-semibold transition ${
+                  vistaActual === v ? 'bg-purple-600 text-white' : 'text-white/50 hover:text-white/70'
+                }`}
+              >
+                {v === 'mi-signo' ? 'Mi horóscopo' : 'Todos los signos'}
+              </button>
+            ))}
           </div>
         )}
 
-        {!cargando && interpretacion && (
-          <>
-            <DisclaimerIA />
-            <Valoracion onValorar={handleValorar} />
-            <Compartir
-              titulo={`Horóscopo ${signo} · ${fechaHoy}`}
-              texto={interpretacion}
-              hashtags={['Universe', 'Horoscopo', signo]}
-            />
+        {/* ── MI SIGNO ─────────────────────────────────── */}
+        {(vistaActual === 'mi-signo' || signoViendo) && (
+          <div className="flex flex-col gap-4">
+            {/* Card signo */}
+            <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-5 text-center">
+              <p className="text-4xl mb-2">{infoSigno?.emoji ?? '⭐'}</p>
+              <p className="text-white text-xl font-bold">{signoActual}</p>
+              {signoViendo && signoViendo !== signoUsuario && (
+                <p className="text-purple-300 text-xs mt-1">Tu signo: {signoUsuario}</p>
+              )}
+            </div>
+
+            {/* Secciones estáticas */}
+            <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-5 flex flex-col gap-4">
+              <div>
+                <p className="text-purple-400 text-xs tracking-widest uppercase mb-2">Energía del día</p>
+                <p className="text-white/80 text-sm leading-relaxed">{horoscopo.energia}</p>
+              </div>
+              <div className="border-t border-white/10 pt-4">
+                <p className="text-red-300 text-xs tracking-widest uppercase mb-2">❤️ Amor</p>
+                <p className="text-white/80 text-sm leading-relaxed">{horoscopo.amor}</p>
+              </div>
+              <div className="border-t border-white/10 pt-4">
+                <p className="text-amber-300 text-xs tracking-widest uppercase mb-2">💼 Trabajo</p>
+                <p className="text-white/80 text-sm leading-relaxed">{horoscopo.trabajo}</p>
+              </div>
+              <div className="border-t border-white/10 pt-4">
+                <p className="text-green-300 text-xs tracking-widest uppercase mb-2">🌿 Salud</p>
+                <p className="text-white/80 text-sm leading-relaxed">{horoscopo.salud}</p>
+              </div>
+              <div className="border-t border-white/10 pt-4">
+                <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">✨ Afirmación del día</p>
+                <p className="text-white/80 text-sm leading-relaxed italic">"{horoscopo.afirmacion}"</p>
+              </div>
+            </div>
+
+            {/* IA expandida */}
+            {!interpretacion ? (
+              <div className="flex flex-col gap-3">
+                <DisclaimerIA compact />
+                <button
+                  onClick={generarIA}
+                  disabled={cargando || !userPlan.puedeConsultar}
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition disabled:opacity-40"
+                >
+                  {cargando ? 'Generando...' : 'Generar horóscopo completo con IA'}
+                </button>
+              </div>
+            ) : (
+              <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-6 flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-purple-400 text-xs tracking-widest uppercase">Lectura IA</p>
+                  {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
+                </div>
+                {cargando ? (
+                  <div className="flex gap-2 py-2">
+                    <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                ) : <TextoIA texto={interpretacion} />}
+                {!cargando && interpretacion && (
+                  <>
+                    <DisclaimerIA />
+                    <Valoracion onValorar={handleValorar} />
+                    <Compartir
+                      titulo={`Horóscopo ${signoActual} · ${fechaHoy}`}
+                      texto={interpretacion}
+                      hashtags={['Universe', 'Horoscopo', signoActual]}
+                    />
+                  </>
+                )}
+              </div>
+            )}
+
+            {errorMsg && <p className="text-red-300 text-sm text-center">{errorMsg}</p>}
             <CtaUpsell consultasRestantes={userPlan.consultasRestantes} />
             <button onClick={() => navigate('/guia')} className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full">Explorar con mi Guía IA</button>
-          </>
+          </div>
+        )}
+
+        {/* ── TODOS LOS SIGNOS ─────────────────────────── */}
+        {vistaActual === 'todos' && !signoViendo && (
+          <div className="grid grid-cols-3 gap-2">
+            {Object.entries(SIGNOS_INFO).map(([signo, info]) => (
+              <button
+                key={signo}
+                onClick={() => { setSignoViendo(signo); setInterpretacion(''); lecturaGuardadaRef.current = false }}
+                className={`bg-[#0d0015] border rounded-2xl p-4 flex flex-col items-center gap-2 transition hover:border-purple-500/50 ${
+                  signo === signoUsuario ? 'border-purple-500/50' : 'border-white/15'
+                }`}
+              >
+                <span className="text-2xl">{info.emoji}</span>
+                <span className="text-white text-xs font-semibold">{signo}</span>
+                {signo === signoUsuario && (
+                  <span className="text-purple-300 text-xs">Tu signo</span>
+                )}
+              </button>
+            ))}
+          </div>
         )}
       </div>
     </PageLayout>
