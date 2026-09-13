@@ -12,75 +12,76 @@ jobs:
       - name: Download minor arcana images
         run: |
           BASE="https://upload.wikimedia.org/wikipedia/commons"
+          UA="Mozilla/5.0 (compatible; TarotBot/1.0)"
           
           # BASTOS
-          curl -L "$BASE/1/11/Wands01.jpg" -o public/Wands01.jpg
-          curl -L "$BASE/0/0f/Wands02.jpg" -o public/Wands02.jpg
-          curl -L "$BASE/f/ff/Wands03.jpg" -o public/Wands03.jpg
-          curl -L "$BASE/a/a4/Wands04.jpg" -o public/Wands04.jpg
-          curl -L "$BASE/9/9d/Wands05.jpg" -o public/Wands05.jpg
-          curl -L "$BASE/3/3b/Wands06.jpg" -o public/Wands06.jpg
-          curl -L "$BASE/e/e4/Wands07.jpg" -o public/Wands07.jpg
-          curl -L "$BASE/6/6b/Wands08.jpg" -o public/Wands08.jpg
-          curl -L "$BASE/4/4d/Tarot_Nine_of_Wands.jpg" -o public/Wands09.jpg
-          curl -L "$BASE/0/0b/Wands10.jpg" -o public/Wands10.jpg
-          curl -L "$BASE/6/6a/Wands11.jpg" -o public/Wands11.jpg
-          curl -L "$BASE/1/16/Wands12.jpg" -o public/Wands12.jpg
-          curl -L "$BASE/0/0d/Wands13.jpg" -o public/Wands13.jpg
-          curl -L "$BASE/c/ce/Wands14.jpg" -o public/Wands14.jpg
+          curl -L -A "$UA" "$BASE/1/11/Wands01.jpg" -o public/tarot/Wands01.jpg
+          curl -L -A "$UA" "$BASE/0/0f/Wands02.jpg" -o public/tarot/Wands02.jpg
+          curl -L -A "$UA" "$BASE/f/ff/Wands03.jpg" -o public/tarot/Wands03.jpg
+          curl -L -A "$UA" "$BASE/a/a4/Wands04.jpg" -o public/tarot/Wands04.jpg
+          curl -L -A "$UA" "$BASE/9/9d/Wands05.jpg" -o public/tarot/Wands05.jpg
+          curl -L -A "$UA" "$BASE/3/3b/Wands06.jpg" -o public/tarot/Wands06.jpg
+          curl -L -A "$UA" "$BASE/e/e4/Wands07.jpg" -o public/tarot/Wands07.jpg
+          curl -L -A "$UA" "$BASE/6/6b/Wands08.jpg" -o public/tarot/Wands08.jpg
+          curl -L -A "$UA" "$BASE/4/4d/Tarot_Nine_of_Wands.jpg" -o public/tarot/Wands09.jpg
+          curl -L -A "$UA" "$BASE/0/0b/Wands10.jpg" -o public/tarot/Wands10.jpg
+          curl -L -A "$UA" "$BASE/6/6a/Wands11.jpg" -o public/tarot/Wands11.jpg
+          curl -L -A "$UA" "$BASE/1/16/Wands12.jpg" -o public/tarot/Wands12.jpg
+          curl -L -A "$UA" "$BASE/0/0d/Wands13.jpg" -o public/tarot/Wands13.jpg
+          curl -L -A "$UA" "$BASE/c/ce/Wands14.jpg" -o public/tarot/Wands14.jpg
           
           # COPAS
-          curl -L "$BASE/3/36/Cups01.jpg" -o public/Cups01.jpg
-          curl -L "$BASE/f/f8/Cups02.jpg" -o public/Cups02.jpg
-          curl -L "$BASE/7/7a/Cups03.jpg" -o public/Cups03.jpg
-          curl -L "$BASE/3/35/Cups04.jpg" -o public/Cups04.jpg
-          curl -L "$BASE/d/d7/Cups05.jpg" -o public/Cups05.jpg
-          curl -L "$BASE/1/17/Cups06.jpg" -o public/Cups06.jpg
-          curl -L "$BASE/a/ae/Cups07.jpg" -o public/Cups07.jpg
-          curl -L "$BASE/6/60/Cups08.jpg" -o public/Cups08.jpg
-          curl -L "$BASE/2/24/Cups09.jpg" -o public/Cups09.jpg
-          curl -L "$BASE/8/84/Cups10.jpg" -o public/Cups10.jpg
-          curl -L "$BASE/a/ad/Cups11.jpg" -o public/Cups11.jpg
-          curl -L "$BASE/f/fa/Cups12.jpg" -o public/Cups12.jpg
-          curl -L "$BASE/6/62/Cups13.jpg" -o public/Cups13.jpg
-          curl -L "$BASE/0/04/Cups14.jpg" -o public/Cups14.jpg
+          curl -L -A "$UA" "$BASE/3/36/Cups01.jpg" -o public/tarot/Cups01.jpg
+          curl -L -A "$UA" "$BASE/f/f8/Cups02.jpg" -o public/tarot/Cups02.jpg
+          curl -L -A "$UA" "$BASE/7/7a/Cups03.jpg" -o public/tarot/Cups03.jpg
+          curl -L -A "$UA" "$BASE/3/35/Cups04.jpg" -o public/tarot/Cups04.jpg
+          curl -L -A "$UA" "$BASE/d/d7/Cups05.jpg" -o public/tarot/Cups05.jpg
+          curl -L -A "$UA" "$BASE/1/17/Cups06.jpg" -o public/tarot/Cups06.jpg
+          curl -L -A "$UA" "$BASE/a/ae/Cups07.jpg" -o public/tarot/Cups07.jpg
+          curl -L -A "$UA" "$BASE/6/60/Cups08.jpg" -o public/tarot/Cups08.jpg
+          curl -L -A "$UA" "$BASE/2/24/Cups09.jpg" -o public/tarot/Cups09.jpg
+          curl -L -A "$UA" "$BASE/8/84/Cups10.jpg" -o public/tarot/Cups10.jpg
+          curl -L -A "$UA" "$BASE/a/ad/Cups11.jpg" -o public/tarot/Cups11.jpg
+          curl -L -A "$UA" "$BASE/f/fa/Cups12.jpg" -o public/tarot/Cups12.jpg
+          curl -L -A "$UA" "$BASE/6/62/Cups13.jpg" -o public/tarot/Cups13.jpg
+          curl -L -A "$UA" "$BASE/0/04/Cups14.jpg" -o public/tarot/Cups14.jpg
           
           # ESPADAS
-          curl -L "$BASE/1/1a/Swords01.jpg" -o public/Swords01.jpg
-          curl -L "$BASE/9/9e/Swords02.jpg" -o public/Swords02.jpg
-          curl -L "$BASE/0/02/Swords03.jpg" -o public/Swords03.jpg
-          curl -L "$BASE/b/bf/Swords04.jpg" -o public/Swords04.jpg
-          curl -L "$BASE/2/23/Swords05.jpg" -o public/Swords05.jpg
-          curl -L "$BASE/2/29/Swords06.jpg" -o public/Swords06.jpg
-          curl -L "$BASE/3/34/Swords07.jpg" -o public/Swords07.jpg
-          curl -L "$BASE/a/a7/Swords08.jpg" -o public/Swords08.jpg
-          curl -L "$BASE/2/2f/Swords09.jpg" -o public/Swords09.jpg
-          curl -L "$BASE/d/d4/Swords10.jpg" -o public/Swords10.jpg
-          curl -L "$BASE/4/4c/Swords11.jpg" -o public/Swords11.jpg
-          curl -L "$BASE/b/b0/Swords12.jpg" -o public/Swords12.jpg
-          curl -L "$BASE/d/d4/Swords13.jpg" -o public/Swords13.jpg
-          curl -L "$BASE/3/33/Swords14.jpg" -o public/Swords14.jpg
+          curl -L -A "$UA" "$BASE/1/1a/Swords01.jpg" -o public/tarot/Swords01.jpg
+          curl -L -A "$UA" "$BASE/9/9e/Swords02.jpg" -o public/tarot/Swords02.jpg
+          curl -L -A "$UA" "$BASE/0/02/Swords03.jpg" -o public/tarot/Swords03.jpg
+          curl -L -A "$UA" "$BASE/b/bf/Swords04.jpg" -o public/tarot/Swords04.jpg
+          curl -L -A "$UA" "$BASE/2/23/Swords05.jpg" -o public/tarot/Swords05.jpg
+          curl -L -A "$UA" "$BASE/2/29/Swords06.jpg" -o public/tarot/Swords06.jpg
+          curl -L -A "$UA" "$BASE/3/34/Swords07.jpg" -o public/tarot/Swords07.jpg
+          curl -L -A "$UA" "$BASE/a/a7/Swords08.jpg" -o public/tarot/Swords08.jpg
+          curl -L -A "$UA" "$BASE/2/2f/Swords09.jpg" -o public/tarot/Swords09.jpg
+          curl -L -A "$UA" "$BASE/d/d4/Swords10.jpg" -o public/tarot/Swords10.jpg
+          curl -L -A "$UA" "$BASE/4/4c/Swords11.jpg" -o public/tarot/Swords11.jpg
+          curl -L -A "$UA" "$BASE/b/b0/Swords12.jpg" -o public/tarot/Swords12.jpg
+          curl -L -A "$UA" "$BASE/d/d4/Swords13.jpg" -o public/tarot/Swords13.jpg
+          curl -L -A "$UA" "$BASE/3/33/Swords14.jpg" -o public/tarot/Swords14.jpg
           
           # OROS
-          curl -L "$BASE/f/fd/Pents01.jpg" -o public/Pents01.jpg
-          curl -L "$BASE/9/9f/Pents02.jpg" -o public/Pents02.jpg
-          curl -L "$BASE/4/42/Pents03.jpg" -o public/Pents03.jpg
-          curl -L "$BASE/3/35/Pents04.jpg" -o public/Pents04.jpg
-          curl -L "$BASE/9/96/Pents05.jpg" -o public/Pents05.jpg
-          curl -L "$BASE/a/a6/Pents06.jpg" -o public/Pents06.jpg
-          curl -L "$BASE/6/6a/Pents07.jpg" -o public/Pents07.jpg
-          curl -L "$BASE/4/49/Pents08.jpg" -o public/Pents08.jpg
-          curl -L "$BASE/f/f0/Pents09.jpg" -o public/Pents09.jpg
-          curl -L "$BASE/4/42/Pents10.jpg" -o public/Pents10.jpg
-          curl -L "$BASE/e/ec/Pents11.jpg" -o public/Pents11.jpg
-          curl -L "$BASE/d/d5/Pents12.jpg" -o public/Pents12.jpg
-          curl -L "$BASE/8/88/Pents13.jpg" -o public/Pents13.jpg
-          curl -L "$BASE/1/1c/Pents14.jpg" -o public/Pents14.jpg
+          curl -L -A "$UA" "$BASE/f/fd/Pents01.jpg" -o public/tarot/Pents01.jpg
+          curl -L -A "$UA" "$BASE/9/9f/Pents02.jpg" -o public/tarot/Pents02.jpg
+          curl -L -A "$UA" "$BASE/4/42/Pents03.jpg" -o public/tarot/Pents03.jpg
+          curl -L -A "$UA" "$BASE/3/35/Pents04.jpg" -o public/tarot/Pents04.jpg
+          curl -L -A "$UA" "$BASE/9/96/Pents05.jpg" -o public/tarot/Pents05.jpg
+          curl -L -A "$UA" "$BASE/a/a6/Pents06.jpg" -o public/tarot/Pents06.jpg
+          curl -L -A "$UA" "$BASE/6/6a/Pents07.jpg" -o public/tarot/Pents07.jpg
+          curl -L -A "$UA" "$BASE/4/49/Pents08.jpg" -o public/tarot/Pents08.jpg
+          curl -L -A "$UA" "$BASE/f/f0/Pents09.jpg" -o public/tarot/Pents09.jpg
+          curl -L -A "$UA" "$BASE/4/42/Pents10.jpg" -o public/tarot/Pents10.jpg
+          curl -L -A "$UA" "$BASE/e/ec/Pents11.jpg" -o public/tarot/Pents11.jpg
+          curl -L -A "$UA" "$BASE/d/d5/Pents12.jpg" -o public/tarot/Pents12.jpg
+          curl -L -A "$UA" "$BASE/8/88/Pents13.jpg" -o public/tarot/Pents13.jpg
+          curl -L -A "$UA" "$BASE/1/1c/Pents14.jpg" -o public/tarot/Pents14.jpg
 
       - name: Commit and push
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add public/*.jpg
-          git commit -m "Add minor arcana tarot images"
+          git add public/tarot/*.jpg
+          git commit -m "Add minor arcana tarot images" || echo "Nothing to commit"
           git push
