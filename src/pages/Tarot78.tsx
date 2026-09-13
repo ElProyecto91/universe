@@ -4,7 +4,6 @@ import { useUserPlan, incrementarConsulta } from '../hooks/useUserPlan'
 import { useAnalytics } from '../hooks/useAnalytics'
 import { guardarLectura } from '../hooks/useHistorial'
 import { llamarGemini } from '../lib/gemini'
-import { getCartaSVG } from '../components/svg/TarotSVG'
 import Compartir from '../components/Compartir'
 import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
@@ -12,6 +11,117 @@ import PageLayout from '../components/PageLayout'
 import TextoIA from '../components/TextoIA'
 
 const HERRAMIENTA = 'tarot78'
+
+const IMAGEN_CARTA: Record<string, string> = {
+  'El Loco':                '/tarot/fool.jpg',
+  'El Mago':                '/tarot/magician.jpg',
+  'La Sacerdotisa':         '/tarot/priestess.jpg',
+  'La Emperatriz':          '/tarot/empress.jpg',
+  'El Emperador':           '/tarot/emperor.jpg',
+  'El Sumo Sacerdote':      '/tarot/hierophant.jpg',
+  'Los Amantes':            '/tarot/lovers.jpg',
+  'El Carro':               '/tarot/chariot.jpg',
+  'La Fuerza':              '/tarot/strength.jpg',
+  'El Ermitaño':            '/tarot/hermit.jpg',
+  'La Rueda de la Fortuna': '/tarot/wheel.jpg',
+  'La Justicia':            '/tarot/justice.jpg',
+  'El Colgado':             '/tarot/hanged.jpg',
+  'La Muerte':              '/tarot/death.jpg',
+  'La Templanza':           '/tarot/temperance.jpg',
+  'El Diablo':              '/tarot/devil.jpg',
+  'La Torre':               '/tarot/tower.jpg',
+  'La Estrella':            '/tarot/star.jpg',
+  'La Luna':                '/tarot/moon.jpg',
+  'El Sol':                 '/tarot/sun.jpg',
+  'El Juicio':              '/tarot/judgement.jpg',
+  'El Mundo':               '/tarot/world.jpg',
+  'As de Bastos':           '/tarot/Wands01.jpg',
+  'Dos de Bastos':          '/tarot/Wands02.jpg',
+  'Tres de Bastos':         '/tarot/Wands03.jpg',
+  'Cuatro de Bastos':       '/tarot/Wands04.jpg',
+  'Cinco de Bastos':        '/tarot/Wands05.jpg',
+  'Seis de Bastos':         '/tarot/Wands06.jpg',
+  'Siete de Bastos':        '/tarot/Wands07.jpg',
+  'Ocho de Bastos':         '/tarot/Wands08.jpg',
+  'Nueve de Bastos':        '/tarot/Wands09.jpg',
+  'Diez de Bastos':         '/tarot/Wands10.jpg',
+  'Sota de Bastos':         '/tarot/Wands11.jpg',
+  'Caballero de Bastos':    '/tarot/Wands12.jpg',
+  'Reina de Bastos':        '/tarot/Wands13.jpg',
+  'Rey de Bastos':          '/tarot/Wands14.jpg',
+  'As de Copas':            '/tarot/Cups01.jpg',
+  'Dos de Copas':           '/tarot/Cups02.jpg',
+  'Tres de Copas':          '/tarot/Cups03.jpg',
+  'Cuatro de Copas':        '/tarot/Cups04.jpg',
+  'Cinco de Copas':         '/tarot/Cups05.jpg',
+  'Seis de Copas':          '/tarot/Cups06.jpg',
+  'Siete de Copas':         '/tarot/Cups07.jpg',
+  'Ocho de Copas':          '/tarot/Cups08.jpg',
+  'Nueve de Copas':         '/tarot/Cups09.jpg',
+  'Diez de Copas':          '/tarot/Cups10.jpg',
+  'Sota de Copas':          '/tarot/Cups11.jpg',
+  'Caballero de Copas':     '/tarot/Cups12.jpg',
+  'Reina de Copas':         '/tarot/Cups13.jpg',
+  'Rey de Copas':           '/tarot/Cups14.jpg',
+  'As de Espadas':          '/tarot/Swords01.jpg',
+  'Dos de Espadas':         '/tarot/Swords02.jpg',
+  'Tres de Espadas':        '/tarot/Swords03.jpg',
+  'Cuatro de Espadas':      '/tarot/Swords04.jpg',
+  'Cinco de Espadas':       '/tarot/Swords05.jpg',
+  'Seis de Espadas':        '/tarot/Swords06.jpg',
+  'Siete de Espadas':       '/tarot/Swords07.jpg',
+  'Ocho de Espadas':        '/tarot/Swords08.jpg',
+  'Nueve de Espadas':       '/tarot/Swords09.jpg',
+  'Diez de Espadas':        '/tarot/Swords10.jpg',
+  'Sota de Espadas':        '/tarot/Swords11.jpg',
+  'Caballero de Espadas':   '/tarot/Swords12.jpg',
+  'Reina de Espadas':       '/tarot/Swords13.jpg',
+  'Rey de Espadas':         '/tarot/Swords14.jpg',
+  'As de Oros':             '/tarot/Pents01.jpg',
+  'Dos de Oros':            '/tarot/Pents02.jpg',
+  'Tres de Oros':           '/tarot/Pents03.jpg',
+  'Cuatro de Oros':         '/tarot/Pents04.jpg',
+  'Cinco de Oros':          '/tarot/Pents05.jpg',
+  'Seis de Oros':           '/tarot/Pents06.jpg',
+  'Siete de Oros':          '/tarot/Pents07.jpg',
+  'Ocho de Oros':           '/tarot/Pents08.jpg',
+  'Nueve de Oros':          '/tarot/Pents09.jpg',
+  'Diez de Oros':           '/tarot/Pents10.jpg',
+  'Sota de Oros':           '/tarot/Pents11.jpg',
+  'Caballero de Oros':      '/tarot/Pents12.jpg',
+  'Reina de Oros':          '/tarot/Pents13.jpg',
+  'Rey de Oros':            '/tarot/Pents14.jpg',
+}
+
+const CARTAS_VALIDAS = Object.keys(IMAGEN_CARTA)
+
+function CartaImagen({ nombre }: { nombre: string }) {
+  const src = IMAGEN_CARTA[nombre]
+  const [error, setError] = useState(false)
+
+  if (src && !error) {
+    return (
+      <img
+        src={src}
+        alt={nombre}
+        className="w-full h-full object-cover rounded-xl"
+        onError={() => setError(true)}
+      />
+    )
+  }
+
+  return (
+    <svg viewBox="0 0 120 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      <rect width="120" height="200" fill="#1a0f2e" rx="8"/>
+      <rect x="4" y="4" width="112" height="192" fill="none" stroke="#c084fc" strokeWidth="1" rx="6"/>
+      {[...Array(5)].map((_, i) => (
+        <ellipse key={i} cx="60" cy="90" rx={15 + i * 12} ry={20 + i * 15} fill="none" stroke="#7c3aed" strokeWidth="0.5" opacity={0.7 - i * 0.1}/>
+      ))}
+      <circle cx="60" cy="90" r="3" fill="#c084fc"/>
+      <text x="60" y="155" textAnchor="middle" fill="#c084fc" fontSize="7" fontFamily="serif">{nombre}</text>
+    </svg>
+  )
+}
 
 export default function Tarot78() {
   const navigate  = useNavigate()
@@ -21,7 +131,6 @@ export default function Tarot78() {
   const [pregunta,       setPregunta]       = useState('')
   const [interpretacion, setInterpretacion] = useState('')
   const [cartaNombre,    setCartaNombre]    = useState('')
-  const [cartaKeywords,  setCartaKeywords]  = useState('')
   const [cargando,       setCargando]       = useState(false)
   const [fase,           setFase]           = useState<'preguntar' | 'resultado'>('preguntar')
   const [errorMsg,       setErrorMsg]       = useState('')
@@ -46,54 +155,73 @@ export default function Tarot78() {
     const t0 = Date.now()
 
     try {
-      const prompt = [
-        'IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido, sin markdown, sin texto adicional, sin explicaciones fuera del JSON.',
+      // ── Llamada 1: elegir la carta (Flash) ─────────────
+      const promptCarta = [
+        'Responde ÚNICAMENTE con el nombre de una carta de tarot. NADA MÁS.',
+        'Sin JSON, sin explicaciones, sin puntos, sin comillas, sin markdown.',
+        'EJEMPLO de respuesta correcta: La Fuerza',
+        'EJEMPLO de respuesta incorrecta: {"carta": "La Fuerza"}',
+        '',
+        `Consulta: "${pregunta}". Signo: ${signo}.`,
+        '',
+        'Elige la carta más relevante de esta lista y escribe SOLO su nombre:',
+        CARTAS_VALIDAS.join(', '),
+      ].join('\n')
+
+      const resultCarta = await llamarGemini({
+        herramienta: HERRAMIENTA, prompt: promptCarta,
+        userId: userPlan.userId, usarLite: false,
+        cacheable: false, maxTokens: 10,
+      })
+
+      const nombreRaw = resultCarta.texto?.trim().replace(/["\{\}]/g, '') ?? ''
+      const cartaValida = CARTAS_VALIDAS.find(
+        c => c.toLowerCase() === nombreRaw.toLowerCase()
+      ) ?? nombreRaw
+      setCartaNombre(cartaValida)
+
+      await new Promise(r => setTimeout(r, 500))
+
+      // ── Llamada 2: interpretación (Lite) ────────────────
+      const promptLectura = [
         'Eres un tarotista experto en las 78 cartas del Tarot Rider-Waite.',
+        'Responde SOLO con texto en español, en prosa continua. Sin asteriscos, sin guiones, sin cursivas, sin negritas, sin numeración, sin markdown.',
+        'No empieces nunca con saludos ni con el nombre del usuario.',
+        'Cada párrafo tiene máximo 3 frases cortas. Es obligatorio completar los 3 párrafos.',
         '',
         `El usuario se llama ${nombre}, su signo es ${signo}.`,
         `Consulta: "${pregunta}"`,
+        `La carta elegida es: ${cartaValida}`,
         '',
-        'Devuelve EXACTAMENTE este formato JSON:',
-        '{',
-        '  "carta": "nombre exacto de la carta en español",',
-        '  "keywords": "3 palabras clave separadas por ·",',
-        '  "lectura": "3 párrafos separados por \\n\\n. Cada párrafo máximo 3 frases. En español, en prosa, sin markdown, sin asteriscos, sin listas. Párrafo 1: energía de la carta. Párrafo 2: mensaje para la consulta. Párrafo 3: consejo concreto."',
-        '}',
+        'Escribe exactamente 3 párrafos separados por línea en blanco.',
+        'Párrafo 1: la energía de esta carta y su simbolismo principal.',
+        'Párrafo 2: el mensaje de esta carta en relación directa con la consulta.',
+        'Párrafo 3: un consejo o acción concreta que la carta sugiere para este momento.',
         '',
-        'El nombre de la carta debe ser uno de estos exactos: El Loco, El Mago, La Sacerdotisa, La Emperatriz, El Emperador, El Sumo Sacerdote, Los Amantes, El Carro, La Fuerza, El Ermitaño, La Rueda de la Fortuna, La Justicia, El Colgado, La Muerte, La Templanza, El Diablo, La Torre, La Estrella, La Luna, El Sol, El Juicio, El Mundo, As de Bastos, Dos de Bastos, Tres de Bastos, Cuatro de Bastos, Cinco de Bastos, Seis de Bastos, Siete de Bastos, Ocho de Bastos, Nueve de Bastos, Diez de Bastos, Sota de Bastos, Caballero de Bastos, Reina de Bastos, Rey de Bastos, As de Copas, Dos de Copas, Tres de Copas, Cuatro de Copas, Cinco de Copas, Seis de Copas, Siete de Copas, Ocho de Copas, Nueve de Copas, Diez de Copas, Sota de Copas, Caballero de Copas, Reina de Copas, Rey de Copas, As de Espadas, Dos de Espadas, Tres de Espadas, Cuatro de Espadas, Cinco de Espadas, Seis de Espadas, Siete de Espadas, Ocho de Espadas, Nueve de Espadas, Diez de Espadas, Sota de Espadas, Caballero de Espadas, Reina de Espadas, Rey de Espadas, As de Oros, Dos de Oros, Tres de Oros, Cuatro de Oros, Cinco de Oros, Seis de Oros, Siete de Oros, Ocho de Oros, Nueve de Oros, Diez de Oros, Sota de Oros, Caballero de Oros, Reina de Oros, Rey de Oros.',
+        'Tono sabio, poético y directo. Termina en punto.',
       ].join('\n')
 
-      const result = await llamarGemini({
-        herramienta: HERRAMIENTA, prompt,
-        userId: userPlan.userId, usarLite: false,
-        cacheable: false, maxTokens: 500,
+      const resultLectura = await llamarGemini({
+        herramienta: HERRAMIENTA, prompt: promptLectura,
+        userId: userPlan.userId, usarLite: true,
+        cacheable: false, maxTokens: 400,
       })
 
-      if (!result.error && result.texto) {
-        try {
-          const clean = result.texto.replace(/```json|```/g, '').trim()
-          const json = JSON.parse(clean)
-          setCartaNombre(json.carta || '')
-          setCartaKeywords(json.keywords || '')
-          setInterpretacion(json.lectura || '')
-        } catch {
-          // fallback si el JSON falla
-          setInterpretacion(result.texto)
-          setCartaNombre('')
-        }
+      if (!resultLectura.error && resultLectura.texto) {
+        setInterpretacion(resultLectura.texto)
         if (userPlan.userId) await incrementarConsulta(userPlan.userId)
-        analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: result.modelo })
+        analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: resultLectura.modelo })
         if (!lecturaGuardadaRef.current) {
           lecturaGuardadaRef.current = true
           await guardarLectura({
             herramienta: HERRAMIENTA,
-            titulo: `Tarot 78 · ${fechaHoy}`,
-            contenido: `Consulta: "${pregunta}"\n\nCarta: ${cartaNombre}\n\n${interpretacion}`,
-            metadatos: { pregunta, fecha: fechaHoy, nombre, signo, carta: cartaNombre },
+            titulo: `Tarot 78: ${cartaValida} · ${fechaHoy}`,
+            contenido: `Consulta: "${pregunta}"\nCarta: ${cartaValida}\n\n${resultLectura.texto}`,
+            metadatos: { pregunta, fecha: fechaHoy, nombre, signo, carta: cartaValida },
           })
         }
       } else {
-        setErrorMsg(result.error || 'El universo guarda silencio. Inténtalo de nuevo.')
+        setErrorMsg(resultLectura.error || 'El universo guarda silencio. Inténtalo de nuevo.')
       }
     } catch (err) {
       console.error('[Tarot78]', err)
@@ -113,7 +241,6 @@ export default function Tarot78() {
     setFase('preguntar')
     setInterpretacion('')
     setCartaNombre('')
-    setCartaKeywords('')
     setErrorMsg('')
     lecturaGuardadaRef.current = false
   }
@@ -160,25 +287,29 @@ export default function Tarot78() {
               <p className="text-white/50 text-xs italic">"{pregunta}"</p>
             </div>
 
-            {/* Carta */}
-            {cartaNombre && (
+            {cartaNombre ? (
               <div className="flex flex-col items-center gap-3">
                 <div
                   className="w-36 h-56 rounded-xl overflow-hidden"
                   style={{ boxShadow: '0 0 40px rgba(192,132,252,0.5)' }}
                 >
-                  {getCartaSVG(cartaNombre)}
+                  <CartaImagen nombre={cartaNombre} />
                 </div>
-                <div className="text-center">
-                  <p className="text-white font-bold text-xl">{cartaNombre}</p>
-                  {cartaKeywords && <p className="text-white/40 text-xs mt-1">{cartaKeywords}</p>}
+                <p className="text-white font-bold text-xl text-center">{cartaNombre}</p>
+              </div>
+            ) : (
+              <div className="flex justify-center py-4">
+                <div className="flex gap-2">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
               </div>
             )}
 
             <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-6">
               <p className="text-purple-400 text-xs tracking-widest uppercase mb-4">Interpretación</p>
-              {cargando ? (
+              {cargando && !interpretacion ? (
                 <div className="flex gap-2 py-2">
                   <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                   <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
