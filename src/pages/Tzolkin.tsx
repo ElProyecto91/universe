@@ -12,48 +12,45 @@ import TextoIA from '../components/TextoIA'
 
 const HERRAMIENTA = 'tzolkin'
 
-// ── 20 Sellos Solares ───────────────────────────────────────
 const SELLOS = [
-  { id: 0,  nombre: 'Dragón',     maya: 'Imix',    emoji: '🐊', elemento: 'Agua',   color: 'text-red-400',    desc: 'Nacimiento · Nutrición · Ser' },
-  { id: 1,  nombre: 'Viento',     maya: 'Ik',      emoji: '💨', elemento: 'Aire',   color: 'text-white',      desc: 'Espíritu · Comunicación · Aliento' },
-  { id: 2,  nombre: 'Noche',      maya: 'Akbal',   emoji: '🌑', elemento: 'Tierra', color: 'text-indigo-400', desc: 'Sueño · Intuición · Abundancia' },
-  { id: 3,  nombre: 'Semilla',    maya: 'Kan',     emoji: '🌱', elemento: 'Tierra', color: 'text-yellow-400', desc: 'Florecimiento · Objetivo · Semilla' },
-  { id: 4,  nombre: 'Serpiente',  maya: 'Chicchan',emoji: '🐍', elemento: 'Fuego',  color: 'text-red-500',    desc: 'Fuerza vital · Instinto · Pasión' },
-  { id: 5,  nombre: 'Muerte',     maya: 'Cimi',    emoji: '💀', elemento: 'Tierra', color: 'text-gray-400',   desc: 'Transformación · Entrega · Ciclo' },
-  { id: 6,  nombre: 'Venado',     maya: 'Manik',   emoji: '🦌', elemento: 'Aire',   color: 'text-green-400',  desc: 'Gracia · Cooperación · Herramienta' },
-  { id: 7,  nombre: 'Estrella',   maya: 'Lamat',   emoji: '⭐', elemento: 'Agua',   color: 'text-yellow-300', desc: 'Armonía · Belleza · Elegancia' },
-  { id: 8,  nombre: 'Luna',       maya: 'Muluc',   emoji: '🌊', elemento: 'Agua',   color: 'text-blue-400',   desc: 'Flujo · Emoción · Purificación' },
-  { id: 9,  nombre: 'Perro',      maya: 'Oc',      emoji: '🐕', elemento: 'Aire',   color: 'text-orange-300', desc: 'Lealtad · Amor · Compasión' },
-  { id: 10, nombre: 'Mono',       maya: 'Chuen',   emoji: '🐒', elemento: 'Aire',   color: 'text-purple-400', desc: 'Juego · Magia · Arte' },
-  { id: 11, nombre: 'Humano',     maya: 'Eb',      emoji: '🧑', elemento: 'Tierra', color: 'text-amber-400',  desc: 'Libre albedrío · Sabiduría · Camino' },
-  { id: 12, nombre: 'Caña',       maya: 'Ben',     emoji: '🎋', elemento: 'Tierra', color: 'text-green-500',  desc: 'Tiempo · Guía · Justicia' },
-  { id: 13, nombre: 'Jaguar',     maya: 'Ix',      emoji: '🐆', elemento: 'Tierra', color: 'text-yellow-500', desc: 'Magia · Integridad · Corazón' },
-  { id: 14, nombre: 'Águila',     maya: 'Men',     emoji: '🦅', elemento: 'Aire',   color: 'text-blue-300',   desc: 'Visión · Mente · Creación' },
-  { id: 15, nombre: 'Guerrero',   maya: 'Cib',     emoji: '⚔️', elemento: 'Fuego',  color: 'text-gray-300',   desc: 'Inteligencia · Fuerza · Perdón' },
-  { id: 16, nombre: 'Tierra',     maya: 'Caban',   emoji: '🌍', elemento: 'Tierra', color: 'text-teal-400',   desc: 'Evolución · Sintonía · Navegación' },
-  { id: 17, nombre: 'Espejo',     maya: 'Etznab',  emoji: '🪞', elemento: 'Aire',   color: 'text-cyan-300',   desc: 'Reflejo · Sin fin · Verdad' },
-  { id: 18, nombre: 'Tormenta',   maya: 'Cauac',   emoji: '⛈️', elemento: 'Agua',   color: 'text-violet-400', desc: 'Energía · Autogeneración · Catalizar' },
-  { id: 19, nombre: 'Sol',        maya: 'Ahau',    emoji: '☀️', elemento: 'Fuego',  color: 'text-yellow-400', desc: 'Iluminación · Flor · Ascensión' },
+  { id: 0,  nombre: 'Dragón',    maya: 'Imix',     img: '/tzolkin/imix.jpg',     elemento: 'Agua',   color: 'text-red-400',    desc: 'Nacimiento · Nutrición · Ser' },
+  { id: 1,  nombre: 'Viento',    maya: 'Ik',       img: '/tzolkin/ik.jpg',       elemento: 'Aire',   color: 'text-white',      desc: 'Espíritu · Comunicación · Aliento' },
+  { id: 2,  nombre: 'Noche',     maya: 'Akbal',    img: '/tzolkin/akbal.jpg',    elemento: 'Tierra', color: 'text-indigo-400', desc: 'Sueño · Intuición · Abundancia' },
+  { id: 3,  nombre: 'Semilla',   maya: 'Kan',      img: '/tzolkin/kan.jpg',      elemento: 'Tierra', color: 'text-yellow-400', desc: 'Florecimiento · Objetivo · Semilla' },
+  { id: 4,  nombre: 'Serpiente', maya: 'Chicchan', img: '/tzolkin/chicchan.jpg', elemento: 'Fuego',  color: 'text-red-500',    desc: 'Fuerza vital · Instinto · Pasión' },
+  { id: 5,  nombre: 'Muerte',    maya: 'Cimi',     img: '/tzolkin/cimi.jpg',     elemento: 'Tierra', color: 'text-gray-400',   desc: 'Transformación · Entrega · Ciclo' },
+  { id: 6,  nombre: 'Venado',    maya: 'Manik',    img: '/tzolkin/manik.jpg',    elemento: 'Aire',   color: 'text-green-400',  desc: 'Gracia · Cooperación · Herramienta' },
+  { id: 7,  nombre: 'Estrella',  maya: 'Lamat',    img: '/tzolkin/lamat.jpg',    elemento: 'Agua',   color: 'text-yellow-300', desc: 'Armonía · Belleza · Elegancia' },
+  { id: 8,  nombre: 'Luna',      maya: 'Muluc',    img: '/tzolkin/muluc.jpg',    elemento: 'Agua',   color: 'text-blue-400',   desc: 'Flujo · Emoción · Purificación' },
+  { id: 9,  nombre: 'Perro',     maya: 'Oc',       img: '/tzolkin/oc.jpg',       elemento: 'Aire',   color: 'text-orange-300', desc: 'Lealtad · Amor · Compasión' },
+  { id: 10, nombre: 'Mono',      maya: 'Chuen',    img: '/tzolkin/chuen.jpg',    elemento: 'Aire',   color: 'text-purple-400', desc: 'Juego · Magia · Arte' },
+  { id: 11, nombre: 'Humano',    maya: 'Eb',       img: '/tzolkin/eb.jpg',       elemento: 'Tierra', color: 'text-amber-400',  desc: 'Libre albedrío · Sabiduría · Camino' },
+  { id: 12, nombre: 'Caña',      maya: 'Ben',      img: '/tzolkin/ben.jpg',      elemento: 'Tierra', color: 'text-green-500',  desc: 'Tiempo · Guía · Justicia' },
+  { id: 13, nombre: 'Jaguar',    maya: 'Ix',       img: '/tzolkin/ix.jpg',       elemento: 'Tierra', color: 'text-yellow-500', desc: 'Magia · Integridad · Corazón' },
+  { id: 14, nombre: 'Águila',    maya: 'Men',      img: '/tzolkin/men.jpg',      elemento: 'Aire',   color: 'text-blue-300',   desc: 'Visión · Mente · Creación' },
+  { id: 15, nombre: 'Guerrero',  maya: 'Cib',      img: '/tzolkin/cib.jpg',      elemento: 'Fuego',  color: 'text-gray-300',   desc: 'Inteligencia · Fuerza · Perdón' },
+  { id: 16, nombre: 'Tierra',    maya: 'Caban',    img: '/tzolkin/caban.jpg',    elemento: 'Tierra', color: 'text-teal-400',   desc: 'Evolución · Sintonía · Navegación' },
+  { id: 17, nombre: 'Espejo',    maya: 'Etznab',   img: '/tzolkin/etznab.jpg',   elemento: 'Aire',   color: 'text-cyan-300',   desc: 'Reflejo · Sin fin · Verdad' },
+  { id: 18, nombre: 'Tormenta',  maya: 'Cauac',    img: '/tzolkin/cauac.jpg',    elemento: 'Agua',   color: 'text-violet-400', desc: 'Energía · Autogeneración · Catalizar' },
+  { id: 19, nombre: 'Sol',       maya: 'Ahau',     img: '/tzolkin/ahau.jpg',     elemento: 'Fuego',  color: 'text-yellow-400', desc: 'Iluminación · Flor · Ascensión' },
 ]
 
-// ── 13 Tonos Galácticos ─────────────────────────────────────
 const TONOS = [
-  { num: 1,  nombre: 'Magnético',  keyword: 'Unificar · Atraer · Propósito' },
-  { num: 2,  nombre: 'Lunar',      keyword: 'Polarizar · Estabilizar · Desafío' },
-  { num: 3,  nombre: 'Eléctrico',  keyword: 'Activar · Vincular · Servicio' },
+  { num: 1,  nombre: 'Magnético',     keyword: 'Unificar · Atraer · Propósito' },
+  { num: 2,  nombre: 'Lunar',         keyword: 'Polarizar · Estabilizar · Desafío' },
+  { num: 3,  nombre: 'Eléctrico',     keyword: 'Activar · Vincular · Servicio' },
   { num: 4,  nombre: 'Autoexistente', keyword: 'Definir · Medir · Forma' },
-  { num: 5,  nombre: 'Overtono',   keyword: 'Empoderar · Comandar · Radiance' },
-  { num: 6,  nombre: 'Rítmico',    keyword: 'Organizar · Equilibrar · Igualdad' },
-  { num: 7,  nombre: 'Resonante',  keyword: 'Canalizar · Inspirar · Sintonía' },
-  { num: 8,  nombre: 'Galáctico',  keyword: 'Armonizar · Modelar · Integridad' },
-  { num: 9,  nombre: 'Solar',      keyword: 'Pulsar · Realizar · Intención' },
-  { num: 10, nombre: 'Planetario', keyword: 'Perfeccionar · Producir · Manifestar' },
-  { num: 11, nombre: 'Espectral',  keyword: 'Disolver · Liberar · Liberación' },
-  { num: 12, nombre: 'Cristal',    keyword: 'Dedicar · Universalizar · Cooperación' },
-  { num: 13, nombre: 'Cósmico',    keyword: 'Trascender · Elaborar · Presencia' },
+  { num: 5,  nombre: 'Overtono',      keyword: 'Empoderar · Comandar · Radiancia' },
+  { num: 6,  nombre: 'Rítmico',       keyword: 'Organizar · Equilibrar · Igualdad' },
+  { num: 7,  nombre: 'Resonante',     keyword: 'Canalizar · Inspirar · Sintonía' },
+  { num: 8,  nombre: 'Galáctico',     keyword: 'Armonizar · Modelar · Integridad' },
+  { num: 9,  nombre: 'Solar',         keyword: 'Pulsar · Realizar · Intención' },
+  { num: 10, nombre: 'Planetario',    keyword: 'Perfeccionar · Producir · Manifestar' },
+  { num: 11, nombre: 'Espectral',     keyword: 'Disolver · Liberar · Liberación' },
+  { num: 12, nombre: 'Cristal',       keyword: 'Dedicar · Universalizar · Cooperación' },
+  { num: 13, nombre: 'Cósmico',       keyword: 'Trascender · Elaborar · Presencia' },
 ]
 
-// ── Correlación GMT (584283) ────────────────────────────────
 function fechaAJuliano(anio: number, mes: number, dia: number): number {
   const a = Math.floor((14 - mes) / 12)
   const y = anio + 4800 - a
@@ -66,20 +63,15 @@ function calcularKin(fecha: string) {
   const jd = fechaAJuliano(parseInt(anioStr), parseInt(mesStr), parseInt(diaStr))
   const tzolkinPos = (jd - 584283) % 260
   const pos = ((tzolkinPos % 260) + 260) % 260
-
   const selloIdx = pos % 20
   const tonoIdx  = pos % 13
-
   const sello = SELLOS[selloIdx]
   const tono  = TONOS[tonoIdx]
   const kin   = pos + 1
-
-  // 4 energías del oráculo
-  const analogaIdx    = (selloIdx + 6)  % 20  // +6 sellos
-  const antipodaIdx   = (selloIdx + 10) % 20  // +10 sellos
-  const ocultaIdx     = 19 - selloIdx           // espejo
-  const guiaIdx       = (selloIdx + (tonoIdx % 5) * 4) % 20
-
+  const analogaIdx  = (selloIdx + 6)  % 20
+  const antipodaIdx = (selloIdx + 10) % 20
+  const ocultaIdx   = 19 - selloIdx
+  const guiaIdx     = (selloIdx + (tonoIdx % 5) * 4) % 20
   return {
     kin, sello, tono,
     oraculo: {
@@ -89,6 +81,26 @@ function calcularKin(fecha: string) {
       guia:     SELLOS[guiaIdx],
     }
   }
+}
+
+function ImagenSello({ sello, size = 'md' }: { sello: typeof SELLOS[0], size?: 'sm' | 'md' | 'lg' }) {
+  const [error, setError] = useState(false)
+  const sizes = { sm: 'w-12 h-12', md: 'w-20 h-20', lg: 'w-28 h-28' }
+  if (!error) {
+    return (
+      <img
+        src={sello.img}
+        alt={sello.nombre}
+        className={`${sizes[size]} object-cover rounded-xl`}
+        onError={() => setError(true)}
+      />
+    )
+  }
+  return (
+    <div className={`${sizes[size]} bg-[#1a0030] rounded-xl flex items-center justify-center`}>
+      <p className={`text-xs font-bold ${sello.color}`}>{sello.maya}</p>
+    </div>
+  )
 }
 
 export default function Tzolkin() {
@@ -193,17 +205,15 @@ export default function Tzolkin() {
         </div>
 
         {/* Kin Natal */}
-        <div className={`bg-[#0d0015] border border-white/15 rounded-3xl p-5`}>
-          <p className="text-purple-400 text-xs tracking-widest uppercase mb-3">Tu Kin natal · {fechaNacimiento}</p>
+        <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-5">
+          <p className="text-purple-400 text-xs tracking-widest uppercase mb-3">Tu Kin natal</p>
           <div className="flex items-center gap-4">
-            <div className="text-center">
-              <p className="text-5xl">{kinNatal.sello.emoji}</p>
-              <p className={`text-sm font-bold mt-1 ${kinNatal.sello.color}`}>{kinNatal.sello.nombre}</p>
-              <p className="text-white/40 text-xs">{kinNatal.sello.maya}</p>
-            </div>
+            <ImagenSello sello={kinNatal.sello} size="lg" />
             <div className="flex-1">
               <p className="text-white/40 text-xs uppercase tracking-widest mb-1">Kin {kinNatal.kin}</p>
-              <p className="text-white font-bold">Tono {kinNatal.tono.num} — {kinNatal.tono.nombre}</p>
+              <p className={`text-xl font-bold ${kinNatal.sello.color}`}>{kinNatal.sello.nombre}</p>
+              <p className="text-white/50 text-xs">{kinNatal.sello.maya}</p>
+              <p className="text-white font-semibold mt-1">Tono {kinNatal.tono.num} — {kinNatal.tono.nombre}</p>
               <p className="text-white/50 text-xs mt-1">{kinNatal.tono.keyword}</p>
               <p className={`text-xs mt-2 ${kinNatal.sello.color}`}>{kinNatal.sello.desc}</p>
             </div>
@@ -219,8 +229,8 @@ export default function Tzolkin() {
                 { label: 'Antípoda', sello: kinNatal.oraculo.antipoda },
                 { label: 'Oculta',   sello: kinNatal.oraculo.oculta },
               ].map(({ label, sello }) => (
-                <div key={label} className="text-center">
-                  <p className="text-2xl">{sello.emoji}</p>
+                <div key={label} className="text-center flex flex-col items-center gap-1">
+                  <ImagenSello sello={sello} size="sm" />
                   <p className={`text-xs font-semibold ${sello.color}`}>{sello.nombre}</p>
                   <p className="text-white/30 text-xs">{label}</p>
                 </div>
@@ -231,16 +241,16 @@ export default function Tzolkin() {
 
         {/* Kin del día */}
         <div className="bg-[#0d0015] border border-purple-500/30 rounded-3xl p-5">
-          <p className="text-purple-400 text-xs tracking-widest uppercase mb-3">Kin de hoy · {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+          <p className="text-purple-400 text-xs tracking-widest uppercase mb-3">
+            Kin de hoy · {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </p>
           <div className="flex items-center gap-4">
-            <div className="text-center">
-              <p className="text-4xl">{kinHoy.sello.emoji}</p>
-              <p className={`text-sm font-bold mt-1 ${kinHoy.sello.color}`}>{kinHoy.sello.nombre}</p>
-              <p className="text-white/40 text-xs">{kinHoy.sello.maya}</p>
-            </div>
+            <ImagenSello sello={kinHoy.sello} size="md" />
             <div className="flex-1">
               <p className="text-white/40 text-xs uppercase tracking-widest mb-1">Kin {kinHoy.kin}</p>
-              <p className="text-white font-bold">Tono {kinHoy.tono.num} — {kinHoy.tono.nombre}</p>
+              <p className={`text-lg font-bold ${kinHoy.sello.color}`}>{kinHoy.sello.nombre}</p>
+              <p className="text-white/50 text-xs">{kinHoy.sello.maya}</p>
+              <p className="text-white font-semibold mt-1">Tono {kinHoy.tono.num} — {kinHoy.tono.nombre}</p>
               <p className="text-white/50 text-xs mt-1">{kinHoy.tono.keyword}</p>
             </div>
           </div>
