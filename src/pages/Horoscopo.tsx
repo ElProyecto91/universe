@@ -5,7 +5,7 @@ import { useAnalytics } from '../hooks/useAnalytics'
 import { guardarLectura } from '../hooks/useHistorial'
 import { llamarGemini } from '../lib/gemini'
 import { supabase } from '../lib/supabase'
-import { getHoroscopoPorSigno, getSignoSolar, SIGNOS_ZODIACALES } from '../lib/motores/horoscopo'
+import { getHoroscopoDiario, getSignoSolar, HOROSCOPOS_DIARIOS } from '../lib/motores/horoscopo'
 import Compartir from '../components/Compartir'
 import CtaUpsell from '../components/CtaUpsell'
 import Valoracion from '../components/Valoracion'
@@ -33,7 +33,7 @@ export default function Horoscopo() {
   const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
   const signoUsuario    = getSignoSolar(fechaNacimiento)
   const signoActual     = signoViendo || signoUsuario
-  const horoscopo       = getHoroscopoPorSigno(signoActual)
+  const horoscopo       = getHoroscopoDiario(signoActual)
   const fechaHoy        = new Date().toISOString().split('T')[0]
   const hoy             = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
 
@@ -70,7 +70,7 @@ export default function Horoscopo() {
           'Cada párrafo tiene MÁXIMO 3 frases cortas. Obligatorio.',
           '',
           `Signo: ${signoActual}. Fecha: ${fechaHoy}.`,
-          `Contexto base: ${horoscopo.energia}`,
+          `Contexto base: ${horoscopo.general}`,
           '',
           'Escribe exactamente 3 párrafos separados por línea en blanco.',
           'Párrafo 1: la energía general del día para este signo.',
@@ -118,6 +118,12 @@ export default function Horoscopo() {
     analytics.registrarValoracion(valor)
   }
 
+  const EMOJIS_ZODIACALES: Record<string, string> = {
+    Aries: '♈', Tauro: '♉', Géminis: '♊', Cáncer: '♋',
+    Leo: '♌', Virgo: '♍', Libra: '♎', Escorpio: '♏',
+    Sagitario: '♐', Capricornio: '♑', Acuario: '♒', Piscis: '♓',
+  }
+
   return (
     <PageLayout>
       <div className="flex flex-col gap-6">
@@ -153,7 +159,7 @@ export default function Horoscopo() {
         {(vistaActual === 'mi-signo' || signoViendo) && (
           <div className="flex flex-col gap-4">
             <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-5 text-center">
-              <p className="text-4xl mb-2">{horoscopo.emoji ?? '⭐'}</p>
+              <p className="text-4xl mb-2">{EMOJIS_ZODIACALES[signoActual] ?? '⭐'}</p>
               <p className="text-white text-xl font-bold">{signoActual}</p>
               {signoViendo && signoViendo !== signoUsuario && (
                 <p className="text-purple-300 text-xs mt-1">Tu signo: {signoUsuario}</p>
@@ -163,7 +169,7 @@ export default function Horoscopo() {
             <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-5 flex flex-col gap-4">
               <div>
                 <p className="text-purple-400 text-xs tracking-widest uppercase mb-2">Energía del día</p>
-                <p className="text-white/80 text-sm leading-relaxed">{horoscopo.energia}</p>
+                <p className="text-white/80 text-sm leading-relaxed">{horoscopo.general}</p>
               </div>
               <div className="border-t border-white/10 pt-4">
                 <p className="text-red-300 text-xs tracking-widest uppercase mb-2">❤️ Amor</p>
@@ -230,24 +236,21 @@ export default function Horoscopo() {
         {/* ── TODOS LOS SIGNOS ─────────────────────────── */}
         {vistaActual === 'todos' && !signoViendo && (
           <div className="grid grid-cols-3 gap-2">
-            {SIGNOS_ZODIACALES.map(signo => {
-              const info = getHoroscopoPorSigno(signo)
-              return (
-                <button
-                  key={signo}
-                  onClick={() => { setSignoViendo(signo); setInterpretacion(''); lecturaGuardadaRef.current = false }}
-                  className={`bg-[#0d0015] border rounded-2xl p-4 flex flex-col items-center gap-2 transition hover:border-purple-500/50 ${
-                    signo === signoUsuario ? 'border-purple-500/50' : 'border-white/15'
-                  }`}
-                >
-                  <span className="text-2xl">{info.emoji}</span>
-                  <span className="text-white text-xs font-semibold">{signo}</span>
-                  {signo === signoUsuario && (
-                    <span className="text-purple-300 text-xs">Tu signo</span>
-                  )}
-                </button>
-              )
-            })}
+            {Object.keys(HOROSCOPOS_DIARIOS).map(signo => (
+              <button
+                key={signo}
+                onClick={() => { setSignoViendo(signo); setInterpretacion(''); lecturaGuardadaRef.current = false }}
+                className={`bg-[#0d0015] border rounded-2xl p-4 flex flex-col items-center gap-2 transition hover:border-purple-500/50 ${
+                  signo === signoUsuario ? 'border-purple-500/50' : 'border-white/15'
+                }`}
+              >
+                <span className="text-2xl">{EMOJIS_ZODIACALES[signo] ?? '⭐'}</span>
+                <span className="text-white text-xs font-semibold">{signo}</span>
+                {signo === signoUsuario && (
+                  <span className="text-purple-300 text-xs">Tu signo</span>
+                )}
+              </button>
+            ))}
           </div>
         )}
       </div>
