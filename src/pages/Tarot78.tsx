@@ -13,28 +13,30 @@ import TextoIA from '../components/TextoIA'
 const HERRAMIENTA = 'tarot78'
 
 const IMAGEN_CARTA: Record<string, string> = {
-  'El Loco':                '/tarot/Fool.jpg',
-  'El Mago':                '/tarot/Magician.jpg',
-  'La Sacerdotisa':         '/tarot/Priestess.jpg',
-  'La Emperatriz':          '/tarot/Empress.jpg',
-  'El Emperador':           '/tarot/Emperor.jpg',
-  'El Sumo Sacerdote':      '/tarot/Hierophant.jpg',
-  'Los Amantes':            '/tarot/Lovers.jpg',
-  'El Carro':               '/tarot/Chariot.jpg',
-  'La Fuerza':              '/tarot/Strength.jpg',
-  'El Ermitaño':            '/tarot/Hermit.jpg',
-  'La Rueda de la Fortuna': '/tarot/Wheel.jpg',
-  'La Justicia':            '/tarot/Justice.jpg',
-  'El Colgado':             '/tarot/Hanged.jpg',
-  'La Muerte':              '/tarot/Death.jpg',
-  'La Templanza':           '/tarot/Temperance.jpg',
-  'El Diablo':              '/tarot/Devil.jpg',
-  'La Torre':               '/tarot/Tower.jpg',
-  'La Estrella':            '/tarot/Star.jpg',
-  'La Luna':                '/tarot/Moon.jpg',
-  'El Sol':                 '/tarot/Sun.jpg',
-  'El Juicio':              '/tarot/Judgement.jpg',
-  'El Mundo':               '/tarot/World.jpg',
+  // ARCANOS MAYORES — minúsculas
+  'El Loco':                '/tarot/fool.jpg',
+  'El Mago':                '/tarot/magician.jpg',
+  'La Sacerdotisa':         '/tarot/priestess.jpg',
+  'La Emperatriz':          '/tarot/empress.jpg',
+  'El Emperador':           '/tarot/emperor.jpg',
+  'El Sumo Sacerdote':      '/tarot/hierophant.jpg',
+  'Los Amantes':            '/tarot/lovers.jpg',
+  'El Carro':               '/tarot/chariot.jpg',
+  'La Fuerza':              '/tarot/strength.jpg',
+  'El Ermitaño':            '/tarot/hermit.jpg',
+  'La Rueda de la Fortuna': '/tarot/wheel.jpg',
+  'La Justicia':            '/tarot/justice.jpg',
+  'El Colgado':             '/tarot/hanged.jpg',
+  'La Muerte':              '/tarot/death.jpg',
+  'La Templanza':           '/tarot/temperance.jpg',
+  'El Diablo':              '/tarot/devil.jpg',
+  'La Torre':               '/tarot/tower.jpg',
+  'La Estrella':            '/tarot/star.jpg',
+  'La Luna':                '/tarot/moon.jpg',
+  'El Sol':                 '/tarot/sun.jpg',
+  'El Juicio':              '/tarot/judgement.jpg',
+  'El Mundo':               '/tarot/world.jpg',
+  // BASTOS — mayúscula inicial
   'As de Bastos':           '/tarot/Wands01.jpg',
   'Dos de Bastos':          '/tarot/Wands02.jpg',
   'Tres de Bastos':         '/tarot/Wands03.jpg',
@@ -49,6 +51,7 @@ const IMAGEN_CARTA: Record<string, string> = {
   'Caballero de Bastos':    '/tarot/Wands12.jpg',
   'Reina de Bastos':        '/tarot/Wands13.jpg',
   'Rey de Bastos':          '/tarot/Wands14.jpg',
+  // COPAS
   'As de Copas':            '/tarot/Cups01.jpg',
   'Dos de Copas':           '/tarot/Cups02.jpg',
   'Tres de Copas':          '/tarot/Cups03.jpg',
@@ -63,6 +66,7 @@ const IMAGEN_CARTA: Record<string, string> = {
   'Caballero de Copas':     '/tarot/Cups12.jpg',
   'Reina de Copas':         '/tarot/Cups13.jpg',
   'Rey de Copas':           '/tarot/Cups14.jpg',
+  // ESPADAS
   'As de Espadas':          '/tarot/Swords01.jpg',
   'Dos de Espadas':         '/tarot/Swords02.jpg',
   'Tres de Espadas':        '/tarot/Swords03.jpg',
@@ -77,6 +81,7 @@ const IMAGEN_CARTA: Record<string, string> = {
   'Caballero de Espadas':   '/tarot/Swords12.jpg',
   'Reina de Espadas':       '/tarot/Swords13.jpg',
   'Rey de Espadas':         '/tarot/Swords14.jpg',
+  // OROS
   'As de Oros':             '/tarot/Pents01.jpg',
   'Dos de Oros':            '/tarot/Pents02.jpg',
   'Tres de Oros':           '/tarot/Pents03.jpg',
@@ -175,18 +180,18 @@ export default function Tarot78() {
       })
 
       const nombreRaw = resultCarta.texto
-  ?.trim()
-  .replace(/["\{\}\[\]]/g, '')
-  .replace(/\n/g, '')
-  .trim() ?? ''
+        ?.trim()
+        .replace(/["\{\}\[\]]/g, '')
+        .replace(/\n/g, '')
+        .trim() ?? ''
 
-const cartaValida = CARTAS_VALIDAS.find(
-  c => nombreRaw.toLowerCase().includes(c.toLowerCase())
-) ?? CARTAS_VALIDAS.find(
-  c => c.toLowerCase().includes(nombreRaw.toLowerCase())
-) ?? nombreRaw
+      const cartaValida = CARTAS_VALIDAS.find(
+        c => nombreRaw.toLowerCase().includes(c.toLowerCase())
+      ) ?? CARTAS_VALIDAS.find(
+        c => c.toLowerCase().includes(nombreRaw.toLowerCase())
+      ) ?? nombreRaw
 
-setCartaNombre(cartaValida)
+      setCartaNombre(cartaValida)
 
       await new Promise(r => setTimeout(r, 500))
 
@@ -304,8 +309,6 @@ setCartaNombre(cartaValida)
                   <CartaImagen nombre={cartaNombre} />
                 </div>
                 <p className="text-white font-bold text-xl text-center">{cartaNombre}</p>
-                {/* DEBUG — quitar cuando funcione */}
-                <p className="text-yellow-400 text-xs text-center">[{cartaNombre}]</p>
               </div>
             ) : (
               <div className="flex justify-center py-4">
