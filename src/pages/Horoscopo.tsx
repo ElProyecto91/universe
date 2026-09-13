@@ -5,7 +5,7 @@ import { useAnalytics } from '../hooks/useAnalytics'
 import { guardarLectura } from '../hooks/useHistorial'
 import { llamarGemini } from '../lib/gemini'
 import { supabase } from '../lib/supabase'
-import { getHoroscopoDelDia, getSignoSolar, SIGNOS, SIGNO_EMOJIS } from '../lib/motores/horoscopo'
+import { getHoroscopoPorSigno, getSignoSolar, SIGNOS_ZODIACALES } from '../lib/motores/horoscopo'
 import Compartir from '../components/Compartir'
 import CtaUpsell from '../components/CtaUpsell'
 import Valoracion from '../components/Valoracion'
@@ -33,7 +33,7 @@ export default function Horoscopo() {
   const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
   const signoUsuario    = getSignoSolar(fechaNacimiento)
   const signoActual     = signoViendo || signoUsuario
-  const horoscopo       = getHoroscopoDelDia(signoActual)
+  const horoscopo       = getHoroscopoPorSigno(signoActual)
   const fechaHoy        = new Date().toISOString().split('T')[0]
   const hoy             = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
 
@@ -153,7 +153,7 @@ export default function Horoscopo() {
         {(vistaActual === 'mi-signo' || signoViendo) && (
           <div className="flex flex-col gap-4">
             <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-5 text-center">
-              <p className="text-4xl mb-2">{SIGNO_EMOJIS[signoActual] ?? '⭐'}</p>
+              <p className="text-4xl mb-2">{horoscopo.emoji ?? '⭐'}</p>
               <p className="text-white text-xl font-bold">{signoActual}</p>
               {signoViendo && signoViendo !== signoUsuario && (
                 <p className="text-purple-300 text-xs mt-1">Tu signo: {signoUsuario}</p>
@@ -230,21 +230,24 @@ export default function Horoscopo() {
         {/* ── TODOS LOS SIGNOS ─────────────────────────── */}
         {vistaActual === 'todos' && !signoViendo && (
           <div className="grid grid-cols-3 gap-2">
-            {SIGNOS.map(signo => (
-              <button
-                key={signo}
-                onClick={() => { setSignoViendo(signo); setInterpretacion(''); lecturaGuardadaRef.current = false }}
-                className={`bg-[#0d0015] border rounded-2xl p-4 flex flex-col items-center gap-2 transition hover:border-purple-500/50 ${
-                  signo === signoUsuario ? 'border-purple-500/50' : 'border-white/15'
-                }`}
-              >
-                <span className="text-2xl">{SIGNO_EMOJIS[signo]}</span>
-                <span className="text-white text-xs font-semibold">{signo}</span>
-                {signo === signoUsuario && (
-                  <span className="text-purple-300 text-xs">Tu signo</span>
-                )}
-              </button>
-            ))}
+            {SIGNOS_ZODIACALES.map(signo => {
+              const info = getHoroscopoPorSigno(signo)
+              return (
+                <button
+                  key={signo}
+                  onClick={() => { setSignoViendo(signo); setInterpretacion(''); lecturaGuardadaRef.current = false }}
+                  className={`bg-[#0d0015] border rounded-2xl p-4 flex flex-col items-center gap-2 transition hover:border-purple-500/50 ${
+                    signo === signoUsuario ? 'border-purple-500/50' : 'border-white/15'
+                  }`}
+                >
+                  <span className="text-2xl">{info.emoji}</span>
+                  <span className="text-white text-xs font-semibold">{signo}</span>
+                  {signo === signoUsuario && (
+                    <span className="text-purple-300 text-xs">Tu signo</span>
+                  )}
+                </button>
+              )
+            })}
           </div>
         )}
       </div>
