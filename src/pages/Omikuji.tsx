@@ -8,22 +8,19 @@ import Compartir from '../components/Compartir'
 import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
 import PageLayout from '../components/PageLayout'
-import TextoIA from '../components/TextoIA'
 
 const HERRAMIENTA = 'omikuji'
 
-// Niveles de fortuna del Omikuji
 const FORTUNAS = [
-  { nivel: 'Dai-kichi', emoji: '🌟', desc: 'Gran Fortuna' },
-  { nivel: 'Kichi',     emoji: '✨', desc: 'Fortuna' },
-  { nivel: 'Chū-kichi', emoji: '🍀', desc: 'Fortuna Media' },
-  { nivel: 'Shō-kichi', emoji: '🌸', desc: 'Pequeña Fortuna' },
-  { nivel: 'Han-kichi', emoji: '🌿', desc: 'Fortuna Moderada' },
-  { nivel: 'Kyō',       emoji: '🌑', desc: 'Mala Fortuna' },
+  { nivel: 'Dai-kichi', kanji: '大吉', emoji: '🌟', desc: 'Gran Fortuna',       color: 'border-yellow-400', bg: 'from-yellow-50 to-amber-50',   texto: 'text-yellow-900' },
+  { nivel: 'Kichi',     kanji: '吉',   emoji: '✨', desc: 'Fortuna',            color: 'border-gray-400',   bg: 'from-gray-50 to-white',         texto: 'text-gray-900'   },
+  { nivel: 'Chū-kichi', kanji: '中吉', emoji: '🍀', desc: 'Fortuna Media',      color: 'border-green-500',  bg: 'from-green-50 to-emerald-50',   texto: 'text-green-900'  },
+  { nivel: 'Shō-kichi', kanji: '小吉', emoji: '🌸', desc: 'Pequeña Fortuna',    color: 'border-pink-400',   bg: 'from-pink-50 to-rose-50',       texto: 'text-pink-900'   },
+  { nivel: 'Han-kichi', kanji: '末吉', emoji: '🌿', desc: 'Fortuna Moderada',   color: 'border-teal-500',   bg: 'from-teal-50 to-green-50',      texto: 'text-teal-900'   },
+  { nivel: 'Kyō',       kanji: '凶',   emoji: '🌑', desc: 'Mala Fortuna',       color: 'border-gray-700',   bg: 'from-gray-100 to-gray-200',     texto: 'text-gray-900'   },
 ]
 
 function sortearFortuna() {
-  // Pesos: más probable buena fortuna (tradición omikuji)
   const pesos = [15, 30, 25, 15, 10, 5]
   const total = pesos.reduce((a, b) => a + b, 0)
   let rand = Math.random() * total
@@ -65,7 +62,6 @@ export default function Omikuji() {
     setFase('resultado'); setCargando(true); setErrorMsg('')
     const t0 = Date.now()
 
-    // Sortear fortuna en frontend
     const fortunaSorteada = sortearFortuna()
     setFortuna(fortunaSorteada)
 
@@ -150,7 +146,7 @@ export default function Omikuji() {
         {fase === 'preguntar' && (
           <div className="flex flex-col gap-4">
             <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-6 text-center">
-              <p className="text-4xl mb-3">🎋</p>
+              <p className="text-5xl mb-3">🎋</p>
               <p className="text-white/60 text-sm leading-relaxed">Escribe tu pregunta y el espíritu del templo sorteará tu fortuna.</p>
             </div>
             <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-6">
@@ -178,29 +174,77 @@ export default function Omikuji() {
               <p className="text-white/50 text-xs italic">"{pregunta}"</p>
             </div>
 
-            {/* Fortuna sorteada */}
+            {/* Papel omikuji */}
             {fortuna && (
-              <div className="bg-[#0d0015] border border-purple-500/50 rounded-3xl p-6 text-center">
-                <p className="text-5xl mb-3">{fortuna.emoji}</p>
-                <p className="text-purple-300 text-xs tracking-widest uppercase mb-1">Tu fortuna</p>
-                <p className="text-white text-2xl font-bold">{fortuna.nivel}</p>
-                <p className="text-white/50 text-sm mt-1">{fortuna.desc}</p>
+              <div className={`relative mx-auto w-64 rounded-sm border-4 ${fortuna.color} bg-gradient-to-b ${fortuna.bg} shadow-2xl`}
+                style={{ minHeight: '420px' }}
+              >
+                {/* Franja superior decorativa */}
+                <div className={`w-full h-2 bg-gradient-to-r ${fortuna.color.replace('border-', 'from-')} to-transparent opacity-40`} />
+
+                {/* Contenido del papel */}
+                <div className="flex flex-col items-center px-5 py-6 gap-4">
+
+                  {/* Línea decorativa superior */}
+                  <div className="flex items-center gap-2 w-full">
+                    <div className="flex-1 h-px bg-gray-400/40" />
+                    <p className="text-gray-500 text-xs">おみくじ</p>
+                    <div className="flex-1 h-px bg-gray-400/40" />
+                  </div>
+
+                  {/* Kanji grande */}
+                  <p className={`text-7xl font-bold ${fortuna.texto} leading-none`}
+                    style={{ fontFamily: 'serif', textShadow: '1px 1px 2px rgba(0,0,0,0.15)' }}
+                  >{fortuna.kanji}</p>
+
+                  {/* Nombre y descripción */}
+                  <div className="text-center">
+                    <p className={`text-sm font-bold ${fortuna.texto} tracking-widest`}>{fortuna.nivel}</p>
+                    <p className={`text-xs ${fortuna.texto} opacity-70`}>{fortuna.desc}</p>
+                  </div>
+
+                  {/* Línea decorativa */}
+                  <div className="flex items-center gap-2 w-full">
+                    <div className="flex-1 h-px bg-gray-400/40" />
+                    <p className="text-gray-400 text-xs">✦</p>
+                    <div className="flex-1 h-px bg-gray-400/40" />
+                  </div>
+
+                  {/* Texto de la lectura */}
+                  <div className={`w-full ${fortuna.texto} text-xs leading-relaxed text-center`}>
+                    {cargando ? (
+                      <div className="flex justify-center gap-2 py-4">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </div>
+                    ) : errorMsg
+                      ? <p className="text-red-600 text-xs">{errorMsg}</p>
+                      : <p className="whitespace-pre-wrap">{interpretacion}</p>
+                    }
+                  </div>
+
+                  {/* Línea decorativa inferior */}
+                  {interpretacion && (
+                    <div className="flex items-center gap-2 w-full">
+                      <div className="flex-1 h-px bg-gray-400/40" />
+                      <p className="text-gray-400 text-xs">✦</p>
+                      <div className="flex-1 h-px bg-gray-400/40" />
+                    </div>
+                  )}
+
+                  {/* Fecha en japonés al pie */}
+                  {interpretacion && (
+                    <p className="text-gray-400 text-xs opacity-60" style={{ fontFamily: 'serif' }}>
+                      {new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+                  )}
+                </div>
+
+                {/* Franja inferior decorativa */}
+                <div className={`w-full h-2 bg-gradient-to-r ${fortuna.color.replace('border-', 'from-')} to-transparent opacity-40`} />
               </div>
             )}
-
-            <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-6">
-              <p className="text-purple-400 text-xs tracking-widest uppercase mb-4">Mensaje del oráculo</p>
-              {cargando ? (
-                <div className="flex gap-2 py-2">
-                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
-              ) : errorMsg
-                ? <p className="text-red-300 text-sm">{errorMsg}</p>
-                : <TextoIA texto={interpretacion} />
-              }
-            </div>
 
             {!cargando && interpretacion && (
               <>
@@ -208,7 +252,7 @@ export default function Omikuji() {
                 <Valoracion onValorar={handleValorar} />
                 <Compartir
                   titulo={`Omikuji: ${fortuna?.nivel}`}
-                  texto={`${fortuna?.nivel} — ${fortuna?.desc}\n\n${interpretacion}`}
+                  texto={`${fortuna?.kanji} ${fortuna?.nivel} — ${fortuna?.desc}\n\n${interpretacion}`}
                   hashtags={['Universe', 'Omikuji', 'Japon']}
                 />
                 <button onClick={() => navigate('/guia')} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition">Explorar con mi Guía IA</button>
