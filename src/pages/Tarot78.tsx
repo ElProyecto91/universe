@@ -175,15 +175,18 @@ export default function Tarot78() {
       })
 
       const nombreRaw = resultCarta.texto
-        ?.trim()
-        .replace(/["\{\}\[\]]/g, '')
-        .replace(/\n/g, '')
-        .trim() ?? ''
+  ?.trim()
+  .replace(/["\{\}\[\]]/g, '')
+  .replace(/\n/g, '')
+  .trim() ?? ''
 
-      const cartaValida = CARTAS_VALIDAS.find(
-        c => c.toLowerCase() === nombreRaw.toLowerCase()
-      ) ?? nombreRaw
-      setCartaNombre(cartaValida)
+const cartaValida = CARTAS_VALIDAS.find(
+  c => nombreRaw.toLowerCase().includes(c.toLowerCase())
+) ?? CARTAS_VALIDAS.find(
+  c => c.toLowerCase().includes(nombreRaw.toLowerCase())
+) ?? nombreRaw
+
+setCartaNombre(cartaValida)
 
       await new Promise(r => setTimeout(r, 500))
 
