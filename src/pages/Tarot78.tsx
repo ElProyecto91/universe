@@ -171,7 +171,7 @@ export default function Tarot78() {
       const resultCarta = await llamarGemini({
         herramienta: HERRAMIENTA, prompt: promptCarta,
         userId: userPlan.userId, usarLite: false,
-        cacheable: false, maxTokens: 10,
+        cacheable: false, maxTokens: 30,
       })
 
       const nombreRaw = resultCarta.texto
