@@ -1,9 +1,3 @@
-// src/pages/Afirmaciones.tsx
-// ============================================================
-// UNIVERSE — Afirmaciones
-// Usa PageLayout — fondo y overlay gestionados globalmente
-// ============================================================
-
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUserPlan, incrementarConsulta } from '../hooks/useUserPlan'
@@ -15,6 +9,7 @@ import { getSignoSolar } from '../lib/motores/horoscopo'
 import { AFIRMACIONES_TEMATICAS, getAfirmacionDelDia, getAfirmacionTematica } from '../lib/motores/afirmaciones'
 import Compartir from '../components/Compartir'
 import Valoracion from '../components/Valoracion'
+import DisclaimerIA from '../components/DisclaimerIA'
 import PageLayout from '../components/PageLayout'
 
 const HERRAMIENTA = 'afirmaciones'
@@ -29,15 +24,6 @@ const TEMAS = [
 
 type TemaId = typeof TEMAS[number]['id']
 type Vista  = 'diaria' | 'tematica' | 'practica'
-
-function DisclaimerIA() {
-  return (
-    <p className="text-white/40 text-xs text-center leading-relaxed px-2">
-      Contenido generado por IA con fines de reflexión y entretenimiento.
-      No sustituye asesoramiento profesional.
-    </p>
-  )
-}
 
 export default function Afirmaciones() {
   const navigate  = useNavigate()
@@ -69,10 +55,9 @@ export default function Afirmaciones() {
 
   const generarAfirmacion = async () => {
     if (userPlan.cargando) return
-    if (!userPlan.puedeConsultar) { analytics.registrarPaywall(); navigate('/premium'); return }
-    if (!userPlan.esPremium && userPlan.consultasRestantes <= 0) {
-      analytics.registrarLimite()
-      setErrorMsg(`Has alcanzado tu límite diario de ${userPlan.limiteConsultasDia} consultas gratuitas.`)
+    if (!userPlan.puedeConsultar) {
+      analytics.registrarPaywall()
+      navigate('/premium')
       return
     }
 
@@ -97,9 +82,16 @@ export default function Afirmaciones() {
 
       const result = await llamarGemini({
         herramienta: HERRAMIENTA,
-        prompt: `Experto en psicología positiva. Crea 3 afirmaciones poderosas para ${signo} hoy.
-Afirmación base: "${afirmacionDiaria}"
-Cada una en primera persona presente, una por línea, sin numeración ni guiones. Máximo 3 líneas.`,
+        prompt: [
+          'Eres un experto en psicología positiva y afirmaciones transformadoras.',
+          'Responde SOLO con texto en español, en prosa. Sin asteriscos, sin guiones, sin markdown.',
+          'No uses saludos ni introducciones.',
+          '',
+          `Crea 3 afirmaciones poderosas y personalizadas para ${signo} hoy.`,
+          `Afirmación base del día: "${afirmacionDiaria}"`,
+          'Escribe cada afirmación en primera persona presente, una por línea.',
+          'Sin numeración ni guiones. Exactamente 3 líneas.',
+        ].join('\n'),
         userId: userPlan.userId,
         usarLite: true,
         cacheable: false,
@@ -150,9 +142,7 @@ Cada una en primera persona presente, una por línea, sin numeración ni guiones
 
         {/* Header */}
         <div className="flex items-center">
-          <button onClick={() => navigate('/universo')} className="text-purple-300 text-sm">
-            ← Volver
-          </button>
+          <button onClick={() => navigate('/universo')} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
             <p className="text-white font-semibold text-sm">Afirmaciones</p>
             <p className="text-purple-300 text-xs capitalize">{hoy}</p>
@@ -165,7 +155,7 @@ Cada una en primera persona presente, una por línea, sin numeración ni guiones
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-white/8 border border-white/10 rounded-2xl p-1">
+        <div className="flex gap-1 bg-white/5 border border-white/10 rounded-2xl p-1">
           {(['diaria', 'tematica', 'practica'] as Vista[]).map((id) => (
             <button
               key={id}
@@ -182,7 +172,6 @@ Cada una en primera persona presente, una por línea, sin numeración ni guiones
         {/* ── DIARIA ─────────────────────────────────────── */}
         {vista === 'diaria' && (
           <div className="flex flex-col gap-4">
-
             <div className="bg-[#0d0015] border border-purple-500/50 rounded-3xl p-7 text-center">
               <p className="text-purple-400 text-xs tracking-widest uppercase mb-4">
                 Tu afirmación de hoy · {signo}
@@ -209,14 +198,6 @@ Cada una en primera persona presente, una por línea, sin numeración ni guiones
             {errorMsg && (
               <div className="bg-[#0d0015] border border-red-400/50 rounded-2xl p-4">
                 <p className="text-red-300 text-sm text-center">{errorMsg}</p>
-                {!userPlan.esPremium && (
-                  <button
-                    onClick={() => navigate('/premium')}
-                    className="mt-3 w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold py-2 rounded-full"
-                  >
-                    Hazte Premium
-                  </button>
-                )}
               </div>
             )}
 
@@ -263,7 +244,6 @@ Cada una en primera persona presente, una por línea, sin numeración ni guiones
         {/* ── TEMÁTICA ───────────────────────────────────── */}
         {vista === 'tematica' && (
           <div className="flex flex-col gap-4">
-
             <div className="grid grid-cols-3 gap-2">
               {TEMAS.map(tema => (
                 <button
@@ -306,11 +286,8 @@ Cada una en primera persona presente, una por línea, sin numeración ni guiones
         {/* ── PRÁCTICA ───────────────────────────────────── */}
         {vista === 'practica' && (
           <div className="flex flex-col gap-6 items-center">
-
             <div className="text-center">
-              <p className="text-purple-400 text-xs tracking-widest uppercase mb-3">
-                Modo práctica
-              </p>
+              <p className="text-purple-400 text-xs tracking-widest uppercase mb-3">Modo práctica</p>
               <p className="text-white/70 text-sm">
                 Lee la afirmación en voz alta. Toca el botón cada vez que la repitas.
               </p>
@@ -369,7 +346,6 @@ Cada una en primera persona presente, una por línea, sin numeración ni guiones
             </div>
           </div>
         )}
-
       </div>
     </PageLayout>
   )
