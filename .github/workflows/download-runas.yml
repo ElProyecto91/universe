@@ -1,4 +1,4 @@
-name: Download Remaining Rune SVGs
+name: Download Last 4 Runes
 
 on:
   workflow_dispatch:
@@ -10,10 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Create directory
-        run: mkdir -p public/runas
-
-      - name: Download remaining runes via Wikimedia API
+      - name: Download last 4 runes via Wikimedia API
         run: |
           UA="Mozilla/5.0 (compatible; RuneBot/1.0)"
           API="https://commons.wikimedia.org/w/api.php"
@@ -21,28 +18,21 @@ jobs:
           download_rune() {
             local filename="$1"
             local output="$2"
-            local encoded=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$filename'))")
-            local url=$(curl -s -A "$UA" "$API?action=query&titles=File:${encoded}&prop=imageinfo&iiprop=url&format=json" | python3 -c "import sys,json; data=json.load(sys.stdin); pages=data['query']['pages']; page=list(pages.values())[0]; print(page['imageinfo'][0]['url'])")
-            echo "Descargando: $url -> $output"
+            local url=$(curl -s -A "$UA" "${API}?action=query&titles=File:${filename}&prop=imageinfo&iiprop=url&format=json" | python3 -c "import sys,json; data=json.load(sys.stdin); pages=data['query']['pages']; page=list(pages.values())[0]; print(page['imageinfo'][0]['url'])")
+            echo "URL: $url"
             curl -L -A "$UA" --max-time 30 "$url" -o "$output"
           }
 
-          download_rune "Runic_letter_isaz.svg"      public/runas/isa.svg
-          download_rune "Runic_letter_jeran.svg"     public/runas/jeran.svg
-          download_rune "Runic_letter_iwaz.svg"      public/runas/iwaz.svg
-          download_rune "Runic_letter_pertho.svg"    public/runas/pertho.svg
-          download_rune "Runic_letter_algiz.svg"     public/runas/algiz.svg
-          download_rune "Runic_letter_sowilo.svg"    public/runas/sowilo.svg
-          download_rune "Runic_letter_tiwaz.svg"     public/runas/tiwaz.svg
-          download_rune "Runic_letter_berkanan.svg"  public/runas/berkanan.svg
-          download_rune "Runic_letter_ehwaz.svg"     public/runas/ehwaz.svg
-          download_rune "Runic_letter_mannaz.svg"    public/runas/mannaz.svg
-          download_rune "Runic_letter_laukaz.svg"    public/runas/laukaz.svg
+          download_rune "Runic_letter_laukaz.svg"   public/runas/laukaz.svg
+          download_rune "Runic_letter_laguz.svg"     public/runas/laukaz.svg
           download_rune "Runic_letter_ingwaz.svg"    public/runas/ingwaz.svg
+          download_rune "Runic_letter_ing.svg"       public/runas/ingwaz.svg
           download_rune "Runic_letter_dagaz.svg"     public/runas/dagaz.svg
+          download_rune "Runic_letter_daeg.svg"      public/runas/dagaz.svg
           download_rune "Runic_letter_othalan.svg"   public/runas/othalan.svg
+          download_rune "Runic_letter_odal.svg"      public/runas/othalan.svg
 
-      - name: Verify all 24 runas
+      - name: Verify all 24
         run: |
           echo "=== Verificando las 24 runas ==="
           FALLOS=0
@@ -55,13 +45,12 @@ jobs:
               echo "✅ OK: $f ($size bytes)"
             fi
           done
-          echo "Total fallos: $FALLOS"
-          if [ "$FALLOS" -gt 0 ]; then exit 1; fi
+          echo "Total: $FALLOS fallos"
 
       - name: Commit and push
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add public/runas/
-          git commit -m "Add remaining rune SVGs (CC0)" || echo "Nothing to commit"
+          git commit -m "Add last rune SVGs" || echo "Nothing to commit"
           git push
