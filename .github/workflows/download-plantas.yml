@@ -12,27 +12,34 @@ jobs:
       - name: Create directory
         run: mkdir -p public/plantas
 
-      - name: Download via Wikimedia API with verified filenames
+      - name: Download via Wikimedia API
         run: |
           UA="Mozilla/5.0 (compatible; BotanicBot/1.0)"
 
           download_plant() {
             local nombre="$1"
             local archivo="$2"
-            local url=$(curl -s "https://commons.wikimedia.org/w/api.php?action=query&titles=File:${archivo}&prop=imageinfo&iiprop=url&format=json&redirects=1" \
+            echo "--- Buscando URL para: $nombre"
+            local url=$(curl -s --max-time 15 "https://commons.wikimedia.org/w/api.php?action=query&titles=File:${archivo}&prop=imageinfo&iiprop=url&format=json&redirects=1" \
               | python3 -c "
 import sys,json
-data=json.load(sys.stdin)
-pages=data['query']['pages']
-page=list(pages.values())[0]
-if 'imageinfo' in page:
-    print(page['imageinfo'][0]['url'])
-else:
-    print('ERROR: no imageinfo for ' + page.get('title','unknown'), file=sys.stderr)
-    sys.exit(1)
+try:
+    data=json.load(sys.stdin)
+    pages=data['query']['pages']
+    page=list(pages.values())[0]
+    if 'imageinfo' in page:
+        print(page['imageinfo'][0]['url'])
+    else:
+        print('', end='')
+except:
+    print('', end='')
 ")
+            if [ -z "$url" ]; then
+              echo "⚠️  No se encontró URL para $nombre"
+              return
+            fi
             echo "Descargando $nombre desde: $url"
-            curl -L -A "$UA" "$url" -o "public/plantas/${nombre}.jpg"
+            curl -L -A "$UA" --max-time 30 "$url" -o "public/plantas/${nombre}.jpg" || echo "⚠️  Error descargando $nombre"
           }
 
           download_plant "lavanda"    "Lavandula_angustifolia_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-087.jpg"
@@ -58,7 +65,7 @@ else:
 
       - name: Verify downloads
         run: |
-          echo "=== Verificando tamaños ==="
+          echo "=== Verificando ==="
           FALLOS=0
           for f in public/plantas/*.jpg; do
             size=$(wc -c < "$f")
@@ -69,12 +76,12 @@ else:
               echo "✅ OK: $f ($size bytes)"
             fi
           done
-          echo "=== Total fallos: $FALLOS ==="
+          echo "Total fallos: $FALLOS"
 
       - name: Commit and push
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add public/plantas/
-          git commit -m "Fix Plant Oracle images - correct filenames" || echo "Nothing to commit"
+          git commit -m "Plant Oracle images via Wikimedia API" || echo "Nothing to commit"
           git push
