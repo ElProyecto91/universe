@@ -12,50 +12,53 @@ jobs:
       - name: Create directory
         run: mkdir -p public/plantas
 
-      - name: Download botanical illustrations (Köhler 1887 - Public Domain)
+      - name: Download botanical illustrations via Wikimedia FilePath API
         run: |
-          BASE="https://upload.wikimedia.org/wikipedia/commons"
+          BASE="https://commons.wikimedia.org/wiki/Special:FilePath"
           UA="Mozilla/5.0 (compatible; BotanicBot/1.0)"
 
-          curl -L -A "$UA" "$BASE/5/5b/Lavandula_angustifolia_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-087.jpg" -o public/plantas/lavanda.jpg
-          curl -L -A "$UA" "$BASE/5/5f/Salvia_officinalis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-125.jpg" -o public/plantas/salvia.jpg
-          curl -L -A "$UA" "$BASE/8/8b/Rosa_centifolia_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-118.jpg" -o public/plantas/rosa.jpg
-          curl -L -A "$UA" "$BASE/c/c7/Matricaria_chamomilla_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-135.jpg" -o public/plantas/manzanilla.jpg
-          curl -L -A "$UA" "$BASE/4/4b/Mentha_x_piperita_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-080.jpg" -o public/plantas/menta.jpg
-          curl -L -A "$UA" "$BASE/9/96/Rosmarinus_officinalis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-123.jpg" -o public/plantas/romero.jpg
-          curl -L -A "$UA" "$BASE/d/d4/Valeriana_officinalis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-143_clean.jpg" -o public/plantas/valeriana.jpg
-          curl -L -A "$UA" "$BASE/3/3e/Atropa_belladonna_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-014.jpg" -o public/plantas/belladona.jpg
-          curl -L -A "$UA" "$BASE/c/c7/Verbena_officinalis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-147.jpg" -o public/plantas/verbena.jpg
-          curl -L -A "$UA" "$BASE/2/27/Artemisia_absinthium_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-006.jpg" -o public/plantas/ajenjo.jpg
-          curl -L -A "$UA" "$BASE/7/7f/Thymus_vulgaris_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-138.jpg" -o public/plantas/tomillo.jpg
-          curl -L -A "$UA" "$BASE/0/09/Achillea_millefolium_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-001.jpg" -o public/plantas/milenrama.jpg
-          curl -L -A "$UA" "$BASE/0/0c/Foeniculum_vulgare_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-053.jpg" -o public/plantas/hinojo.jpg
-          curl -L -A "$UA" "$BASE/a/a7/Origanum_vulgare_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-096.jpg" -o public/plantas/oregano.jpg
-          curl -L -A "$UA" "$BASE/5/52/Laurus_nobilis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-086.jpg" -o public/plantas/laurel.jpg
-          curl -L -A "$UA" "$BASE/c/c5/Hypericum_perforatum_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-064.jpg" -o public/plantas/hiperico.jpg
-          curl -L -A "$UA" "$BASE/1/1e/Viscum_album_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-152.jpg" -o public/plantas/muerdago.jpg
-          curl -L -A "$UA" "$BASE/5/5f/Mandragora_officinarum_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-076.jpg" -o public/plantas/mandragora.jpg
-          curl -L -A "$UA" "$BASE/8/8b/Helleborus_niger_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-059.jpg" -o public/plantas/helenboro.jpg
-          curl -L -A "$UA" "$BASE/3/3c/Aconitum_napellus_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-002.jpg" -o public/plantas/aconito.jpg
+          curl -L -A "$UA" "$BASE/Lavandula_angustifolia_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-087.jpg" -o public/plantas/lavanda.jpg
+          curl -L -A "$UA" "$BASE/Salvia_officinalis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-125.jpg" -o public/plantas/salvia.jpg
+          curl -L -A "$UA" "$BASE/Rosa_centifolia_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-118.jpg" -o public/plantas/rosa.jpg
+          curl -L -A "$UA" "$BASE/Matricaria_chamomilla_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-135.jpg" -o public/plantas/manzanilla.jpg
+          curl -L -A "$UA" "$BASE/Mentha_x_piperita_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-080.jpg" -o public/plantas/menta.jpg
+          curl -L -A "$UA" "$BASE/Rosmarinus_officinalis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-123.jpg" -o public/plantas/romero.jpg
+          curl -L -A "$UA" "$BASE/Valeriana_officinalis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-143_clean.jpg" -o public/plantas/valeriana.jpg
+          curl -L -A "$UA" "$BASE/Atropa_belladonna_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-014.jpg" -o public/plantas/belladona.jpg
+          curl -L -A "$UA" "$BASE/Verbena_officinalis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-147.jpg" -o public/plantas/verbena.jpg
+          curl -L -A "$UA" "$BASE/Artemisia_absinthium_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-006.jpg" -o public/plantas/ajenjo.jpg
+          curl -L -A "$UA" "$BASE/Thymus_vulgaris_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-138.jpg" -o public/plantas/tomillo.jpg
+          curl -L -A "$UA" "$BASE/Achillea_millefolium_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-001.jpg" -o public/plantas/milenrama.jpg
+          curl -L -A "$UA" "$BASE/Foeniculum_vulgare_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-053.jpg" -o public/plantas/hinojo.jpg
+          curl -L -A "$UA" "$BASE/Origanum_vulgare_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-096.jpg" -o public/plantas/oregano.jpg
+          curl -L -A "$UA" "$BASE/Laurus_nobilis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-086.jpg" -o public/plantas/laurel.jpg
+          curl -L -A "$UA" "$BASE/Hypericum_perforatum_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-064.jpg" -o public/plantas/hiperico.jpg
+          curl -L -A "$UA" "$BASE/Viscum_album_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-152.jpg" -o public/plantas/muerdago.jpg
+          curl -L -A "$UA" "$BASE/Mandragora_officinarum_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-076.jpg" -o public/plantas/mandragora.jpg
+          curl -L -A "$UA" "$BASE/Helleborus_niger_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-059.jpg" -o public/plantas/helenboro.jpg
+          curl -L -A "$UA" "$BASE/Aconitum_napellus_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-002.jpg" -o public/plantas/aconito.jpg
 
       - name: Verify downloads
         run: |
           echo "=== Archivos descargados ==="
           ls -la public/plantas/
           echo "=== Verificando tamaños ==="
+          FALLOS=0
           for f in public/plantas/*.jpg; do
             size=$(wc -c < "$f")
-            if [ "$size" -lt 1000 ]; then
+            if [ "$size" -lt 10000 ]; then
               echo "⚠️  FALLO: $f ($size bytes)"
+              FALLOS=$((FALLOS+1))
             else
               echo "✅ OK: $f ($size bytes)"
             fi
           done
+          echo "=== Total fallos: $FALLOS ==="
 
       - name: Commit and push
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add public/plantas/*.jpg
+          git add public/plantas/
           git commit -m "Add Plant Oracle botanical illustrations (Köhler 1887 public domain)" || echo "Nothing to commit"
           git push
