@@ -19,6 +19,7 @@ const CATEGORIAS = [
       { id: 'iching', nombre: 'I Ching', subtitulo: 'El Libro de los Cambios · China', descripcion: '64 hexagramas revelan la energía del momento.', ruta: '/iching' },
       { id: 'tibetan-mo', nombre: 'Mo Tibetano', subtitulo: 'Adivinación budista · Tibet', descripcion: 'Sistema de adivinación del budismo tibetano mediante dados. 36 posibles resultados.', ruta: '/tibetan-mo' },
       { id: 'geomancia', nombre: 'Geomancia', subtitulo: 'ʿIlm al-raml · Tradición árabe-medieval', descripcion: '16 figuras geománticas revelan la energía de tu pregunta.', ruta: '/geomancia' },
+      { id: 'ifa', nombre: 'Oráculo de Ifá', subtitulo: 'Tradición yoruba · África occidental · UNESCO', descripcion: 'El sistema adivinatorio más antiguo de África. Los 16 Odù revelan la sabiduría ancestral yoruba.', ruta: '/ifa' },
       { id: 'dados', nombre: 'Oracle de Dados', subtitulo: 'Cleromancia · Tradición antigua', descripcion: 'Lanza tres dados y explora el mensaje de los números.', ruta: '/dados' },
       { id: 'monedas', nombre: 'Oracle de Monedas', subtitulo: 'Cleromancia · Decisión', descripcion: 'Tres monedas, seis patrones posibles. El azar como espejo de la energía presente.', ruta: '/monedas' },
       { id: 'bibliomancia', nombre: 'Bibliomancia', subtitulo: 'Textos en dominio público', descripcion: 'Abre un texto sagrado o filosófico al azar y encuentra orientación.', ruta: '/bibliomancia' },
@@ -50,6 +51,7 @@ const CATEGORIAS = [
       { id: 'rueda', nombre: 'Rueda del Año', subtitulo: 'Ciclo estacional · Tradición pagana', descripcion: 'Los 8 Sabbats y la sabiduría de cada estación del año.', ruta: '/rueda' },
       { id: 'elementos', nombre: 'Oracle Elemental', subtitulo: 'Los cinco elementos', descripcion: 'Fuego, Agua, Tierra, Aire y Éter — explora desde la energía elemental.', ruta: '/elementos' },
       { id: 'chakras', nombre: 'Chakra Oracle', subtitulo: 'Sistema de chakras · Tradición hindú', descripcion: 'Explora los 7 chakras y cuál necesita atención en tu vida ahora mismo.', ruta: '/chakras' },
+      { id: 'feng-shui', nombre: 'Feng Shui · Bagua', subtitulo: 'Mapa energético · Las 9 áreas de vida', descripcion: 'Activa las 9 áreas del mapa Bagua en tu espacio para armonizar prosperidad, amor, carrera y más.', ruta: '/feng-shui', etiqueta: 'GRATIS' },
       { id: 'cristales', nombre: 'Cristaloterapia', subtitulo: '10 cristales · Tradiciones del mundo', descripcion: 'Propiedades, usos y lectura personalizada de cristales y piedras.', ruta: '/cristales' },
       { id: 'plantas', nombre: 'Plant Oracle', subtitulo: 'Simbolismo vegetal · Tradiciones del mundo', descripcion: 'Cada planta lleva un mensaje. Explora el simbolismo de la naturaleza.', ruta: '/plantas' },
       { id: 'color', nombre: 'Color Oracle', subtitulo: 'Cromoterapia simbólica · Tradiciones', descripcion: '¿Qué color te atrae hoy? Explora su significado en diferentes culturas.', ruta: '/color' },
@@ -107,7 +109,7 @@ export default function Tradiciones() {
           <button onClick={() => window.location.href = '/universo'} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
             <p className="text-white font-bold text-base">Explorar Tradiciones</p>
-            <p className="text-white/50 text-xs">55+ herramientas espirituales</p>
+            <p className="text-white/50 text-xs">57+ herramientas espirituales</p>
           </div>
         </div>
 
