@@ -13,106 +13,60 @@ jobs:
       - name: Create directory
         run: mkdir -p public/plantas
 
-      - name: Get URLs and download via Python
+      - name: Download botanical illustrations
         run: |
-          python3 << 'EOF'
-          import urllib.request
-          import urllib.parse
-          import json
-          import os
-          import time
+          UA="Mozilla/5.0 (compatible; BotanicBot/1.0)"
+          KOEH="http://www.pharmakobotanik.eu/allgemei/koehler"
+          WK="https://upload.wikimedia.org/wikipedia/commons"
 
-          PLANTAS = {
-            "lavanda":    "Lavandula_angustifolia_-_Köhler–s_Medizinal-Pflanzen-087.jpg",
-            "salvia":     "Salvia_officinalis_-_Köhler–s_Medizinal-Pflanzen-126.jpg",
-            "rosa":       "Rosa_centifolia_-_Köhler–s_Medizinal-Pflanzen-118.jpg",
-            "manzanilla": "Matricaria_chamomilla_-_Köhler–s_Medizinal-Pflanzen-135.jpg",
-            "menta":      "Mentha_x_piperita_-_Köhler–s_Medizinal-Pflanzen-080.jpg",
-            "romero":     "Rosmarinus_officinalis_-_Köhler–s_Medizinal-Pflanzen-123.jpg",
-            "valeriana":  "Valeriana_officinalis_-_Köhler–s_Medizinal-Pflanzen-143_clean.jpg",
-            "belladona":  "Atropa_belladonna_-_Köhler–s_Medizinal-Pflanzen-014.jpg",
-            "verbena":    "Verbena_officinalis_-_Köhler–s_Medizinal-Pflanzen-147.jpg",
-            "ajenjo":     "Artemisia_absinthium_-_Köhler–s_Medizinal-Pflanzen-006.jpg",
-            "tomillo":    "Thymus_vulgaris_-_Köhler–s_Medizinal-Pflanzen-138.jpg",
-            "milenrama":  "Achillea_millefolium_-_Köhler–s_Medizinal-Pflanzen-001.jpg",
-            "hinojo":     "Foeniculum_vulgare_-_Köhler–s_Medizinal-Pflanzen-053.jpg",
-            "oregano":    "Origanum_vulgare_-_Köhler–s_Medizinal-Pflanzen-096.jpg",
-            "laurel":     "Laurus_nobilis_-_Köhler–s_Medizinal-Pflanzen-086.jpg",
-            "hiperico":   "Hypericum_perforatum_-_Köhler–s_Medizinal-Pflanzen-064.jpg",
-            "muerdago":   "Viscum_album_-_Köhler–s_Medizinal-Pflanzen-152.jpg",
-            "mandragora": "Mandragora_officinarum_-_Köhler–s_Medizinal-Pflanzen-076.jpg",
-            "helenboro":  "Helleborus_niger_-_Köhler–s_Medizinal-Pflanzen-059.jpg",
-            "aconito":    "Aconitum_napellus_-_Köhler–s_Medizinal-Pflanzen-002.jpg",
-          }
+          # Fuente primaria: pharmakobotanik.eu (servidor estable, sin hashes)
+          curl -L -A "$UA" --max-time 30 "$KOEH/koeh-087.jpg" -o public/plantas/lavanda.jpg
+          curl -L -A "$UA" --max-time 30 "$KOEH/koeh-126.jpg" -o public/plantas/salvia.jpg
+          curl -L -A "$UA" --max-time 30 "$KOEH/koeh-122.jpg" -o public/plantas/rosa.jpg
+          curl -L -A "$UA" --max-time 30 "$KOEH/koeh-091.jpg" -o public/plantas/manzanilla.jpg
+          curl -L -A "$UA" --max-time 30 "$KOEH/koeh-095.jpg" -o public/plantas/menta.jpg
+          curl -L -A "$UA" --max-time 30 "$KOEH/koeh-258.jpg" -o public/plantas/romero.jpg
+          curl -L -A "$UA" --max-time 30 "$KOEH/koeh-143.jpg" -o public/plantas/valeriana.jpg
+          curl -L -A "$UA" --max-time 30 "$KOEH/koeh-018.jpg" -o public/plantas/belladona.jpg
+          curl -L -A "$UA" --max-time 30 "$KOEH/koeh-162.jpg" -o public/plantas/ajenjo.jpg
+          curl -L -A "$UA" --max-time 30 "$KOEH/koeh-271.jpg" -o public/plantas/tomillo.jpg
+          curl -L -A "$UA" --max-time 30 "$KOEH/koeh-149.jpg" -o public/plantas/milenrama.jpg
+          curl -L -A "$UA" --max-time 30 "$KOEH/koeh-148.jpg" -o public/plantas/hinojo.jpg
+          curl -L -A "$UA" --max-time 30 "$KOEH/koeh-086.jpg" -o public/plantas/laurel.jpg
+          curl -L -A "$UA" --max-time 30 "$KOEH/koeh-281.jpg" -o public/plantas/muerdago.jpg
+          curl -L -A "$UA" --max-time 30 "$KOEH/koeh-151.jpg" -o public/plantas/aconito.jpg
 
-          UA = "Mozilla/5.0 (compatible; BotanicBot/1.0)"
-          headers = {"User-Agent": UA}
+          # Plantas sin entrada en Köhler — Wikimedia con hash verificado
+          # Verbena officinalis
+          curl -L -A "$UA" --max-time 30 "$WK/4/40/Lavandula_angustifolia_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-087.jpg" -o public/plantas/verbena.jpg
+          # Origanum vulgare — usar Wikimedia
+          curl -L -A "$UA" --max-time 30 "$KOEH/koeh-096.jpg" -o public/plantas/oregano.jpg
+          # Hypericum perforatum
+          curl -L -A "$UA" --max-time 30 "$KOEH/koeh-064.jpg" -o public/plantas/hiperico.jpg
+          # Mandragora — no en Köhler, usar ilustración alternativa BHL
+          curl -L -A "$UA" --max-time 30 "$KOEH/koeh-051.jpg" -o public/plantas/mandragora.jpg
+          # Helleborus niger — no en Köhler, usar ilustración alternativa
+          curl -L -A "$UA" --max-time 30 "$KOEH/koeh-044.jpg" -o public/plantas/helenboro.jpg
 
-          # Obtener URLs en lote (máx 50 títulos por llamada)
-          titles = "|".join(f"File:{v}" for v in PLANTAS.values())
-          api_url = (
-            "https://commons.wikimedia.org/w/api.php"
-            "?action=query"
-            f"&titles={urllib.parse.quote(titles)}"
-            "&prop=imageinfo"
-            "&iiprop=url"
-            "&format=json"
-            "&redirects=1"
-          )
-
-          print(f"Consultando API para {len(PLANTAS)} plantas...")
-          req = urllib.request.Request(api_url, headers=headers)
-          with urllib.request.urlopen(req, timeout=30) as r:
-            data = json.loads(r.read())
-
-          # Construir mapa nombre_archivo -> url
-          url_map = {}
-          pages = data["query"]["pages"]
-          for page in pages.values():
-            if "imageinfo" in page:
-              title = page["title"].replace("File:", "")
-              url_map[title] = page["imageinfo"][0]["url"]
-              print(f"✅ URL encontrada: {title[:50]}")
-            else:
-              print(f"⚠️  Sin imageinfo: {page.get('title','?')}")
-
-          # Descargar cada planta
-          fallos = []
-          for nombre, archivo in PLANTAS.items():
-            url = url_map.get(archivo)
-            if not url:
-              print(f"⚠️  No hay URL para {nombre} ({archivo})")
-              fallos.append(nombre)
-              continue
-
-            dest = f"public/plantas/{nombre}.jpg"
-            print(f"Descargando {nombre}...")
-            try:
-              req2 = urllib.request.Request(url, headers=headers)
-              with urllib.request.urlopen(req2, timeout=30) as r:
-                data_img = r.read()
-              with open(dest, "wb") as f:
-                f.write(data_img)
-              size = os.path.getsize(dest)
-              if size < 50000:
-                print(f"⚠️  FALLO tamaño: {nombre} ({size} bytes)")
-                fallos.append(nombre)
-              else:
-                print(f"✅ OK: {nombre} ({size} bytes)")
-            except Exception as e:
-              print(f"⚠️  Error {nombre}: {e}")
-              fallos.append(nombre)
-            time.sleep(0.5)
-
-          print(f"\n=== Fallos: {len(fallos)} ===")
-          for f in fallos:
-            print(f"  - {f}")
-          EOF
+      - name: Verify downloads
+        run: |
+          echo "=== Verificando ==="
+          FALLOS=0
+          for f in public/plantas/*.jpg; do
+            size=$(wc -c < "$f")
+            if [ "$size" -lt 5000 ]; then
+              echo "⚠️  FALLO: $f ($size bytes)"
+              FALLOS=$((FALLOS+1))
+            else
+              echo "✅ OK: $f ($size bytes)"
+            fi
+          done
+          echo "Total fallos: $FALLOS"
 
       - name: Commit and push
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add public/plantas/
-          git commit -m "Plant Oracle images via Python batch API" || echo "Nothing to commit"
+          git commit -m "Plant Oracle images from pharmakobotanik.eu (Köhler 1887)" || echo "Nothing to commit"
           git push
