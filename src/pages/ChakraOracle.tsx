@@ -217,7 +217,7 @@ export default function ChakraOracle() {
         'Escribe exactamente 3 párrafos separados por línea en blanco. Cada párrafo máximo 3 frases.',
         `Párrafo 1: por qué ${chakraElegido.nombreSanscrito} resuena con esta situación y qué señales de desequilibrio o activación están presentes.`,
         `Párrafo 2: qué bloqueo o flujo de energía está presente en este chakra y cómo se manifiesta en la vida del consultante.`,
-        `Párrafo 3: una práctica concreta (respiración, visualización del color ${chakraElegido.colorNombre}, mantra ${chakraElegido.mantraBija} o movimiento) para equilibrar este chakra hoy, y una pregunta reflexiva de cierre. Nunca uses códigos hexadecimales, solo el nombre del color en español.`,
+        `Párrafo 3: una práctica concreta (respiración, mantra ${chakraElegido.mantraBija} o movimiento corporal) para equilibrar este chakra hoy, y una pregunta reflexiva de cierre. NO menciones ningún color ni código en este párrafo.`,
         'Tono sabio y compasivo. Termina en punto.',
       ].join('\n')
 
