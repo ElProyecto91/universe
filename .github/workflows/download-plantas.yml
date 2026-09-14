@@ -12,36 +12,41 @@ jobs:
       - name: Create directory
         run: mkdir -p public/plantas
 
-      - name: Download botanical illustrations via Wikimedia FilePath API
+      - name: Download via Wikimedia API
         run: |
-          BASE="https://commons.wikimedia.org/wiki/Special:FilePath"
           UA="Mozilla/5.0 (compatible; BotanicBot/1.0)"
 
-          curl -L -A "$UA" "$BASE/Lavandula_angustifolia_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-087.jpg" -o public/plantas/lavanda.jpg
-          curl -L -A "$UA" "$BASE/Salvia_officinalis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-125.jpg" -o public/plantas/salvia.jpg
-          curl -L -A "$UA" "$BASE/Rosa_centifolia_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-118.jpg" -o public/plantas/rosa.jpg
-          curl -L -A "$UA" "$BASE/Matricaria_chamomilla_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-135.jpg" -o public/plantas/manzanilla.jpg
-          curl -L -A "$UA" "$BASE/Mentha_x_piperita_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-080.jpg" -o public/plantas/menta.jpg
-          curl -L -A "$UA" "$BASE/Rosmarinus_officinalis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-123.jpg" -o public/plantas/romero.jpg
-          curl -L -A "$UA" "$BASE/Valeriana_officinalis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-143_clean.jpg" -o public/plantas/valeriana.jpg
-          curl -L -A "$UA" "$BASE/Atropa_belladonna_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-014.jpg" -o public/plantas/belladona.jpg
-          curl -L -A "$UA" "$BASE/Verbena_officinalis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-147.jpg" -o public/plantas/verbena.jpg
-          curl -L -A "$UA" "$BASE/Artemisia_absinthium_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-006.jpg" -o public/plantas/ajenjo.jpg
-          curl -L -A "$UA" "$BASE/Thymus_vulgaris_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-138.jpg" -o public/plantas/tomillo.jpg
-          curl -L -A "$UA" "$BASE/Achillea_millefolium_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-001.jpg" -o public/plantas/milenrama.jpg
-          curl -L -A "$UA" "$BASE/Foeniculum_vulgare_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-053.jpg" -o public/plantas/hinojo.jpg
-          curl -L -A "$UA" "$BASE/Origanum_vulgare_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-096.jpg" -o public/plantas/oregano.jpg
-          curl -L -A "$UA" "$BASE/Laurus_nobilis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-086.jpg" -o public/plantas/laurel.jpg
-          curl -L -A "$UA" "$BASE/Hypericum_perforatum_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-064.jpg" -o public/plantas/hiperico.jpg
-          curl -L -A "$UA" "$BASE/Viscum_album_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-152.jpg" -o public/plantas/muerdago.jpg
-          curl -L -A "$UA" "$BASE/Mandragora_officinarum_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-076.jpg" -o public/plantas/mandragora.jpg
-          curl -L -A "$UA" "$BASE/Helleborus_niger_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-059.jpg" -o public/plantas/helenboro.jpg
-          curl -L -A "$UA" "$BASE/Aconitum_napellus_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-002.jpg" -o public/plantas/aconito.jpg
+          download_plant() {
+            local nombre="$1"
+            local archivo="$2"
+            local url=$(curl -s "https://commons.wikimedia.org/w/api.php?action=query&titles=File:${archivo}&prop=imageinfo&iiprop=url&format=json" | python3 -c "import sys,json; data=json.load(sys.stdin); pages=data['query']['pages']; page=list(pages.values())[0]; print(page['imageinfo'][0]['url'])")
+            echo "Descargando $nombre desde: $url"
+            curl -L -A "$UA" "$url" -o "public/plantas/${nombre}.jpg"
+          }
+
+          download_plant "lavanda"    "Lavandula_angustifolia_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-087.jpg"
+          download_plant "salvia"     "Salvia_officinalis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-125.jpg"
+          download_plant "rosa"       "Rosa_centifolia_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-118.jpg"
+          download_plant "manzanilla" "Matricaria_chamomilla_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-135.jpg"
+          download_plant "menta"      "Mentha_x_piperita_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-080.jpg"
+          download_plant "romero"     "Rosmarinus_officinalis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-123.jpg"
+          download_plant "valeriana"  "Valeriana_officinalis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-143_clean.jpg"
+          download_plant "belladona"  "Atropa_belladonna_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-014.jpg"
+          download_plant "verbena"    "Verbena_officinalis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-147.jpg"
+          download_plant "ajenjo"     "Artemisia_absinthium_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-006.jpg"
+          download_plant "tomillo"    "Thymus_vulgaris_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-138.jpg"
+          download_plant "milenrama"  "Achillea_millefolium_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-001.jpg"
+          download_plant "hinojo"     "Foeniculum_vulgare_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-053.jpg"
+          download_plant "oregano"    "Origanum_vulgare_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-096.jpg"
+          download_plant "laurel"     "Laurus_nobilis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-086.jpg"
+          download_plant "hiperico"   "Hypericum_perforatum_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-064.jpg"
+          download_plant "muerdago"   "Viscum_album_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-152.jpg"
+          download_plant "mandragora" "Mandragora_officinarum_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-076.jpg"
+          download_plant "helenboro"  "Helleborus_niger_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-059.jpg"
+          download_plant "aconito"    "Aconitum_napellus_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-002.jpg"
 
       - name: Verify downloads
         run: |
-          echo "=== Archivos descargados ==="
-          ls -la public/plantas/
           echo "=== Verificando tamaños ==="
           FALLOS=0
           for f in public/plantas/*.jpg; do
@@ -60,5 +65,5 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add public/plantas/
-          git commit -m "Add Plant Oracle botanical illustrations (Köhler 1887 public domain)" || echo "Nothing to commit"
+          git commit -m "Fix Plant Oracle images via Wikimedia API" || echo "Nothing to commit"
           git push
