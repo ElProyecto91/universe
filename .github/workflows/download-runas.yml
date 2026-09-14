@@ -1,0 +1,68 @@
+name: Download Rune SVGs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Create directory
+        run: mkdir -p public/runas
+
+      - name: Download Elder Futhark SVGs from Wikimedia Commons
+        run: |
+          BASE="https://upload.wikimedia.org/wikipedia/commons"
+          UA="Mozilla/5.0 (compatible; RuneBot/1.0)"
+
+          curl -L -A "$UA" --max-time 30 "$BASE/3/3f/Runic_letter_fehu_feoh_fe_f.svg"    -o public/runas/fehu.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/8/8a/Runic_letter_uruz_ur_u.svg"          -o public/runas/uruz.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/b/bf/Runic_letter_thurisaz_thurs_thorn.svg" -o public/runas/thurisaz.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/d/d2/Runic_letter_ansuz_a.svg"            -o public/runas/ansuz.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/0/00/Runic_letter_raido_rad_reid_r.svg"   -o public/runas/raido.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/0/0e/Runic_letter_kaun_k.svg"             -o public/runas/kaunaz.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/e/e2/Runic_letter_gebo_gyfu_g.svg"        -o public/runas/gebo.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/d/df/Runic_letter_wunjo_wynn_w.svg"       -o public/runas/wunjo.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/3/34/Runic_letter_haglaz_h.svg"           -o public/runas/haglaz.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/9/90/Runic_letter_naudiz_nyd_naud_n.svg"  -o public/runas/naudiz.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/a/a4/Runic_letter_isaz_is_iss_i.svg"      -o public/runas/isa.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/f/f3/Runic_letter_jera-a_jara_j_1.svg"   -o public/runas/jeran.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/7/75/Runic_letter_iwaz_io_eoh.svg"        -o public/runas/iwaz.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/7/70/Runic_letter_pertho_peorth_p.svg"    -o public/runas/pertho.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/9/9d/Runic_letter_algiz_z.svg"            -o public/runas/algiz.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/c/c0/Runic_letter_sowilo_s.svg"           -o public/runas/sowilo.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/3/34/Runic_letter_tiwaz_tir_tyr_t.svg"   -o public/runas/tiwaz.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/7/7a/Runic_letter_berkanan_beorc_bjarkan_b.svg" -o public/runas/berkanan.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/c/c8/Runic_letter_ehwaz_eh_e.svg"         -o public/runas/ehwaz.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/e/ef/Runic_letter_mannaz_man_m.svg"       -o public/runas/mannaz.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/b/b4/Runic_letter_laukaz_lagu_logr_l.svg" -o public/runas/laukaz.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/d/d5/Runic_letter_ingwaz.svg"             -o public/runas/ingwaz.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/0/0e/Runic_letter_dagaz_daeg_d.svg"       -o public/runas/dagaz.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/c/ca/Runic_letter_othalan_ethel_o.svg"    -o public/runas/othalan.svg
+
+      - name: Verify downloads
+        run: |
+          echo "=== Verificando runas ==="
+          FALLOS=0
+          for f in public/runas/*.svg; do
+            size=$(wc -c < "$f")
+            if [ "$size" -lt 200 ]; then
+              echo "⚠️  FALLO: $f ($size bytes)"
+              FALLOS=$((FALLOS+1))
+            else
+              echo "✅ OK: $f ($size bytes)"
+            fi
+          done
+          echo "Total fallos: $FALLOS"
+          if [ "$FALLOS" -gt 0 ]; then exit 1; fi
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add public/runas/
+          git commit -m "Add Elder Futhark rune SVGs from Wikimedia Commons (CC0)" || echo "Nothing to commit"
+          git push
