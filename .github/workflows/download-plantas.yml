@@ -12,20 +12,31 @@ jobs:
       - name: Create directory
         run: mkdir -p public/plantas
 
-      - name: Download via Wikimedia API
+      - name: Download via Wikimedia API with verified filenames
         run: |
           UA="Mozilla/5.0 (compatible; BotanicBot/1.0)"
 
           download_plant() {
             local nombre="$1"
             local archivo="$2"
-            local url=$(curl -s "https://commons.wikimedia.org/w/api.php?action=query&titles=File:${archivo}&prop=imageinfo&iiprop=url&format=json" | python3 -c "import sys,json; data=json.load(sys.stdin); pages=data['query']['pages']; page=list(pages.values())[0]; print(page['imageinfo'][0]['url'])")
+            local url=$(curl -s "https://commons.wikimedia.org/w/api.php?action=query&titles=File:${archivo}&prop=imageinfo&iiprop=url&format=json&redirects=1" \
+              | python3 -c "
+import sys,json
+data=json.load(sys.stdin)
+pages=data['query']['pages']
+page=list(pages.values())[0]
+if 'imageinfo' in page:
+    print(page['imageinfo'][0]['url'])
+else:
+    print('ERROR: no imageinfo for ' + page.get('title','unknown'), file=sys.stderr)
+    sys.exit(1)
+")
             echo "Descargando $nombre desde: $url"
             curl -L -A "$UA" "$url" -o "public/plantas/${nombre}.jpg"
           }
 
           download_plant "lavanda"    "Lavandula_angustifolia_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-087.jpg"
-          download_plant "salvia"     "Salvia_officinalis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-125.jpg"
+          download_plant "salvia"     "Salvia_officinalis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-126.jpg"
           download_plant "rosa"       "Rosa_centifolia_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-118.jpg"
           download_plant "manzanilla" "Matricaria_chamomilla_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-135.jpg"
           download_plant "menta"      "Mentha_x_piperita_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-080.jpg"
@@ -51,7 +62,7 @@ jobs:
           FALLOS=0
           for f in public/plantas/*.jpg; do
             size=$(wc -c < "$f")
-            if [ "$size" -lt 10000 ]; then
+            if [ "$size" -lt 50000 ]; then
               echo "⚠️  FALLO: $f ($size bytes)"
               FALLOS=$((FALLOS+1))
             else
@@ -65,5 +76,5 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add public/plantas/
-          git commit -m "Fix Plant Oracle images via Wikimedia API" || echo "Nothing to commit"
+          git commit -m "Fix Plant Oracle images - correct filenames" || echo "Nothing to commit"
           git push
