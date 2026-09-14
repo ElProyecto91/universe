@@ -1,38 +1,28 @@
-// src/pages/Biorritmos.tsx
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useUserPlan, incrementarConsulta } from '../hooks/useUserPlan'
+import { useUserPlan } from '../hooks/useUserPlan'
 import { useAnalytics } from '../hooks/useAnalytics'
-import { guardarLectura } from '../hooks/useHistorial'
-import { llamarGemini } from '../lib/gemini'
-import { supabase } from '../lib/supabase'
+import { calcularBiorritmos, getLecturaBiorritmos } from '../lib/motores/biorhythm'
 import Compartir from '../components/Compartir'
 import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
 import CtaUpsell from '../components/CtaUpsell'
 import PageLayout from '../components/PageLayout'
-import TextoIA from '../components/TextoIA'
 
 const HERRAMIENTA = 'biorritmos'
 
-// Calcula las fases en el frontend — la IA nunca hace matemáticas
-function calcularFases(fechaNacimiento: string): { fisico: string; emocional: string; intelectual: string } {
-  const nac  = new Date(fechaNacimiento).getTime()
-  const hoy  = new Date().setHours(0, 0, 0, 0)
-  const dias = Math.floor((hoy - nac) / 86400000)
+const ETIQUETAS: Record<string, string> = {
+  alta:     'Alta energía ↑',
+  ascenso:  'En ascenso ↗',
+  descenso: 'En descenso ↘',
+  baja:     'Momento de pausa ↓',
+}
 
-  const describir = (val: number) => {
-    if (val > 0.5)  return 'alta energía'
-    if (val > 0)    return 'energía en ascenso'
-    if (val > -0.5) return 'energía en descenso'
-    return 'energía baja, momento de descanso'
-  }
-
-  return {
-    fisico:      describir(Math.sin(2 * Math.PI * dias / 23)),
-    emocional:   describir(Math.sin(2 * Math.PI * dias / 28)),
-    intelectual: describir(Math.sin(2 * Math.PI * dias / 33)),
-  }
+const COLORES: Record<string, string> = {
+  alta:     'text-green-400',
+  ascenso:  'text-blue-400',
+  descenso: 'text-amber-400',
+  baja:     'text-red-400',
 }
 
 export default function Biorritmos() {
@@ -40,112 +30,23 @@ export default function Biorritmos() {
   const userPlan  = useUserPlan()
   const analytics = useAnalytics(HERRAMIENTA, userPlan.esPremium)
 
-  const [interpretacion, setInterpretacion] = useState('')
-  const [cargando,       setCargando]       = useState(false)
-  const [generado,       setGenerado]       = useState(false)
-  const [fromCache,      setFromCache]      = useState(false)
-  const [errorMsg,       setErrorMsg]       = useState('')
-  const [yaValorado,     setYaValorado]     = useState(false)
-  const lecturaGuardadaRef                  = useRef(false)
+  const [mostrar,    setMostrar]    = useState(false)
+  const [yaValorado, setYaValorado] = useState(false)
 
-  const nombre          = localStorage.getItem('nombre')          || 'viajero'
   const signo           = localStorage.getItem('signo')           || 'Leo'
   const fechaNacimiento = localStorage.getItem('fechaNacimiento') || '1991-08-15'
-  const fechaHoy        = new Date().toISOString().split('T')[0]
   const hoy             = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
+
+  const { fases, valores } = calcularBiorritmos(fechaNacimiento)
+  const lectura            = getLecturaBiorritmos(fechaNacimiento)
 
   useEffect(() => {
     if (!userPlan.cargando) analytics.registrarApertura()
   }, [userPlan.cargando])
 
-  const generarLectura = async () => {
-    if (userPlan.cargando) return
-    if (!userPlan.puedeConsultar) { analytics.registrarPaywall(); navigate('/premium'); return }
-    if (!userPlan.esPremium && userPlan.consultasRestantes <= 0) {
-      analytics.registrarLimite()
-      setErrorMsg(`Has alcanzado tu límite diario de ${userPlan.limiteConsultasDia} consultas gratuitas.`)
-      return
-    }
-
-    setCargando(true)
-    setGenerado(true)
-    setErrorMsg('')
-    const t0 = Date.now()
-
-    try {
-      const { data: cached } = await supabase.from('horoscopo_cache').select('contenido')
-        .eq('signo', signo.toLowerCase()).eq('fecha', fechaHoy).eq('tipo', HERRAMIENTA).maybeSingle()
-
-      if (cached?.contenido) {
-        setInterpretacion(cached.contenido)
-        setFromCache(true)
-        analytics.registrarLectura({ desdCache: true, tiempoMs: Date.now() - t0, modeloIa: 'cache' })
-        await _guardarSiPrimera(cached.contenido)
-        setCargando(false)
-        return
-      }
-
-      // Las fases se calculan aquí — la IA solo interpreta en prosa
-      const fases = calcularFases(fechaNacimiento)
-
-      const prompt = [
-        'Eres un guía espiritual. Tu tarea es escribir una lectura personal en prosa, en español.',
-        'No uses listas, asteriscos, guiones, fórmulas ni ningún símbolo especial. Solo texto en párrafos.',
-        '',
-        `El usuario se llama ${nombre}. Sus ciclos de hoy ya están calculados:`,
-        `- Ciclo físico: ${fases.fisico}`,
-        `- Ciclo emocional: ${fases.emocional}`,
-        `- Ciclo intelectual: ${fases.intelectual}`,
-        '',
-        `Escribe exactamente 4 párrafos cortos dirigiéndote a ${nombre} directamente. Sin introducción genérica, empieza directo con el contenido.`,
-        `Párrafo 1: ciclo físico (${fases.fisico}) — qué significa para su cuerpo y vitalidad hoy.`,
-        `Párrafo 2: ciclo emocional (${fases.emocional}) — cómo afecta a sus relaciones y estado interior.`,
-        `Párrafo 3: ciclo intelectual (${fases.intelectual}) — qué significa para su mente y decisiones.`,
-        'Párrafo 4: un consejo práctico y concreto para sacar el máximo a este día.',
-        '',
-        'Cada párrafo máximo 3 frases cortas. Separa con línea en blanco. Termina siempre en punto. Nunca dejes una frase incompleta.',
-      ].join('\n')
-
-      const result = await llamarGemini({
-        herramienta: HERRAMIENTA,
-        prompt,
-        userId: userPlan.userId,
-        usarLite: false,
-        cacheable: false,
-        maxTokens: 1500,
-        temperatura: 0.7,
-      })
-
-      if (!result.error && result.texto) {
-        setInterpretacion(result.texto)
-        setFromCache(false)
-        supabase.from('horoscopo_cache').insert({
-          signo: signo.toLowerCase(), fecha: fechaHoy, tipo: HERRAMIENTA,
-          contenido: result.texto, tokens_used: result.tokensUsados,
-        }).then(() => {})
-        if (userPlan.userId) await incrementarConsulta(userPlan.userId)
-        analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: result.modelo })
-        await _guardarSiPrimera(result.texto)
-      } else {
-        setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.')
-      }
-    } catch (err) {
-      console.error('[Biorritmos]', err)
-      setErrorMsg('Error inesperado. Inténtalo de nuevo.')
-    } finally {
-      setCargando(false)
-    }
-  }
-
-  const _guardarSiPrimera = async (texto: string) => {
-    if (lecturaGuardadaRef.current) return
-    lecturaGuardadaRef.current = true
-    await guardarLectura({
-      herramienta: HERRAMIENTA,
-      titulo: `Biorritmos · ${signo} · ${fechaHoy}`,
-      contenido: texto,
-      metadatos: { signo, fecha: fechaHoy, nombre, fechaNacimiento },
-    })
+  const handleGenerar = () => {
+    analytics.registrarLectura({ desdCache: false, tiempoMs: 0, modeloIa: 'static' })
+    setMostrar(true)
   }
 
   const handleValorar = (valor: 1 | -1) => {
@@ -153,6 +54,18 @@ export default function Biorritmos() {
     setYaValorado(true)
     analytics.registrarValoracion(valor)
   }
+
+  const textoCompartir = [
+    `Biorritmos · ${signo} · ${hoy}`,
+    '',
+    `🏃 Físico (${valores.fisico > 0 ? '+' : ''}${valores.fisico}%): ${lectura.fisico}`,
+    '',
+    `❤️ Emocional (${valores.emocional > 0 ? '+' : ''}${valores.emocional}%): ${lectura.emocional}`,
+    '',
+    `🧠 Intelectual (${valores.intelectual > 0 ? '+' : ''}${valores.intelectual}%): ${lectura.intelectual}`,
+    '',
+    `✨ Consejo: ${lectura.consejo}`,
+  ].join('\n')
 
   return (
     <PageLayout>
@@ -162,64 +75,79 @@ export default function Biorritmos() {
           <button onClick={() => navigate('/tradiciones')} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
             <p className="text-white font-semibold text-sm">Biorritmos</p>
-            <p className="text-purple-300 text-xs">Ciclos energéticos del día</p>
+            <p className="text-purple-300 text-xs capitalize">{hoy}</p>
           </div>
-          {!userPlan.cargando && !userPlan.esPremium && (
-            <p className="text-white/40 text-xs">{userPlan.consultasRestantes}/{userPlan.limiteConsultasDia}</p>
-          )}
         </div>
 
-        <div className="bg-[#0d0015] border border-purple-500/50 rounded-3xl p-5 text-center">
-          <p className="text-purple-400 text-xs tracking-widest uppercase mb-1">Biorritmos</p>
-          <p className="text-white text-sm">{signo} · {hoy}</p>
+        {/* Indicadores visuales */}
+        <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-5 flex flex-col gap-4">
+          {[
+            { label: '🏃 Físico',      fase: fases.fisico,      valor: valores.fisico },
+            { label: '❤️ Emocional',   fase: fases.emocional,   valor: valores.emocional },
+            { label: '🧠 Intelectual', fase: fases.intelectual, valor: valores.intelectual },
+          ].map(({ label, fase, valor }) => (
+            <div key={label}>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-white/70 text-xs">{label}</p>
+                <p className={`text-xs font-semibold ${COLORES[fase]}`}>{ETIQUETAS[fase]}</p>
+              </div>
+              <div className="w-full bg-white/10 rounded-full h-2">
+                <div
+                  className={`h-2 rounded-full transition-all ${
+                    valor >= 0 ? 'bg-gradient-to-r from-purple-500 to-pink-500' : 'bg-white/20'
+                  }`}
+                  style={{
+                    width: `${Math.abs(valor)}%`,
+                    marginLeft: valor < 0 ? `${100 - Math.abs(valor)}%` : '0',
+                  }}
+                />
+              </div>
+              <p className="text-white/40 text-xs mt-1 text-right">{valor > 0 ? '+' : ''}{valor}%</p>
+            </div>
+          ))}
         </div>
 
-        {!generado ? (
+        {!mostrar ? (
           <div className="flex flex-col gap-3">
             <DisclaimerIA compact />
-            <button onClick={generarLectura} disabled={userPlan.cargando}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition disabled:opacity-40">
-              Generar mi lectura
+            <button
+              onClick={handleGenerar}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition"
+            >
+              Ver mi lectura de hoy
             </button>
           </div>
         ) : (
-          <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-purple-400 text-xs tracking-widest uppercase">Tu lectura</p>
-              {fromCache && <span className="text-green-400 text-xs">⚡ Instantáneo</span>}
+          <div className="bg-[#0d0015] border border-white/15 rounded-3xl p-5 flex flex-col gap-4">
+            <div>
+              <p className="text-purple-400 text-xs tracking-widest uppercase mb-2">🏃 Ciclo Físico</p>
+              <p className="text-white/80 text-sm leading-relaxed">{lectura.fisico}</p>
             </div>
-            {cargando ? (
-              <div className="flex gap-2 py-2">
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-              </div>
-            ) : (
-              <TextoIA texto={interpretacion} />
-            )}
+            <div className="border-t border-white/10 pt-4">
+              <p className="text-red-300 text-xs tracking-widest uppercase mb-2">❤️ Ciclo Emocional</p>
+              <p className="text-white/80 text-sm leading-relaxed">{lectura.emocional}</p>
+            </div>
+            <div className="border-t border-white/10 pt-4">
+              <p className="text-blue-300 text-xs tracking-widest uppercase mb-2">🧠 Ciclo Intelectual</p>
+              <p className="text-white/80 text-sm leading-relaxed">{lectura.intelectual}</p>
+            </div>
+            <div className="border-t border-white/10 pt-4">
+              <p className="text-amber-300 text-xs tracking-widest uppercase mb-2">✨ Consejo del día</p>
+              <p className="text-white/80 text-sm leading-relaxed">{lectura.consejo}</p>
+            </div>
           </div>
         )}
 
-        {errorMsg && (
-          <div className="bg-[#0d0015] border border-red-400/50 rounded-2xl p-4">
-            <p className="text-red-300 text-sm text-center">{errorMsg}</p>
-            {!userPlan.esPremium && (
-              <button onClick={() => navigate('/premium')}
-                className="mt-3 w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold py-2 rounded-full">
-                Hazte Premium
-              </button>
-            )}
-          </div>
-        )}
-
-        {!cargando && interpretacion && (
+        {mostrar && (
           <>
             <DisclaimerIA />
             <Valoracion onValorar={handleValorar} />
-            <Compartir titulo="Biorritmos" texto={interpretacion} hashtags={['Universe', 'Biorritmos']} />
+            <Compartir titulo="Biorritmos" texto={textoCompartir} hashtags={['Universe', 'Biorritmos']} />
             <CtaUpsell consultasRestantes={userPlan.consultasRestantes} />
-            <button onClick={() => navigate('/guia')}
-              className="w-full bg-[#0d0015] border border-white/15 text-white font-semibold py-4 rounded-full hover:border-purple-500/50 transition">
+            <button
+              onClick={() => navigate('/guia')}
+              className="w-full bg-[#0d0015] border border-white/15 text-white font-semibold py-4 rounded-full hover:border-purple-500/50 transition"
+            >
               Explorar con mi Guía IA
             </button>
           </>
