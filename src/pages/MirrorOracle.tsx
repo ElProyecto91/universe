@@ -1,4 +1,3 @@
-// src/pages/MirrorOracle.tsx
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUserPlan, incrementarConsulta } from '../hooks/useUserPlan'
@@ -35,60 +34,46 @@ export default function MirrorOracle() {
   }, [userPlan.cargando])
 
   if (!userPlan.cargando && !userPlan.esPremium) {
-    analytics.registrarPaywall()
-    navigate('/premium')
-    return null
+    analytics.registrarPaywall(); navigate('/premium'); return null
   }
 
   const consultar = async () => {
     if (!pregunta.trim()) return
-    setFase('resultado')
-    setCargando(true)
-    setErrorMsg('')
+    setFase('resultado'); setCargando(true); setErrorMsg('')
     const t0 = Date.now()
 
     try {
-      const base = `Eres un coach espiritual. El usuario se llama ${nombre}, signo ${signo}. Su pregunta: "${pregunta}". Escribe en español, en prosa, sin listas ni asteriscos. Exactamente 3 frases seguidas. Sin saludar ni usar el nombre al inicio.`
+      const prompt = [
+        'Eres un coach espiritual experto en autoconocimiento y reflexión interior.',
+        `El usuario se llama ${nombre}, signo ${signo}. Su pregunta: "${pregunta}".`,
+        'Escribe en español, en prosa, sin listas ni asteriscos. Sin saludar ni usar el nombre al inicio.',
+        '',
+        'Escribe exactamente 3 párrafos separados por línea en blanco. Cada párrafo exactamente 3 frases.',
+        'Párrafo 1: identifica el deseo o necesidad más profunda detrás de esta pregunta.',
+        'Párrafo 2: profundiza en el patrón o creencia que origina esa necesidad.',
+        'Párrafo 3: ofrece una perspectiva transformadora y cierra con una pregunta reflexiva poderosa.',
+        'Termina siempre en punto. Nunca dejes una frase incompleta.',
+      ].join('\n')
 
-      // Párrafo 1
-      const r1 = await llamarGemini({
-        herramienta: HERRAMIENTA,
-        prompt: `${base} Escribe un párrafo que identifique el deseo o necesidad más profunda detrás de esta pregunta.`,
-        userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250,
+      const result = await llamarGemini({
+        herramienta: HERRAMIENTA, prompt,
+        userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 500,
       })
-      if (r1.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
 
-      // Párrafo 2 — recibe el párrafo 1 como contexto
-      const r2 = await llamarGemini({
-        herramienta: HERRAMIENTA,
-        prompt: `${base} Ya escribiste este primer párrafo: "${r1.texto.trim()}". Ahora escribe el siguiente párrafo que continúe naturalmente desde ahí, profundizando en el patrón o creencia que origina esa necesidad.`,
-        userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250,
-      })
-      if (r2.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
+      if (result.error || !result.texto) {
+        setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.')
+        return
+      }
 
-      // Párrafo 3 — recibe los dos anteriores como contexto
-      const r3 = await llamarGemini({
-        herramienta: HERRAMIENTA,
-        prompt: `${base} Ya escribiste estos párrafos: "${r1.texto.trim()} ${r2.texto.trim()}". Ahora escribe el párrafo final que continúe naturalmente, ofreciendo una perspectiva transformadora y cerrando con una pregunta reflexiva poderosa.`,
-        userId: userPlan.userId, usarLite: true, cacheable: false, maxTokens: 250,
-      })
-      if (r3.error) { setErrorMsg('El universo guarda silencio. Inténtalo de nuevo.'); return }
-
-      const texto = [r1.texto, r2.texto, r3.texto]
-        .map(t => t.trim())
-        .filter(Boolean)
-        .join('\n\n')
-
-      setInterpretacion(texto)
+      setInterpretacion(result.texto)
       if (userPlan.userId) await incrementarConsulta(userPlan.userId)
       analytics.registrarLectura({ desdCache: false, tiempoMs: Date.now() - t0, modeloIa: 'lite' })
-
       if (!lecturaGuardadaRef.current) {
         lecturaGuardadaRef.current = true
         await guardarLectura({
           herramienta: HERRAMIENTA,
           titulo: `Mirror Oracle · ${fechaHoy}`,
-          contenido: `Consulta: "${pregunta}"\n\n${texto}`,
+          contenido: `Consulta: "${pregunta}"\n\n${result.texto}`,
           metadatos: { pregunta, fecha: fechaHoy, nombre, signo },
         })
       }
@@ -109,10 +94,8 @@ export default function MirrorOracle() {
   return (
     <PageLayout>
       <div className="flex flex-col gap-6">
-
         <div className="flex items-center">
-          <button onClick={() => fase === 'resultado' ? setFase('preguntar') : navigate('/tradiciones')}
-            className="text-purple-300 text-sm">← Volver</button>
+          <button onClick={() => fase === 'resultado' ? setFase('preguntar') : navigate('/tradiciones')} className="text-purple-300 text-sm">← Volver</button>
           <div className="flex-1 text-center">
             <p className="text-white font-semibold text-sm">Mirror Oracle</p>
             <p className="text-purple-300 text-xs">Reflexión interior</p>
@@ -149,29 +132,19 @@ export default function MirrorOracle() {
                   <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                   <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
-              ) : errorMsg
-                ? <p className="text-red-300 text-sm">{errorMsg}</p>
-                : <TextoIA texto={interpretacion} />
-              }
+              ) : errorMsg ? <p className="text-red-300 text-sm">{errorMsg}</p> : <TextoIA texto={interpretacion} />}
             </div>
             {!cargando && interpretacion && (
               <>
                 <DisclaimerIA />
                 <Valoracion onValorar={handleValorar} />
                 <Compartir titulo="Mirror Oracle" texto={interpretacion} hashtags={['Universe', 'MirrorOracle']} />
-                <button onClick={() => navigate('/guia')}
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition">
-                  Explorar con mi Guía IA
-                </button>
-                <button onClick={() => { setFase('preguntar'); setInterpretacion(''); setErrorMsg(''); lecturaGuardadaRef.current = false }}
-                  className="w-full text-purple-300/60 text-sm py-2">
-                  Nueva consulta
-                </button>
+                <button onClick={() => navigate('/guia')} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition">Explorar con mi Guía IA</button>
+                <button onClick={() => { setFase('preguntar'); setInterpretacion(''); setErrorMsg(''); lecturaGuardadaRef.current = false }} className="w-full text-purple-300/60 text-sm py-2">Nueva consulta</button>
               </>
             )}
           </div>
         )}
-
       </div>
     </PageLayout>
   )
