@@ -13,7 +13,7 @@ jobs:
       - name: Create directory
         run: mkdir -p public/runas
 
-      - name: Download all 24 Elder Futhark SVGs via Wikimedia API
+      - name: Download all 24 Elder Futhark SVGs
         run: |
           UA="Mozilla/5.0 (compatible; RuneBot/1.0)"
           API="https://commons.wikimedia.org/w/api.php"
@@ -23,6 +23,13 @@ jobs:
             local output="$2"
             local url=$(curl -s -A "$UA" "${API}?action=query&titles=File:${filename}&prop=imageinfo&iiprop=url&format=json" | python3 -c "import sys,json; data=json.load(sys.stdin); pages=data['query']['pages']; page=list(pages.values())[0]; print(page['imageinfo'][0]['url'])")
             echo "✓ $filename"
+            curl -L -s -A "$UA" --max-time 30 "$url" -o "$output"
+          }
+
+          download_url() {
+            local url="$1"
+            local output="$2"
+            echo "✓ URL directa → $output"
             curl -L -s -A "$UA" --max-time 30 "$url" -o "$output"
           }
 
@@ -36,10 +43,9 @@ jobs:
           download_rune "Runic_letter_wunjo.svg"    public/runas/wunjo.svg
           download_rune "Runic_letter_haglaz.svg"   public/runas/haglaz.svg
           download_rune "Runic_letter_naudiz.svg"   public/runas/naudiz.svg
-          curl -L -s -A "$UA" --max-time 30 "https://upload.wikimedia.org/wikipedia/commons/5/54/Runic_letter_isaz.svg" -o public/runas/isa.svg
-          echo "✓ Runic_letter_isaz.svg (URL directa)"
+          download_url  "https://upload.wikimedia.org/wikipedia/commons/5/54/Runic_letter_isaz.svg"    public/runas/isa.svg
           download_rune "Runic_letter_jeran.svg"    public/runas/jeran.svg
-          download_rune "Runic_letter_iwaz.svg"     public/runas/iwaz.svg
+          download_url  "https://upload.wikimedia.org/wikipedia/commons/5/5f/Runic_letter_iwaz.svg"    public/runas/iwaz.svg
           download_rune "Runic_letter_pertho.svg"   public/runas/pertho.svg
           download_rune "Runic_letter_algiz.svg"    public/runas/algiz.svg
           download_rune "Runic_letter_sowilo.svg"   public/runas/sowilo.svg
