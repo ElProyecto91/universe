@@ -6,82 +6,113 @@ on:
 jobs:
   download:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v3
 
       - name: Create directory
         run: mkdir -p public/plantas
 
-      - name: Download via Wikimedia API
+      - name: Get URLs and download via Python
         run: |
-          UA="Mozilla/5.0 (compatible; BotanicBot/1.0)"
+          python3 << 'EOF'
+          import urllib.request
+          import urllib.parse
+          import json
+          import os
+          import time
 
-          download_plant() {
-            local nombre="$1"
-            local archivo="$2"
-            echo "--- Buscando URL para: $nombre"
-            local url=$(curl -s --max-time 15 "https://commons.wikimedia.org/w/api.php?action=query&titles=File:${archivo}&prop=imageinfo&iiprop=url&format=json&redirects=1" \
-              | python3 -c "
-import sys,json
-try:
-    data=json.load(sys.stdin)
-    pages=data['query']['pages']
-    page=list(pages.values())[0]
-    if 'imageinfo' in page:
-        print(page['imageinfo'][0]['url'])
-    else:
-        print('', end='')
-except:
-    print('', end='')
-")
-            if [ -z "$url" ]; then
-              echo "⚠️  No se encontró URL para $nombre"
-              return
-            fi
-            echo "Descargando $nombre desde: $url"
-            curl -L -A "$UA" --max-time 30 "$url" -o "public/plantas/${nombre}.jpg" || echo "⚠️  Error descargando $nombre"
+          PLANTAS = {
+            "lavanda":    "Lavandula_angustifolia_-_Köhler–s_Medizinal-Pflanzen-087.jpg",
+            "salvia":     "Salvia_officinalis_-_Köhler–s_Medizinal-Pflanzen-126.jpg",
+            "rosa":       "Rosa_centifolia_-_Köhler–s_Medizinal-Pflanzen-118.jpg",
+            "manzanilla": "Matricaria_chamomilla_-_Köhler–s_Medizinal-Pflanzen-135.jpg",
+            "menta":      "Mentha_x_piperita_-_Köhler–s_Medizinal-Pflanzen-080.jpg",
+            "romero":     "Rosmarinus_officinalis_-_Köhler–s_Medizinal-Pflanzen-123.jpg",
+            "valeriana":  "Valeriana_officinalis_-_Köhler–s_Medizinal-Pflanzen-143_clean.jpg",
+            "belladona":  "Atropa_belladonna_-_Köhler–s_Medizinal-Pflanzen-014.jpg",
+            "verbena":    "Verbena_officinalis_-_Köhler–s_Medizinal-Pflanzen-147.jpg",
+            "ajenjo":     "Artemisia_absinthium_-_Köhler–s_Medizinal-Pflanzen-006.jpg",
+            "tomillo":    "Thymus_vulgaris_-_Köhler–s_Medizinal-Pflanzen-138.jpg",
+            "milenrama":  "Achillea_millefolium_-_Köhler–s_Medizinal-Pflanzen-001.jpg",
+            "hinojo":     "Foeniculum_vulgare_-_Köhler–s_Medizinal-Pflanzen-053.jpg",
+            "oregano":    "Origanum_vulgare_-_Köhler–s_Medizinal-Pflanzen-096.jpg",
+            "laurel":     "Laurus_nobilis_-_Köhler–s_Medizinal-Pflanzen-086.jpg",
+            "hiperico":   "Hypericum_perforatum_-_Köhler–s_Medizinal-Pflanzen-064.jpg",
+            "muerdago":   "Viscum_album_-_Köhler–s_Medizinal-Pflanzen-152.jpg",
+            "mandragora": "Mandragora_officinarum_-_Köhler–s_Medizinal-Pflanzen-076.jpg",
+            "helenboro":  "Helleborus_niger_-_Köhler–s_Medizinal-Pflanzen-059.jpg",
+            "aconito":    "Aconitum_napellus_-_Köhler–s_Medizinal-Pflanzen-002.jpg",
           }
 
-          download_plant "lavanda"    "Lavandula_angustifolia_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-087.jpg"
-          download_plant "salvia"     "Salvia_officinalis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-126.jpg"
-          download_plant "rosa"       "Rosa_centifolia_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-118.jpg"
-          download_plant "manzanilla" "Matricaria_chamomilla_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-135.jpg"
-          download_plant "menta"      "Mentha_x_piperita_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-080.jpg"
-          download_plant "romero"     "Rosmarinus_officinalis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-123.jpg"
-          download_plant "valeriana"  "Valeriana_officinalis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-143_clean.jpg"
-          download_plant "belladona"  "Atropa_belladonna_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-014.jpg"
-          download_plant "verbena"    "Verbena_officinalis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-147.jpg"
-          download_plant "ajenjo"     "Artemisia_absinthium_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-006.jpg"
-          download_plant "tomillo"    "Thymus_vulgaris_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-138.jpg"
-          download_plant "milenrama"  "Achillea_millefolium_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-001.jpg"
-          download_plant "hinojo"     "Foeniculum_vulgare_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-053.jpg"
-          download_plant "oregano"    "Origanum_vulgare_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-096.jpg"
-          download_plant "laurel"     "Laurus_nobilis_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-086.jpg"
-          download_plant "hiperico"   "Hypericum_perforatum_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-064.jpg"
-          download_plant "muerdago"   "Viscum_album_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-152.jpg"
-          download_plant "mandragora" "Mandragora_officinarum_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-076.jpg"
-          download_plant "helenboro"  "Helleborus_niger_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-059.jpg"
-          download_plant "aconito"    "Aconitum_napellus_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-002.jpg"
+          UA = "Mozilla/5.0 (compatible; BotanicBot/1.0)"
+          headers = {"User-Agent": UA}
 
-      - name: Verify downloads
-        run: |
-          echo "=== Verificando ==="
-          FALLOS=0
-          for f in public/plantas/*.jpg; do
-            size=$(wc -c < "$f")
-            if [ "$size" -lt 50000 ]; then
-              echo "⚠️  FALLO: $f ($size bytes)"
-              FALLOS=$((FALLOS+1))
-            else
-              echo "✅ OK: $f ($size bytes)"
-            fi
-          done
-          echo "Total fallos: $FALLOS"
+          # Obtener URLs en lote (máx 50 títulos por llamada)
+          titles = "|".join(f"File:{v}" for v in PLANTAS.values())
+          api_url = (
+            "https://commons.wikimedia.org/w/api.php"
+            "?action=query"
+            f"&titles={urllib.parse.quote(titles)}"
+            "&prop=imageinfo"
+            "&iiprop=url"
+            "&format=json"
+            "&redirects=1"
+          )
+
+          print(f"Consultando API para {len(PLANTAS)} plantas...")
+          req = urllib.request.Request(api_url, headers=headers)
+          with urllib.request.urlopen(req, timeout=30) as r:
+            data = json.loads(r.read())
+
+          # Construir mapa nombre_archivo -> url
+          url_map = {}
+          pages = data["query"]["pages"]
+          for page in pages.values():
+            if "imageinfo" in page:
+              title = page["title"].replace("File:", "")
+              url_map[title] = page["imageinfo"][0]["url"]
+              print(f"✅ URL encontrada: {title[:50]}")
+            else:
+              print(f"⚠️  Sin imageinfo: {page.get('title','?')}")
+
+          # Descargar cada planta
+          fallos = []
+          for nombre, archivo in PLANTAS.items():
+            url = url_map.get(archivo)
+            if not url:
+              print(f"⚠️  No hay URL para {nombre} ({archivo})")
+              fallos.append(nombre)
+              continue
+
+            dest = f"public/plantas/{nombre}.jpg"
+            print(f"Descargando {nombre}...")
+            try:
+              req2 = urllib.request.Request(url, headers=headers)
+              with urllib.request.urlopen(req2, timeout=30) as r:
+                data_img = r.read()
+              with open(dest, "wb") as f:
+                f.write(data_img)
+              size = os.path.getsize(dest)
+              if size < 50000:
+                print(f"⚠️  FALLO tamaño: {nombre} ({size} bytes)")
+                fallos.append(nombre)
+              else:
+                print(f"✅ OK: {nombre} ({size} bytes)")
+            except Exception as e:
+              print(f"⚠️  Error {nombre}: {e}")
+              fallos.append(nombre)
+            time.sleep(0.5)
+
+          print(f"\n=== Fallos: {len(fallos)} ===")
+          for f in fallos:
+            print(f"  - {f}")
+          EOF
 
       - name: Commit and push
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add public/plantas/
-          git commit -m "Plant Oracle images via Wikimedia API" || echo "Nothing to commit"
+          git commit -m "Plant Oracle images via Python batch API" || echo "Nothing to commit"
           git push
