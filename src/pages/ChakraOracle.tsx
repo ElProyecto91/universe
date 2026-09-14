@@ -427,4 +427,40 @@ export default function ChakraOracle() {
             <div className="bg-[#080810] border border-white/10 rounded-3xl p-6">
               <p className="text-xs tracking-widest uppercase mb-4" style={{ color: chakra.color }}>Lectura del chakra</p>
               {cargando ? (
-         
+                <div className="flex gap-2 py-2">
+                  <div className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: chakra.color, animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: chakra.color, animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: chakra.color, animationDelay: '300ms' }} />
+                </div>
+              ) : errorMsg ? (
+                <p className="text-red-300 text-sm">{errorMsg}</p>
+              ) : (
+                <TextoIA texto={interpretacion} />
+              )}
+            </div>
+
+            {!cargando && interpretacion && (
+              <>
+                <DisclaimerIA />
+                <Valoracion onValorar={handleValorar} />
+                <Compartir
+                  titulo={`Chakra Oracle · ${chakra.nombreSanscrito}`}
+                  texto={`${chakra.nombreSanscrito} · ${chakra.simbolismo}\n\n${interpretacion}`}
+                  hashtags={['Universe', 'ChakraOracle', chakra.nombreSanscrito]}
+                />
+                <button
+                  onClick={() => navigate('/guia')}
+                  className="w-full text-white font-semibold py-4 rounded-full hover:opacity-90 transition"
+                  style={{ background: `linear-gradient(to right, ${chakra.color}99, ${chakra.color}66)` }}
+                >
+                  Explorar con mi Guía IA
+                </button>
+                <button onClick={resetear} className="w-full text-sm py-2" style={{ color: `${chakra.color}60` }}>Nueva consulta</button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </PageLayout>
+  )
+}
