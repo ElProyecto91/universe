@@ -36,7 +36,8 @@ jobs:
           download_rune "Runic_letter_wunjo.svg"    public/runas/wunjo.svg
           download_rune "Runic_letter_haglaz.svg"   public/runas/haglaz.svg
           download_rune "Runic_letter_naudiz.svg"   public/runas/naudiz.svg
-          download_rune "Runic_letter_isaz.svg"     public/runas/isa.svg
+          curl -L -s -A "$UA" --max-time 30 "https://upload.wikimedia.org/wikipedia/commons/5/54/Runic_letter_isaz.svg" -o public/runas/isa.svg
+          echo "✓ Runic_letter_isaz.svg (URL directa)"
           download_rune "Runic_letter_jeran.svg"    public/runas/jeran.svg
           download_rune "Runic_letter_iwaz.svg"     public/runas/iwaz.svg
           download_rune "Runic_letter_pertho.svg"   public/runas/pertho.svg
