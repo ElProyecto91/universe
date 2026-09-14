@@ -13,50 +13,35 @@ jobs:
       - name: Create directory
         run: mkdir -p public/runas
 
-      - name: Download all 24 Elder Futhark SVGs
+      - name: Download all 24 Elder Futhark SVGs direct URLs
         run: |
           UA="Mozilla/5.0 (compatible; RuneBot/1.0)"
-          API="https://commons.wikimedia.org/w/api.php"
+          BASE="https://upload.wikimedia.org/wikipedia/commons"
 
-          download_rune() {
-            local filename="$1"
-            local output="$2"
-            local url=$(curl -s -A "$UA" "${API}?action=query&titles=File:${filename}&prop=imageinfo&iiprop=url&format=json" | python3 -c "import sys,json; data=json.load(sys.stdin); pages=data['query']['pages']; page=list(pages.values())[0]; print(page['imageinfo'][0]['url'])")
-            echo "✓ $filename"
-            curl -L -s -A "$UA" --max-time 30 "$url" -o "$output"
-          }
-
-          download_url() {
-            local url="$1"
-            local output="$2"
-            echo "✓ URL directa → $output"
-            curl -L -s -A "$UA" --max-time 30 "$url" -o "$output"
-          }
-
-          download_rune "Runic_letter_fehu.svg"     public/runas/fehu.svg
-          download_rune "Runic_letter_uruz.svg"     public/runas/uruz.svg
-          download_rune "Runic_letter_thurisaz.svg" public/runas/thurisaz.svg
-          download_rune "Runic_letter_ansuz.svg"    public/runas/ansuz.svg
-          download_rune "Runic_letter_raido.svg"    public/runas/raido.svg
-          download_rune "Runic_letter_kauna.svg"    public/runas/kaunaz.svg
-          download_rune "Runic_letter_gebo.svg"     public/runas/gebo.svg
-          download_rune "Runic_letter_wunjo.svg"    public/runas/wunjo.svg
-          download_rune "Runic_letter_haglaz.svg"   public/runas/haglaz.svg
-          download_rune "Runic_letter_naudiz.svg"   public/runas/naudiz.svg
-          download_url  "https://upload.wikimedia.org/wikipedia/commons/5/54/Runic_letter_isaz.svg"    public/runas/isa.svg
-          download_rune "Runic_letter_jeran.svg"    public/runas/jeran.svg
-          download_url  "https://upload.wikimedia.org/wikipedia/commons/5/5f/Runic_letter_iwaz.svg"    public/runas/iwaz.svg
-          download_rune "Runic_letter_pertho.svg"   public/runas/pertho.svg
-          download_rune "Runic_letter_algiz.svg"    public/runas/algiz.svg
-          download_rune "Runic_letter_sowilo.svg"   public/runas/sowilo.svg
-          download_rune "Runic_letter_tiwaz.svg"    public/runas/tiwaz.svg
-          download_rune "Runic_letter_berkanan.svg" public/runas/berkanan.svg
-          download_rune "Runic_letter_ehwaz.svg"    public/runas/ehwaz.svg
-          download_rune "Runic_letter_mannaz.svg"   public/runas/mannaz.svg
-          download_rune "Runic_letter_laukaz.svg"   public/runas/laukaz.svg
-          download_rune "Runic_letter_ingwaz.svg"   public/runas/ingwaz.svg
-          download_rune "Runic_letter_dagaz.svg"    public/runas/dagaz.svg
-          download_rune "Runic_letter_othalan.svg"  public/runas/othalan.svg
+          curl -L -s -A "$UA" "$BASE/8/8f/Runic_letter_fehu.svg"     -o public/runas/fehu.svg
+          curl -L -s -A "$UA" "$BASE/3/3f/Runic_letter_uruz.svg"     -o public/runas/uruz.svg
+          curl -L -s -A "$UA" "$BASE/8/86/Runic_letter_thurisaz.svg" -o public/runas/thurisaz.svg
+          curl -L -s -A "$UA" "$BASE/d/d3/Runic_letter_ansuz.svg"    -o public/runas/ansuz.svg
+          curl -L -s -A "$UA" "$BASE/4/40/Runic_letter_raido.svg"    -o public/runas/raido.svg
+          curl -L -s -A "$UA" "$BASE/c/c5/Runic_letter_kauna.svg"    -o public/runas/kaunaz.svg
+          curl -L -s -A "$UA" "$BASE/7/70/Runic_letter_gebo.svg"     -o public/runas/gebo.svg
+          curl -L -s -A "$UA" "$BASE/3/35/Runic_letter_wunjo.svg"    -o public/runas/wunjo.svg
+          curl -L -s -A "$UA" "$BASE/2/22/Runic_letter_haglaz.svg"   -o public/runas/haglaz.svg
+          curl -L -s -A "$UA" "$BASE/3/3f/Runic_letter_naudiz.svg"   -o public/runas/naudiz.svg
+          curl -L -s -A "$UA" "$BASE/5/54/Runic_letter_isaz.svg"     -o public/runas/isa.svg
+          curl -L -s -A "$UA" "$BASE/0/08/Runic_letter_jeran.svg"    -o public/runas/jeran.svg
+          curl -L -s -A "$UA" "$BASE/5/5f/Runic_letter_iwaz.svg"     -o public/runas/iwaz.svg
+          curl -L -s -A "$UA" "$BASE/0/0e/Runic_letter_pertho.svg"   -o public/runas/pertho.svg
+          curl -L -s -A "$UA" "$BASE/d/df/Runic_letter_algiz.svg"    -o public/runas/algiz.svg
+          curl -L -s -A "$UA" "$BASE/f/f8/Runic_letter_sowilo.svg"   -o public/runas/sowilo.svg
+          curl -L -s -A "$UA" "$BASE/0/01/Runic_letter_tiwaz.svg"    -o public/runas/tiwaz.svg
+          curl -L -s -A "$UA" "$BASE/6/6e/Runic_letter_berkanan.svg" -o public/runas/berkanan.svg
+          curl -L -s -A "$UA" "$BASE/c/c2/Runic_letter_ehwaz.svg"    -o public/runas/ehwaz.svg
+          curl -L -s -A "$UA" "$BASE/5/57/Runic_letter_mannaz.svg"   -o public/runas/mannaz.svg
+          curl -L -s -A "$UA" "$BASE/4/46/Runic_letter_laukaz.svg"   -o public/runas/laukaz.svg
+          curl -L -s -A "$UA" "$BASE/d/d5/Runic_letter_ingwaz.svg"   -o public/runas/ingwaz.svg
+          curl -L -s -A "$UA" "$BASE/0/0e/Runic_letter_dagaz.svg"    -o public/runas/dagaz.svg
+          curl -L -s -A "$UA" "$BASE/c/ca/Runic_letter_othalan.svg"  -o public/runas/othalan.svg
 
       - name: Verify all 24
         run: |
