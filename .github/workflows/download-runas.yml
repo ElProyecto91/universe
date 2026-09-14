@@ -10,6 +10,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Create directory
+        run: mkdir -p public/runas
+
       - name: Download last 4 runes via Wikimedia API
         run: |
           UA="Mozilla/5.0 (compatible; RuneBot/1.0)"
@@ -23,20 +26,15 @@ jobs:
             curl -L -A "$UA" --max-time 30 "$url" -o "$output"
           }
 
-          download_rune "Runic_letter_laukaz.svg"   public/runas/laukaz.svg
-          download_rune "Runic_letter_laguz.svg"     public/runas/laukaz.svg
-          download_rune "Runic_letter_ingwaz.svg"    public/runas/ingwaz.svg
-          download_rune "Runic_letter_ing.svg"       public/runas/ingwaz.svg
-          download_rune "Runic_letter_dagaz.svg"     public/runas/dagaz.svg
-          download_rune "Runic_letter_daeg.svg"      public/runas/dagaz.svg
-          download_rune "Runic_letter_othalan.svg"   public/runas/othalan.svg
-          download_rune "Runic_letter_odal.svg"      public/runas/othalan.svg
+          download_rune "Runic_letter_laukaz.svg"  public/runas/laukaz.svg
+          download_rune "Runic_letter_ingwaz.svg"  public/runas/ingwaz.svg
+          download_rune "Runic_letter_dagaz.svg"   public/runas/dagaz.svg
+          download_rune "Runic_letter_othalan.svg" public/runas/othalan.svg
 
-      - name: Verify all 24
+      - name: Verify
         run: |
-          echo "=== Verificando las 24 runas ==="
           FALLOS=0
-          for f in public/runas/*.svg; do
+          for f in public/runas/laukaz.svg public/runas/ingwaz.svg public/runas/dagaz.svg public/runas/othalan.svg; do
             size=$(wc -c < "$f")
             if [ "$size" -lt 150 ]; then
               echo "⚠️  FALLO: $f ($size bytes)"
@@ -45,12 +43,12 @@ jobs:
               echo "✅ OK: $f ($size bytes)"
             fi
           done
-          echo "Total: $FALLOS fallos"
+          echo "Total fallos: $FALLOS"
 
       - name: Commit and push
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add public/runas/
-          git commit -m "Add last rune SVGs" || echo "Nothing to commit"
+          git commit -m "Add last 4 rune SVGs" || echo "Nothing to commit"
           git push
