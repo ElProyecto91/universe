@@ -1,31 +1,213 @@
-export const FIGURAS_GEOMANTICAS = [
-  { nombre: 'Puer', simbolo: '⊙\n⊙\n⊙⊙\n⊙', keywords: 'Energía · Impulsividad · Juventud · Acción', elemento: 'Fuego', planeta: 'Marte', favorable: 'Batalla, competición, inicio de proyectos', desfavorable: 'Contratos, amor, negocios delicados', mensaje: 'Una energía joven e impulsiva. Hay fuerza disponible — la clave está en canalizarla con dirección.' },
-  { nombre: 'Amissio', simbolo: '⊙⊙\n⊙⊙\n⊙\n⊙', keywords: 'Pérdida · Soltar · Transformación', elemento: 'Tierra', planeta: 'Venus', favorable: 'Soltar, amor transitorio, recuperar lo perdido', desfavorable: 'Dinero, negocios, permanencia', mensaje: 'Algo está siendo soltado. La pérdida que percibes puede ser una liberación necesaria.' },
-  { nombre: 'Albus', simbolo: '⊙⊙\n⊙\n⊙⊙\n⊙⊙', keywords: 'Sabiduría · Claridad · Pureza · Prudencia', elemento: 'Aire', planeta: 'Mercurio', favorable: 'Negocios, estudio, contratos, comunicación', desfavorable: 'Inicio de empresas, aventura', mensaje: 'La sabiduría y la claridad están disponibles. Piensa antes de actuar — la mente es tu mejor herramienta ahora.' },
-  { nombre: 'Populus', simbolo: '⊙⊙\n⊙⊙\n⊙⊙\n⊙⊙', keywords: 'Comunidad · Neutralidad · Masa · Espejo', elemento: 'Agua', planeta: 'Luna', favorable: 'Todo, dependiendo del contexto', desfavorable: 'Decisiones individuales claras', mensaje: 'La figura más neutral. El resultado refleja lo que traes. Lo que siembras ahora se multiplica.' },
-  { nombre: 'Fortuna Major', simbolo: '⊙\n⊙\n⊙⊙\n⊙⊙', keywords: 'Gran fortuna · Éxito · Protección · Estabilidad', elemento: 'Fuego', planeta: 'Sol', favorable: 'Todo — especialmente éxito, poder, reconocimiento', desfavorable: 'Pocas cosas', mensaje: 'Una de las figuras más auspiciosas. El éxito viene desde dentro — tu fuerza interior es lo que triunfa.' },
-  { nombre: 'Fortuna Minor', simbolo: '⊙⊙\n⊙⊙\n⊙\n⊙', keywords: 'Fortuna pequeña · Velocidad · Oportunidad breve', elemento: 'Fuego', planeta: 'Sol', favorable: 'Situaciones que requieren rapidez', desfavorable: 'Proyectos a largo plazo', mensaje: 'Una oportunidad que no durará mucho. Actúa rápido si quieres aprovecharla.' },
-  { nombre: 'Conjunctio', simbolo: '⊙⊙\n⊙\n⊙\n⊙⊙', keywords: 'Unión · Encuentro · Comunicación · Conexión', elemento: 'Aire', planeta: 'Mercurio', favorable: 'Relaciones, comunicación, encuentros, contratos', desfavorable: 'Soledad necesaria', mensaje: 'Una unión o conexión está en juego. Los caminos se cruzan — el encuentro tiene potencial significativo.' },
-  { nombre: 'Puella', simbolo: '⊙\n⊙⊙\n⊙⊙\n⊙', keywords: 'Belleza · Armonía · Amor · Paz', elemento: 'Aire', planeta: 'Venus', favorable: 'Amor, arte, belleza, armonía, paz', desfavorable: 'Conflictos, negocios duros', mensaje: 'La belleza y la armonía son las fuerzas dominantes. Un momento de gracia y amor está disponible.' },
-  { nombre: 'Rubeus', simbolo: '⊙⊙\n⊙\n⊙\n⊙', keywords: 'Pasión · Peligro · Transformación oscura', elemento: 'Fuego', planeta: 'Marte', favorable: 'Magia, transformación, situaciones que requieren intensidad', desfavorable: 'La mayoría de preguntas convencionales', mensaje: 'Energía intensa y peligrosa. No es el momento para actuar desde el ego — la transformación requiere honestidad radical.' },
-  { nombre: 'Acquisitio', simbolo: '⊙\n⊙\n⊙⊙\n⊙', keywords: 'Adquisición · Ganancia · Éxito material', elemento: 'Fuego', planeta: 'Júpiter', favorable: 'Dinero, negocios, adquisiciones, ganancias', desfavorable: 'Espiritualidad, soltar', mensaje: 'Lo que buscas está llegando. Una figura de ganancia y éxito material — tus esfuerzos darán fruto.' },
-  { nombre: 'Carcer', simbolo: '⊙\n⊙\n⊙\n⊙', keywords: 'Límite · Restricción · Karma · Estructura', elemento: 'Tierra', planeta: 'Saturno', favorable: 'Estructura, límites necesarios, karma resuelto', desfavorable: 'Movimiento, cambio, libertad', mensaje: 'Un límite o restricción rodea la situación. Puede ser externa o interna. La paciencia y la aceptación son clave.' },
-  { nombre: 'Tristitia', simbolo: '⊙\n⊙\n⊙\n⊙⊙', keywords: 'Tristeza · Descenso · Interiorización', elemento: 'Tierra', planeta: 'Saturno', favorable: 'Introspección, espiritualidad, magia', desfavorable: 'Acción externa, alegría inmediata', mensaje: 'Un momento de descenso y profundización. La tristeza que encuentras tiene algo que enseñar si la atraviesas con consciencia.' },
-  { nombre: 'Laetitia', simbolo: '⊙⊙\n⊙\n⊙\n⊙', keywords: 'Alegría · Expansión · Optimismo · Elevación', elemento: 'Agua', planeta: 'Júpiter', favorable: 'Alegría, salud, expansión, esperanza', desfavorable: 'Pocas cosas', mensaje: 'Alegría y expansión. Un momento ascendente — aprovecha este impulso hacia arriba.' },
-  { nombre: 'Cauda Draconis', simbolo: '⊙\n⊙⊙\n⊙\n⊙', keywords: 'Final · Karma · Umbral · Salida', elemento: 'Fuego/Tierra', planeta: 'Nodo Sur', favorable: 'Finales, liberación de lo viejo, karma completado', desfavorable: 'Inicios, adquisiciones', mensaje: 'La cola del dragón marca un final. Algo está completando su ciclo — el cierre abre una nueva puerta.' },
-  { nombre: 'Caput Draconis', simbolo: '⊙\n⊙\n⊙⊙\n⊙', keywords: 'Inicio · Potencial · Entrada · Nuevo ciclo', elemento: 'Tierra/Aire', planeta: 'Nodo Norte', favorable: 'Inicios, adquisiciones, nuevos proyectos', desfavorable: 'Finales, liberación', mensaje: 'La cabeza del dragón marca un inicio poderoso. Un nuevo ciclo de crecimiento y adquisición comienza.' },
-  { nombre: 'Via', simbolo: '⊙\n⊙\n⊙\n⊙', keywords: 'Camino · Movimiento · Viaje · Decisión', elemento: 'Agua', planeta: 'Luna', favorable: 'Viajes, cambios, movimiento', desfavorable: 'Estabilidad, permanencia', mensaje: 'El camino está abierto. El movimiento es inevitable — la pregunta es en qué dirección quieres ir.' },
-]
-
-export function generarFigura(): typeof FIGURAS_GEOMANTICAS[0] {
-  return FIGURAS_GEOMANTICAS[Math.floor(Math.random() * FIGURAS_GEOMANTICAS.length)]
+export type FiguraGeomantica = {
+  nombre: string
+  nombreArabe: string
+  nombreLatin: string
+  simbolo: string
+  planeta: string
+  elemento: string
+  energia: string
+  mensaje: string
+  patron: [number, number, number, number] // 1=impar(●), 2=par(●●) × 4 filas
 }
 
-export function generarLectura3Figuras() {
-  const mezcladas = [...FIGURAS_GEOMANTICAS].sort(() => Math.random() - 0.5)
-  return {
-    escudo: mezcladas[0],
-    corazon: mezcladas[1],
-    testigo: mezcladas[2],
-  }
+export const FIGURAS_GEOMANTICAS: FiguraGeomantica[] = [
+  {
+    nombre: 'Via',
+    nombreArabe: 'الطريق',
+    nombreLatin: 'Via',
+    simbolo: '⊕',
+    planeta: 'Luna',
+    elemento: 'Agua',
+    energia: 'Camino · Movimiento · Viaje',
+    patron: [2, 2, 2, 2],
+    mensaje: 'Via señala un camino abierto y en movimiento. Lo que consultas está en transición — nada está fijo todavía. El movimiento es la respuesta: avanza, no esperes.',
+  },
+  {
+    nombre: 'Populus',
+    nombreArabe: 'الجماعة',
+    nombreLatin: 'Populus',
+    simbolo: '⊗',
+    planeta: 'Luna',
+    elemento: 'Agua',
+    energia: 'Colectivo · Masa · Neutralidad',
+    patron: [1, 2, 2, 2],
+    mensaje: 'Populus representa la masa y la neutralidad. La situación refleja lo que el entorno colectivo dicta. Busca tu voz individual dentro del grupo — la respuesta no está en seguir a la mayoría.',
+  },
+  {
+    nombre: 'Albus',
+    nombreArabe: 'الأبيض',
+    nombreLatin: 'Albus',
+    simbolo: '☽',
+    planeta: 'Mercurio',
+    elemento: 'Aire',
+    energia: 'Claridad · Sabiduría · Paz',
+    patron: [2, 2, 1, 2],
+    mensaje: 'Albus trae claridad y mente despejada. La sabiduría que necesitas ya está en ti — este es el momento de confiar en el pensamiento claro y las palabras precisas. La paz es posible.',
+  },
+  {
+    nombre: 'Conjunctio',
+    nombreArabe: 'الاجتماع',
+    nombreLatin: 'Conjunctio',
+    simbolo: '✕',
+    planeta: 'Mercurio',
+    elemento: 'Aire',
+    energia: 'Unión · Encuentro · Recuperación',
+    patron: [2, 1, 1, 2],
+    mensaje: 'Conjunctio anuncia un encuentro o reunión. Lo que se había separado puede volver a unirse. Presta atención a las conexiones que se forman — una de ellas tiene el poder de cambiar el resultado.',
+  },
+  {
+    nombre: 'Puella',
+    nombreArabe: 'البنت',
+    nombreLatin: 'Puella',
+    simbolo: '♀',
+    planeta: 'Venus',
+    elemento: 'Agua',
+    energia: 'Belleza · Armonía · Amor',
+    patron: [2, 1, 2, 1],
+    mensaje: 'Puella trae belleza, armonía y amor. La situación se beneficia de la suavidad y la receptividad. No forces — deja que la situación fluya hacia su forma natural más bella.',
+  },
+  {
+    nombre: 'Amissio',
+    nombreArabe: 'الخسارة',
+    nombreLatin: 'Amissio',
+    simbolo: '↓',
+    planeta: 'Venus',
+    elemento: 'Fuego',
+    energia: 'Pérdida · Liberación · Soltar',
+    patron: [1, 2, 2, 1],
+    mensaje: 'Amissio señala pérdida o liberación. Lo que se va no puede ser retenido — pero lo que se suelta con gracia deja espacio para algo mejor. La pérdida de hoy es la liberación de mañana.',
+  },
+  {
+    nombre: 'Fortuna Major',
+    nombreArabe: 'النصرة الداخلة',
+    nombreLatin: 'Fortuna Major',
+    simbolo: '☀',
+    planeta: 'Sol',
+    elemento: 'Fuego',
+    energia: 'Gran fortuna · Éxito · Protección interior',
+    patron: [2, 1, 1, 1],
+    mensaje: 'Fortuna Major anuncia gran fortuna que viene desde dentro. El éxito que buscas está ya en tu interior — tus propias capacidades son la fuente de la buena suerte. Confía en ti.',
+  },
+  {
+    nombre: 'Fortuna Minor',
+    nombreArabe: 'النصرة الخارجة',
+    nombreLatin: 'Fortuna Minor',
+    simbolo: '◑',
+    planeta: 'Sol',
+    elemento: 'Fuego',
+    energia: 'Fortuna externa · Rapidez · Ayuda',
+    patron: [1, 2, 1, 2],
+    mensaje: 'Fortuna Minor trae buena suerte rápida que viene del exterior. Una persona, circunstancia o evento externo actúa a tu favor. Mantente receptivo a la ayuda que llega desde fuera.',
+  },
+  {
+    nombre: 'Puer',
+    nombreArabe: 'الفتى',
+    nombreLatin: 'Puer',
+    simbolo: '♂',
+    planeta: 'Marte',
+    elemento: 'Fuego',
+    energia: 'Acción · Impulsividad · Valor',
+    patron: [1, 1, 2, 1],
+    mensaje: 'Puer trae energía de acción e impulso. La situación exige valentía y decisión rápida. El exceso de reflexión es el único peligro aquí — actúa con valor y sin titubear.',
+  },
+  {
+    nombre: 'Rubeus',
+    nombreArabe: 'الأحمر',
+    nombreLatin: 'Rubeus',
+    simbolo: '⬡',
+    planeta: 'Marte',
+    elemento: 'Fuego',
+    energia: 'Pasión · Peligro · Transformación por fuego',
+    patron: [2, 1, 1, 1],
+    mensaje: 'Rubeus advierte de pasiones intensas y peligro potencial. La energía presente es poderosa pero puede quemarte si no la canalizas. Actúa con consciencia — el fuego transforma o destruye según quien lo maneja.',
+  },
+  {
+    nombre: 'Acquisitio',
+    nombreArabe: 'الربح',
+    nombreLatin: 'Acquisitio',
+    simbolo: '↑',
+    planeta: 'Júpiter',
+    elemento: 'Aire',
+    energia: 'Ganancia · Abundancia · Logro',
+    patron: [1, 2, 1, 1],
+    mensaje: 'Acquisitio es la figura de la ganancia y la abundancia. Lo que buscas puede obtenerse — las condiciones son favorables. Actúa con intención clara y la recompensa llegará.',
+  },
+  {
+    nombre: 'Laetitia',
+    nombreArabe: 'الفرح',
+    nombreLatin: 'Laetitia',
+    simbolo: '☺',
+    planeta: 'Júpiter',
+    elemento: 'Aire',
+    energia: 'Alegría · Expansión · Optimismo',
+    patron: [1, 1, 2, 2],
+    mensaje: 'Laetitia trae alegría genuina y expansión. La situación se mueve hacia un resultado positivo — confía en el proceso. La ligereza y el optimismo son las herramientas correctas ahora.',
+  },
+  {
+    nombre: 'Tristitia',
+    nombreArabe: 'الحزن',
+    nombreLatin: 'Tristitia',
+    simbolo: '☹',
+    planeta: 'Saturno',
+    elemento: 'Tierra',
+    energia: 'Tristeza · Restricción · Profundidad',
+    patron: [2, 2, 1, 1],
+    mensaje: 'Tristitia señala un período de restricción o tristeza interior. No es un mal augurio sino una invitación a la profundidad. Lo que se aprende en los momentos difíciles tiene raíces más hondas.',
+  },
+  {
+    nombre: 'Carcer',
+    nombreArabe: 'الحبس',
+    nombreLatin: 'Carcer',
+    simbolo: '⬛',
+    planeta: 'Saturno',
+    elemento: 'Tierra',
+    energia: 'Límite · Restricción · Necesidad de paciencia',
+    patron: [1, 1, 1, 1],
+    mensaje: 'Carcer indica una situación de límites y restricción. No es el momento de forzar la salida — la paciencia y la aceptación son la clave. Lo que parece una prisión puede ser también un lugar de concentración y preparación.',
+  },
+  {
+    nombre: 'Caput Draconis',
+    nombreArabe: 'رأس الجوزهر',
+    nombreLatin: 'Caput Draconis',
+    simbolo: '☊',
+    planeta: 'Nodo Norte',
+    elemento: 'Tierra/Aire',
+    energia: 'Entrada · Inicio favorable · Crecimiento',
+    patron: [1, 1, 2, 1],
+    mensaje: 'Caput Draconis marca una entrada favorable y un inicio lleno de potencial. Lo que comienza ahora tiene el viento a favor. Es el momento de iniciar, entrar y abrirse a lo nuevo.',
+  },
+  {
+    nombre: 'Cauda Draconis',
+    nombreArabe: 'ذنب الجوزهر',
+    nombreLatin: 'Cauda Draconis',
+    simbolo: '☋',
+    planeta: 'Nodo Sur',
+    elemento: 'Fuego/Agua',
+    energia: 'Salida · Cierre · Liberación final',
+    patron: [1, 2, 1, 1],
+    mensaje: 'Cauda Draconis marca una salida o cierre necesario. Lo que debe terminar, termina. No te aferres a lo que pide ser liberado — la puerta que se cierra aquí abre otra en otro lugar.',
+  },
+]
+
+export function lanzarFigura(): FiguraGeomantica {
+  // 4 filas, cada una par(2) o impar(1) según puntos al azar
+  const patron: [number, number, number, number] = [
+    Math.random() > 0.5 ? 1 : 2,
+    Math.random() > 0.5 ? 1 : 2,
+    Math.random() > 0.5 ? 1 : 2,
+    Math.random() > 0.5 ? 1 : 2,
+  ]
+  // Busca la figura que coincide con el patrón
+  const figura = FIGURAS_GEOMANTICAS.find(f =>
+    f.patron[0] === patron[0] &&
+    f.patron[1] === patron[1] &&
+    f.patron[2] === patron[2] &&
+    f.patron[3] === patron[3]
+  )
+  // Fallback aleatorio si no hay match exacto
+  return figura ?? FIGURAS_GEOMANTICAS[Math.floor(Math.random() * FIGURAS_GEOMANTICAS.length)]
+}
+
+export function renderizarPatron(patron: [number, number, number, number]): string[] {
+  return patron.map(p => p === 1 ? '●' : '● ●')
 }
