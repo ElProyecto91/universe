@@ -131,7 +131,7 @@ export default function Runas() {
       userId,
       usarLite: false,
       cacheable: false,
-      maxTokens: 1800,
+      maxTokens: 2200,
     })
 
     if (!result.error && result.texto) {
