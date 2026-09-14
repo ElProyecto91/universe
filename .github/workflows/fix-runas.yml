@@ -1,0 +1,50 @@
+name: Fix Failed Rune SVGs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download failed runes with corrected URLs
+        run: |
+          BASE="https://upload.wikimedia.org/wikipedia/commons"
+          UA="Mozilla/5.0 (compatible; RuneBot/1.0)"
+
+          curl -L -A "$UA" --max-time 30 "$BASE/f/f4/Runic_letter_fehu.svg"      -o public/runas/fehu.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/4/46/Runic_letter_uruz.svg"       -o public/runas/uruz.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/b/bf/Runic_letter_thurisaz.svg"   -o public/runas/thurisaz.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/3/3b/Runic_letter_ansuz.svg"      -o public/runas/ansuz.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/b/b5/Runic_letter_raido.svg"      -o public/runas/raido.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/1/1b/Runic_letter_kauna.svg"      -o public/runas/kaunaz.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/6/69/Runic_letter_gebo.svg"       -o public/runas/gebo.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/2/2e/Runic_letter_wunjo.svg"      -o public/runas/wunjo.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/f/f4/Runic_letter_haglaz.svg"     -o public/runas/haglaz.svg
+          curl -L -A "$UA" --max-time 30 "$BASE/b/b3/Runic_letter_naudiz.svg"     -o public/runas/naudiz.svg
+
+      - name: Verify
+        run: |
+          FALLOS=0
+          for f in public/runas/fehu.svg public/runas/uruz.svg public/runas/thurisaz.svg public/runas/ansuz.svg public/runas/raido.svg public/runas/kaunaz.svg public/runas/gebo.svg public/runas/wunjo.svg public/runas/haglaz.svg public/runas/naudiz.svg; do
+            size=$(wc -c < "$f")
+            if [ "$size" -lt 200 ]; then
+              echo "⚠️  FALLO: $f ($size bytes)"
+              FALLOS=$((FALLOS+1))
+            else
+              echo "✅ OK: $f ($size bytes)"
+            fi
+          done
+          echo "Total fallos: $FALLOS"
+          if [ "$FALLOS" -gt 0 ]; then exit 1; fi
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add public/runas/
+          git commit -m "Fix failed rune SVGs with corrected Wikimedia URLs" || echo "Nothing to commit"
+          git push
