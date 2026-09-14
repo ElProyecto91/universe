@@ -180,5 +180,40 @@ const ENERGIAS: Record<NombreFase, string> = {
 }
 
 export function getFaseLunar(signo = 'Leo'): FaseLunar {
-  const hoy                  = new Date()
-  const lunaReferencia     
+  const hoy                 = new Date()
+  const lunaReferencia      = new Date('2000-01-06')
+  const diasDesdeReferencia = Math.floor((hoy.getTime() - lunaReferencia.getTime()) / (1000 * 60 * 60 * 24))
+  const cicloDias           = 29.53059
+  const diaEnCiclo          = diasDesdeReferencia % cicloDias
+
+  const nombre      = getNombreFase(diaEnCiclo)
+  const signoValido = MENSAJES_POR_SIGNO[nombre][signo] ? signo : 'Leo'
+
+  let porcentajeIluminacion: number
+  let diasHastaLunaLlena: number
+
+  if (diaEnCiclo < 14.77) {
+    porcentajeIluminacion = nombre === 'Cuarto Creciente' ? 50 : Math.round((diaEnCiclo / 14.75) * 100)
+    diasHastaLunaLlena    = Math.max(0, Math.round(14.75 - diaEnCiclo))
+  } else if (nombre === 'Luna Llena') {
+    porcentajeIluminacion = 100
+    diasHastaLunaLlena    = 0
+  } else {
+    porcentajeIluminacion = nombre === 'Cuarto Menguante' ? 50 : Math.round(((29.53 - diaEnCiclo) / 14.75) * 100)
+    diasHastaLunaLlena    = Math.round(29.53 - diaEnCiclo + 14.75)
+  }
+
+  return {
+    nombre,
+    simbolo:               SIMBOLOS[nombre],
+    energia:               ENERGIAS[nombre],
+    mensaje:               MENSAJES_POR_SIGNO[nombre][signoValido],
+    practica:              PRACTICAS[nombre],
+    diasHastaLunaLlena:    Math.max(0, diasHastaLunaLlena),
+    porcentajeIluminacion: Math.max(0, Math.min(100, porcentajeIluminacion)),
+  }
+}
+
+export function getDiasHastaLunaLlena(): number {
+  return getFaseLunar().diasHastaLunaLlena
+}
