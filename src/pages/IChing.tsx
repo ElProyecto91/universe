@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { limpiarMarkdown } from '../components/TextoIA'
-import { HEXAGRAMAS, lanzarMonedas, lineasAHexagrama, dibujarHexagrama } from '../lib/motores/iching'
+import { HEXAGRAMAS, lanzarMonedas, lineasAHexagrama } from '../lib/motores/iching'
 import Compartir from '../components/Compartir'
 import Paywall from '../components/Paywall'
 import Valoracion from '../components/Valoracion'
@@ -14,12 +14,99 @@ function getHexagramaUnicode(numero: number): string {
   return String.fromCodePoint(0x4DBF + numero)
 }
 
+function MonedaChina({ girando }: { girando: boolean }) {
+  return (
+    <div style={{
+      width: 180, height: 180,
+      animation: girando ? 'girarMoneda 0.6s ease-in-out infinite' : 'none',
+      margin: '0 auto',
+    }}>
+      <style>{`
+        @keyframes girarMoneda {
+          0%   { transform: rotateY(0deg) scale(1); }
+          50%  { transform: rotateY(90deg) scale(0.92); }
+          100% { transform: rotateY(0deg) scale(1); }
+        }
+      `}</style>
+      <svg width="180" height="180" viewBox="0 0 180 180">
+        {/* Sombra exterior */}
+        <circle cx="92" cy="93" r="82" fill="rgba(0,0,0,0.3)" />
+
+        {/* Cuerpo de la moneda — bronce dorado */}
+        <circle cx="90" cy="90" r="82" fill="#8B6914" />
+        <circle cx="90" cy="90" r="80" fill="#C8970A" />
+        <circle cx="90" cy="90" r="78" fill="#D4A017" />
+
+        {/* Borde exterior relieve */}
+        <circle cx="90" cy="90" r="78" fill="none" stroke="#8B6914" strokeWidth="4" />
+        <circle cx="90" cy="90" r="74" fill="none" stroke="#E8B420" strokeWidth="1.5" />
+
+        {/* Área interior de la moneda */}
+        <circle cx="90" cy="90" r="68" fill="#B8870A" />
+        <circle cx="90" cy="90" r="66" fill="#C8970A" />
+
+        {/* Agujero cuadrado central */}
+        <rect x="73" y="73" width="34" height="34" fill="#1a0a00" rx="2" />
+        <rect x="75" y="75" width="30" height="30" fill="#0d0500" rx="1" />
+        {/* Borde dorado del agujero */}
+        <rect x="73" y="73" width="34" height="34" fill="none" stroke="#8B6914" strokeWidth="2" rx="2" />
+
+        {/* Dragón superior — simplificado */}
+        <path d="M 50 38 Q 60 28 75 32 Q 85 25 90 30 Q 95 25 105 32 Q 120 28 130 38 Q 118 42 110 38 Q 100 34 90 36 Q 80 34 70 38 Q 62 42 50 38 Z"
+          fill="#8B6200" opacity="0.7" />
+        <path d="M 55 40 Q 70 30 90 34 Q 110 30 125 40"
+          fill="none" stroke="#7A5500" strokeWidth="1.5" opacity="0.6" />
+
+        {/* Dragón inferior — simplificado */}
+        <path d="M 50 142 Q 60 152 75 148 Q 85 155 90 150 Q 95 155 105 148 Q 120 152 130 142 Q 118 138 110 142 Q 100 146 90 144 Q 80 146 70 142 Q 62 138 50 142 Z"
+          fill="#8B6200" opacity="0.7" />
+        <path d="M 55 140 Q 70 150 90 146 Q 110 150 125 140"
+          fill="none" stroke="#7A5500" strokeWidth="1.5" opacity="0.6" />
+
+        {/* Dragón izquierdo */}
+        <path d="M 38 50 Q 28 60 32 75 Q 25 85 30 90 Q 25 95 32 105 Q 28 120 38 130 Q 42 118 38 110 Q 34 100 36 90 Q 34 80 38 70 Q 42 62 38 50 Z"
+          fill="#8B6200" opacity="0.7" />
+
+        {/* Dragón derecho */}
+        <path d="M 142 50 Q 152 60 148 75 Q 155 85 150 90 Q 155 95 148 105 Q 152 120 142 130 Q 138 118 142 110 Q 146 100 144 90 Q 146 80 142 70 Q 138 62 142 50 Z"
+          fill="#8B6200" opacity="0.7" />
+
+        {/* Detalles decorativos — escamas */}
+        {[45, 90, 135, 180, 225, 270, 315, 360].map((ang, i) => {
+          const rad = (ang * Math.PI) / 180
+          const x = 90 + 56 * Math.cos(rad)
+          const y = 90 + 56 * Math.sin(rad)
+          return (
+            <circle key={i} cx={x} cy={y} r="3"
+              fill="#8B6200" opacity="0.5" />
+          )
+        })}
+
+        {/* Caracteres chinos en las 4 esquinas del agujero */}
+        <text x="90" y="68" textAnchor="middle" fontSize="10"
+          fill="#7A5500" fontFamily="serif" opacity="0.8">易</text>
+        <text x="90" y="122" textAnchor="middle" fontSize="10"
+          fill="#7A5500" fontFamily="serif" opacity="0.8">經</text>
+        <text x="68" y="94" textAnchor="middle" fontSize="10"
+          fill="#7A5500" fontFamily="serif" opacity="0.8">古</text>
+        <text x="112" y="94" textAnchor="middle" fontSize="10"
+          fill="#7A5500" fontFamily="serif" opacity="0.8">今</text>
+
+        {/* Brillo superior */}
+        <ellipse cx="72" cy="62" rx="18" ry="10"
+          fill="rgba(255,220,80,0.15)" transform="rotate(-35,72,62)" />
+      </svg>
+    </div>
+  )
+}
+
 export default function IChing() {
   const [fase, setFase] = useState<'pregunta' | 'resultado'>('pregunta')
   const [pregunta, setPregunta] = useState('')
   const [resultado, setResultado] = useState<any>(null)
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando, setCargando] = useState(false)
+  const [girando, setGirando] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const nombre = localStorage.getItem('nombre') || 'viajero'
 
@@ -33,6 +120,11 @@ export default function IChing() {
   }
 
   const consultar = async () => {
+    if (!pregunta.trim()) return
+    setGirando(true)
+    await new Promise(r => setTimeout(r, 1200))
+    setGirando(false)
+
     const t0 = Date.now()
     const lineas = lanzarMonedas()
     const { hexagrama, cambiante, hexagramaResultante } = lineasAHexagrama(lineas)
@@ -95,21 +187,19 @@ Tema: ${hexData.tema}
 
         {fase === 'pregunta' && (
           <div className="flex flex-col gap-6">
-            <div className="text-center">
-              <div style={{ fontSize: 80, lineHeight: 1, marginBottom: 16, fontFamily: 'serif', color: 'rgba(167,139,250,0.7)' }}>
-                ☯
-              </div>
-              <p className="text-white/60 text-sm leading-relaxed">El I Ching no predice el futuro. Refleja la energía del momento presente y te ayuda a comprender la situación con mayor profundidad.</p>
-            </div>
+            <MonedaChina girando={girando} />
+            <p className="text-white/50 text-sm text-center leading-relaxed">
+              El I Ching no predice el futuro. Refleja la energía del momento presente y te ayuda a comprender la situación con mayor profundidad.
+            </p>
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Tu pregunta</p>
               <textarea value={pregunta} onChange={e => setPregunta(e.target.value)}
                 placeholder="Formula tu pregunta con sinceridad..." rows={3}
                 className="w-full bg-transparent text-white text-sm resize-none outline-none placeholder-white/30" />
             </div>
-            <button onClick={consultar} disabled={!pregunta.trim()}
+            <button onClick={consultar} disabled={!pregunta.trim() || girando}
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition disabled:opacity-40">
-              Lanzar las monedas
+              {girando ? 'Lanzando las monedas...' : 'Lanzar las monedas'}
             </button>
           </div>
         )}
@@ -117,14 +207,8 @@ Tema: ${hexData.tema}
         {fase === 'resultado' && resultado && (
           <div className="flex flex-col gap-5">
 
-            {/* Hero: hexagrama Unicode grande */}
             <div className="bg-white/5 border border-purple-500/30 rounded-3xl p-6 backdrop-blur flex flex-col items-center gap-3">
-              <div style={{
-                fontSize: 96,
-                lineHeight: 1,
-                fontFamily: 'serif',
-                color: 'rgba(167,139,250,0.9)',
-              }}>
+              <div style={{ fontSize: 96, lineHeight: 1, fontFamily: 'serif', color: 'rgba(167,139,250,0.9)' }}>
                 {getHexagramaUnicode(resultado.hexData.numero)}
               </div>
               <div className="text-center">
@@ -137,7 +221,6 @@ Tema: ${hexData.tema}
               </div>
             </div>
 
-            {/* Transformación */}
             {resultado.hayCambio && (
               <div className="bg-white/5 border border-purple-500/20 rounded-3xl p-4 backdrop-blur flex items-center gap-4">
                 <div style={{ fontSize: 48, fontFamily: 'serif', color: 'rgba(167,139,250,0.5)', lineHeight: 1 }}>
