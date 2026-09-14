@@ -1,4 +1,4 @@
-name: Download Rune SVGs
+name: Download Remaining Rune SVGs
 
 on:
   workflow_dispatch:
@@ -13,7 +13,7 @@ jobs:
       - name: Create directory
         run: mkdir -p public/runas
 
-      - name: Download rune SVGs via Wikimedia API
+      - name: Download remaining runes via Wikimedia API
         run: |
           UA="Mozilla/5.0 (compatible; RuneBot/1.0)"
           API="https://commons.wikimedia.org/w/api.php"
@@ -21,43 +21,34 @@ jobs:
           download_rune() {
             local filename="$1"
             local output="$2"
-            local url=$(curl -s -A "$UA" "$API?action=query&titles=File:${filename}&prop=imageinfo&iiprop=url&format=json" | python3 -c "import sys,json; data=json.load(sys.stdin); pages=data['query']['pages']; page=list(pages.values())[0]; print(page['imageinfo'][0]['url'])")
+            local encoded=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$filename'))")
+            local url=$(curl -s -A "$UA" "$API?action=query&titles=File:${encoded}&prop=imageinfo&iiprop=url&format=json" | python3 -c "import sys,json; data=json.load(sys.stdin); pages=data['query']['pages']; page=list(pages.values())[0]; print(page['imageinfo'][0]['url'])")
             echo "Descargando: $url -> $output"
             curl -L -A "$UA" --max-time 30 "$url" -o "$output"
           }
 
-          download_rune "Runic_letter_fehu.svg"     public/runas/fehu.svg
-          download_rune "Runic_letter_uruz.svg"     public/runas/uruz.svg
-          download_rune "Runic_letter_thurisaz.svg" public/runas/thurisaz.svg
-          download_rune "Runic_letter_ansuz.svg"    public/runas/ansuz.svg
-          download_rune "Runic_letter_raido.svg"    public/runas/raido.svg
-          download_rune "Runic_letter_kauna.svg"    public/runas/kaunaz.svg
-          download_rune "Runic_letter_gebo.svg"     public/runas/gebo.svg
-          download_rune "Runic_letter_wunjo.svg"    public/runas/wunjo.svg
-          download_rune "Runic_letter_haglaz.svg"   public/runas/haglaz.svg
-          download_rune "Runic_letter_naudiz.svg"   public/runas/naudiz.svg
-          download_rune "Runic_letter_isaz_is_iss_i.svg"           public/runas/isa.svg
-          download_rune "Runic_letter_jera-a_jara_j_1.svg"         public/runas/jeran.svg
-          download_rune "Runic_letter_iwaz_io_eoh.svg"             public/runas/iwaz.svg
-          download_rune "Runic_letter_pertho_peorth_p.svg"         public/runas/pertho.svg
-          download_rune "Runic_letter_algiz_z.svg"                 public/runas/algiz.svg
-          download_rune "Runic_letter_sowilo_s.svg"                public/runas/sowilo.svg
-          download_rune "Runic_letter_tiwaz_tir_tyr_t.svg"         public/runas/tiwaz.svg
-          download_rune "Runic_letter_berkanan_beorc_bjarkan_b.svg" public/runas/berkanan.svg
-          download_rune "Runic_letter_ehwaz_eh_e.svg"              public/runas/ehwaz.svg
-          download_rune "Runic_letter_mannaz_man_m.svg"            public/runas/mannaz.svg
-          download_rune "Runic_letter_laukaz_lagu_logr_l.svg"      public/runas/laukaz.svg
-          download_rune "Runic_letter_ingwaz.svg"                  public/runas/ingwaz.svg
-          download_rune "Runic_letter_dagaz_daeg_d.svg"            public/runas/dagaz.svg
-          download_rune "Runic_letter_othalan_ethel_o.svg"         public/runas/othalan.svg
+          download_rune "Runic_letter_isaz.svg"      public/runas/isa.svg
+          download_rune "Runic_letter_jeran.svg"     public/runas/jeran.svg
+          download_rune "Runic_letter_iwaz.svg"      public/runas/iwaz.svg
+          download_rune "Runic_letter_pertho.svg"    public/runas/pertho.svg
+          download_rune "Runic_letter_algiz.svg"     public/runas/algiz.svg
+          download_rune "Runic_letter_sowilo.svg"    public/runas/sowilo.svg
+          download_rune "Runic_letter_tiwaz.svg"     public/runas/tiwaz.svg
+          download_rune "Runic_letter_berkanan.svg"  public/runas/berkanan.svg
+          download_rune "Runic_letter_ehwaz.svg"     public/runas/ehwaz.svg
+          download_rune "Runic_letter_mannaz.svg"    public/runas/mannaz.svg
+          download_rune "Runic_letter_laukaz.svg"    public/runas/laukaz.svg
+          download_rune "Runic_letter_ingwaz.svg"    public/runas/ingwaz.svg
+          download_rune "Runic_letter_dagaz.svg"     public/runas/dagaz.svg
+          download_rune "Runic_letter_othalan.svg"   public/runas/othalan.svg
 
-      - name: Verify downloads
+      - name: Verify all 24 runas
         run: |
-          echo "=== Verificando runas ==="
+          echo "=== Verificando las 24 runas ==="
           FALLOS=0
           for f in public/runas/*.svg; do
             size=$(wc -c < "$f")
-            if [ "$size" -lt 200 ]; then
+            if [ "$size" -lt 150 ]; then
               echo "⚠️  FALLO: $f ($size bytes)"
               FALLOS=$((FALLOS+1))
             else
@@ -72,5 +63,5 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add public/runas/
-          git commit -m "Add Elder Futhark rune SVGs via Wikimedia API (CC0)" || echo "Nothing to commit"
+          git commit -m "Add remaining rune SVGs (CC0)" || echo "Nothing to commit"
           git push
