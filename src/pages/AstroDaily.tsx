@@ -1,3 +1,5 @@
+// src/pages/AstroDaily.tsx
+
 import { useState } from 'react'
 import { limpiarMarkdown } from '../components/TextoIA'
 import { getMensajeDiario, getSignoSolar } from '../lib/motores/astroDaily'
@@ -5,7 +7,7 @@ import Compartir from '../components/Compartir'
 import CtaUpsell from '../components/CtaUpsell'
 import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
-import { supabase, useUserPlan, useAnalytics, registrarEvento } from '../lib/paginaHelper'
+import { supabase, llamarGemini, useUserPlan, useAnalytics, registrarEvento } from '../lib/paginaHelper'
 
 export default function AstroDaily() {
   const [interpretacion, setInterpretacion] = useState('')
@@ -34,7 +36,6 @@ export default function AstroDaily() {
     setCargando(true)
     setGenerado(true)
 
-    // ── 1. Buscar en caché ─────────────────────────────────
     try {
       const { data: cached } = await supabase
         .from('horoscopo_cache')
@@ -55,42 +56,39 @@ export default function AstroDaily() {
       console.warn('[AstroDaily] Error caché:', err)
     }
 
-    // ── 2. Fallback Gemini ─────────────────────────────────
-    const prompt = `Eres un astrólogo simbólico que combina astrología occidental con psicología moderna.
-Signo solar: ${signo}
-Fecha: ${hoy}
-Energía del día: ${mensajes.energia}
+    const result = await llamarGemini({
+      herramienta: 'astro-daily',
+      prompt: [
+        'Escribe en español, en prosa, sin listas, sin asteriscos, sin markdown.',
+        'Eres un astrólogo simbólico que combina astrología occidental con psicología moderna.',
+        `Signo solar: ${signo}`,
+        `Fecha: ${hoy}`,
+        `Energía del día: ${mensajes.energia}`,
+        '',
+        `Escribe una guía astrológica diaria de 3 párrafos para ${signo}.`,
+        `Primero habla de la energía general que ${signo} experimenta hoy.`,
+        'Luego da un consejo para amor/relaciones y otro para trabajo/proyectos.',
+        `Termina con una afirmación poderosa para ${signo}.`,
+        'Tono: reflexivo, simbólico, nunca predictivo ni alarmante.',
+        'Máximo 200 palabras. Solo el texto, sin título ni encabezado.',
+      ].join('\n'),
+      userId,
+      usarLite: true,
+      cacheable: false,
+      maxTokens: 800,
+    })
 
-Escribe una guía astrológica diaria de 3 párrafos para ${signo}.
-Primero habla de la energía general que ${signo} experimenta hoy.
-Luego da un consejo para amor/relaciones y otro para trabajo/proyectos.
-Termina con una afirmación poderosa para ${signo}.
-Tono: reflexivo, simbólico, nunca predictivo ni alarmante.
-Máximo 200 palabras. Solo el texto, sin título ni encabezado.`
-
-    try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] }),
-        }
-      )
-      const data = await res.json()
-      const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-      const tokens = data.usageMetadata?.totalTokenCount ?? 0
-
-      setInterpretacion(limpiarMarkdown(`${nombre}, ${texto}`))
+    if (!result.error && result.texto) {
+      const texto = limpiarMarkdown(`${nombre}, ${result.texto}`)
+      setInterpretacion(texto)
       setFromCache(false)
+      registrarEvento({ herramienta: 'astro-daily', accion: 'lectura_ia', desde_cache: false, tiempo_respuesta_ms: Date.now() - t0, signo, user_id: userId })
 
       supabase.from('horoscopo_cache').insert({
         signo: signo.toLowerCase(), fecha: fechaHoy, tipo: 'astro-daily',
-        contenido: texto, tokens_used: tokens,
+        contenido: result.texto, tokens_used: result.tokensUsados,
       }).then(() => {})
-
-      registrarEvento({ herramienta: 'astro-daily', accion: 'lectura_ia', desde_cache: false, tiempo_respuesta_ms: Date.now() - t0, signo, user_id: userId })
-    } catch {
+    } else {
       setInterpretacion('Las estrellas guardan silencio hoy. Inténtalo de nuevo.')
     }
     setCargando(false)
@@ -98,7 +96,7 @@ Máximo 200 palabras. Solo el texto, sin título ni encabezado.`
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/75" />
+      <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.75)' }} />
 
       <div className="relative z-10 w-full max-w-sm mx-auto flex flex-col px-6 py-10 gap-6">
 
@@ -110,8 +108,12 @@ Máximo 200 palabras. Solo el texto, sin título ni encabezado.`
           </div>
         </div>
 
+        {/* Signo con glifo Unicode */}
         <div className="bg-white/5 border border-purple-500/30 rounded-3xl p-6 backdrop-blur text-center">
           <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Tu energía hoy</p>
+          <p className="text-5xl mb-2" style={{ fontFamily: 'serif' }}>
+            {({ 'Aries': '♈', 'Tauro': '♉', 'Géminis': '♊', 'Cáncer': '♋', 'Leo': '♌', 'Virgo': '♍', 'Libra': '♎', 'Escorpio': '♏', 'Sagitario': '♐', 'Capricornio': '♑', 'Acuario': '♒', 'Piscis': '♓' } as Record<string,string>)[signo] || '★'}
+          </p>
           <p className="text-3xl font-bold mb-1">{signo}</p>
           <p className="text-purple-300 text-sm">{mensajes.energia}</p>
         </div>
@@ -133,10 +135,8 @@ Máximo 200 palabras. Solo el texto, sin título ni encabezado.`
         </div>
 
         {!generado ? (
-          <button
-            onClick={generarLectura}
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition"
-          >
+          <button onClick={generarLectura}
+            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition">
             Generar mi guía astrológica completa
           </button>
         ) : (
@@ -164,14 +164,14 @@ Máximo 200 palabras. Solo el texto, sin título ni encabezado.`
             <Compartir
               titulo={`Mi Astro Daily: ${signo} · ${hoy}`}
               texto={interpretacion}
-              hashtags={['AstroDaily', 'Universe', signo, 'Astrologia']}
-            />
+              hashtags={['AstroDaily', 'Universe', signo, 'Astrologia']} />
             {!esPremium && <CtaUpsell herramienta="guía astrológica" />}
           </>
         )}
 
         {generado && !cargando && (
-          <button onClick={() => window.location.href = '/guia'} className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full">
+          <button onClick={() => window.location.href = '/guia'}
+            className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full">
             Explorar con mi Guía IA
           </button>
         )}
