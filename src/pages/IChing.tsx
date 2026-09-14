@@ -1,3 +1,5 @@
+// src/pages/IChing.tsx
+
 import { useState } from 'react'
 import { limpiarMarkdown } from '../components/TextoIA'
 import { HEXAGRAMAS, lanzarMonedas, lineasAHexagrama, dibujarHexagrama } from '../lib/motores/iching'
@@ -7,6 +9,10 @@ import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
 import { llamarGemini, useUserPlan, useAnalytics, registrarEvento } from '../lib/paginaHelper'
 import { guardarLectura } from '../hooks/useHistorial'
+
+function getHexagramaUnicode(numero: number): string {
+  return String.fromCodePoint(0x4DBF + numero)
+}
 
 export default function IChing() {
   const [fase, setFase] = useState<'pregunta' | 'resultado'>('pregunta')
@@ -20,23 +26,21 @@ export default function IChing() {
   const { esPremium, userId } = useUserPlan()
   useAnalytics('iching')
 
-  const bgStyle = { backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }
-
-  // Paywall: bloquear si no es premium antes de consultar
-  if (!esPremium && fase === 'pregunta') {
-    // Mostramos la UI pero el botón lanza paywall
+  const bgStyle = {
+    backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
   }
 
   const consultar = async () => {
     const t0 = Date.now()
     const lineas = lanzarMonedas()
     const { hexagrama, cambiante, hexagramaResultante } = lineasAHexagrama(lineas)
-    const dibujo = dibujarHexagrama(lineas)
     const hexData = HEXAGRAMAS[hexagrama - 1]
     const hexResultData = HEXAGRAMAS[hexagramaResultante - 1]
     const hayCambio = cambiante.some(c => c) && hexagrama !== hexagramaResultante
 
-    setResultado({ hexData, hexResultData, dibujo, hayCambio })
+    setResultado({ hexData, hexResultData, hayCambio })
     setFase('resultado')
     setCargando(true)
     setErrorMsg('')
@@ -44,7 +48,8 @@ export default function IChing() {
 
     const result = await llamarGemini({
       herramienta: 'iching',
-      prompt: `Sabio intérprete del I Ching con profundo conocimiento de la filosofía taoísta.
+      prompt: `Escribe en español, en prosa, sin listas, sin asteriscos, sin markdown.
+Sabio intérprete del I Ching con profundo conocimiento de la filosofía taoísta.
 
 Nombre: ${nombre}
 Pregunta: "${pregunta}"
@@ -56,9 +61,10 @@ Tema: ${hexData.tema}
       userId, usarLite: false, cacheable: false, maxTokens: 1350,
     })
 
-    if (result.error) setErrorMsg(result.error)
-    else {
-      setInterpretacion(result.texto || hexData.tema)
+    if (result.error) {
+      setErrorMsg(result.error)
+    } else {
+      setInterpretacion(limpiarMarkdown(result.texto || hexData.tema))
       registrarEvento({ herramienta: 'iching', accion: 'lectura_ia', tiempo_respuesta_ms: Date.now() - t0, user_id: userId })
       guardarLectura({
         herramienta: 'iching',
@@ -74,7 +80,6 @@ Tema: ${hexData.tema}
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
       <div className="absolute inset-0 bg-black/75" />
 
-      {/* Paywall para usuarios free */}
       {!esPremium && fase === 'pregunta' && (
         <Paywall motivo="herramienta" herramienta="I Ching · El Libro de los Cambios" />
       )}
@@ -91,14 +96,19 @@ Tema: ${hexData.tema}
         {fase === 'pregunta' && (
           <div className="flex flex-col gap-6">
             <div className="text-center">
-              <div className="text-5xl mb-4" style={{ fontFamily: 'serif' }}>☯</div>
+              <div style={{ fontSize: 80, lineHeight: 1, marginBottom: 16, fontFamily: 'serif', color: 'rgba(167,139,250,0.7)' }}>
+                ☯
+              </div>
               <p className="text-white/60 text-sm leading-relaxed">El I Ching no predice el futuro. Refleja la energía del momento presente y te ayuda a comprender la situación con mayor profundidad.</p>
             </div>
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Tu pregunta</p>
-              <textarea value={pregunta} onChange={e => setPregunta(e.target.value)} placeholder="Formula tu pregunta con sinceridad..." rows={3} className="w-full bg-transparent text-white text-sm resize-none outline-none placeholder-white/30" />
+              <textarea value={pregunta} onChange={e => setPregunta(e.target.value)}
+                placeholder="Formula tu pregunta con sinceridad..." rows={3}
+                className="w-full bg-transparent text-white text-sm resize-none outline-none placeholder-white/30" />
             </div>
-            <button onClick={consultar} disabled={!pregunta.trim()} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition disabled:opacity-40">
+            <button onClick={consultar} disabled={!pregunta.trim()}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition disabled:opacity-40">
               Lanzar las monedas
             </button>
           </div>
@@ -106,26 +116,38 @@ Tema: ${hexData.tema}
 
         {fase === 'resultado' && resultado && (
           <div className="flex flex-col gap-5">
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
-              <p className="text-purple-300 text-xs tracking-widest uppercase mb-4">Tu hexagrama</p>
-              <div className="flex gap-6 items-start">
-                <div className="flex flex-col gap-2 font-mono text-lg">
-                  {resultado.dibujo.map((linea: string, i: number) => <div key={i} className="text-purple-300">{linea}</div>)}
-                </div>
-                <div>
-                  <p className="text-white/40 text-xs mb-1">Hexagrama {resultado.hexData.numero}</p>
-                  <p className="text-xl font-semibold">{resultado.hexData.nombre}</p>
-                  <p className="text-2xl" style={{ fontFamily: 'serif' }}>{resultado.hexData.chino}</p>
-                  <p className="text-purple-300/70 text-xs mt-1">{resultado.hexData.keywords}</p>
-                </div>
+
+            {/* Hero: hexagrama Unicode grande */}
+            <div className="bg-white/5 border border-purple-500/30 rounded-3xl p-6 backdrop-blur flex flex-col items-center gap-3">
+              <div style={{
+                fontSize: 96,
+                lineHeight: 1,
+                fontFamily: 'serif',
+                color: 'rgba(167,139,250,0.9)',
+              }}>
+                {getHexagramaUnicode(resultado.hexData.numero)}
+              </div>
+              <div className="text-center">
+                <p className="text-white/40 text-xs mb-1">Hexagrama {resultado.hexData.numero}</p>
+                <p className="text-white font-bold text-xl">{resultado.hexData.nombre}</p>
+                <p className="text-3xl mt-1" style={{ fontFamily: 'serif', color: 'rgba(167,139,250,0.6)' }}>
+                  {resultado.hexData.chino}
+                </p>
+                <p className="text-purple-300/70 text-xs mt-2">{resultado.hexData.keywords}</p>
               </div>
             </div>
 
+            {/* Transformación */}
             {resultado.hayCambio && (
-              <div className="bg-white/5 border border-purple-500/20 rounded-3xl p-4 backdrop-blur">
-                <p className="text-purple-300 text-xs tracking-widest uppercase mb-2">Transformación hacia</p>
-                <p className="text-white font-semibold">{resultado.hexResultData.nombre} · {resultado.hexResultData.chino}</p>
-                <p className="text-white/50 text-xs">{resultado.hexResultData.keywords}</p>
+              <div className="bg-white/5 border border-purple-500/20 rounded-3xl p-4 backdrop-blur flex items-center gap-4">
+                <div style={{ fontSize: 48, fontFamily: 'serif', color: 'rgba(167,139,250,0.5)', lineHeight: 1 }}>
+                  {getHexagramaUnicode(resultado.hexResultData.numero)}
+                </div>
+                <div>
+                  <p className="text-purple-300 text-xs tracking-widest uppercase mb-1">Transformación hacia</p>
+                  <p className="text-white font-semibold">{resultado.hexResultData.nombre} · {resultado.hexResultData.chino}</p>
+                  <p className="text-white/50 text-xs">{resultado.hexResultData.keywords}</p>
+                </div>
               </div>
             )}
 
@@ -152,15 +174,20 @@ Tema: ${hexData.tema}
               <>
                 <DisclaimerIA />
                 <Valoracion herramienta="iching" userId={userId} />
-                <Compartir titulo={`Mi consulta al I Ching: ${resultado.hexData.nombre}`} texto={interpretacion} hashtags={['IChing', 'Universe', 'Sabiduria', 'China']} />
+                <Compartir
+                  titulo={`Mi consulta al I Ching: ${resultado.hexData.nombre}`}
+                  texto={interpretacion}
+                  hashtags={['IChing', 'Universe', 'Sabiduria', 'China']} />
               </>
             )}
 
             <div className="flex flex-col gap-3">
-              <button onClick={() => window.location.href = '/guia'} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full">
+              <button onClick={() => window.location.href = '/guia'}
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full">
                 Explorar con mi Guía IA
               </button>
-              <button onClick={() => { setFase('pregunta'); setPregunta(''); setInterpretacion(''); setErrorMsg('') }} className="w-full text-purple-300/60 text-sm py-2">
+              <button onClick={() => { setFase('pregunta'); setPregunta(''); setInterpretacion(''); setErrorMsg('') }}
+                className="w-full text-purple-300/60 text-sm py-2">
                 Nueva consulta
               </button>
             </div>
