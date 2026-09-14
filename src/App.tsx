@@ -66,6 +66,8 @@ import Expertos from './pages/Expertos'
 import ExpertoPerfil from './pages/ExpertoPerfil'
 import ExpertoUnirse from './pages/ExpertoUnirse'
 import PanelExperto from './pages/PanelExperto'
+import IfaOracle from './pages/IfaOracle'
+import FengShui from './pages/FengShui'
 
 export default function App() {
   return (
@@ -129,6 +131,8 @@ export default function App() {
         <Route path="/diario" element={<Diario />} />
         <Route path="/vision-board" element={<VisionBoard />} />
         <Route path="/biorritmos" element={<Biorritmos />} />
+        <Route path="/ifa" element={<IfaOracle />} />
+        <Route path="/feng-shui" element={<FengShui />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/perfil" element={<Perfil />} />
         <Route path="/legal" element={<Legal />} />
