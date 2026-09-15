@@ -8,19 +8,7 @@ import Valoracion from '../components/Valoracion'
 import DisclaimerIA from '../components/DisclaimerIA'
 import { llamarGemini, useUserPlan, useAnalytics, registrarEvento } from '../lib/paginaHelper'
 
-interface Camino {
-  id: string
-  nombre: string
-  subtitulo: string
-  descripcion: string
-  etiqueta: string
-  imagen: string
-  video?: string
-  imagenCredito: string
-  prompt: (pregunta: string, nombre: string) => string
-}
-
-const CAMINOS: Camino[] = [
+const CAMINOS = [
   {
     id: 'norse',
     nombre: 'Tradición Nórdica',
@@ -29,7 +17,7 @@ const CAMINOS: Camino[] = [
     etiqueta: '🏛️ HISTÓRICO',
     imagen: '/pagan/norse.jpg',
     imagenCredito: 'Johannes Gehrts, 1901',
-    prompt: (pregunta, nombre) => [
+    prompt: (pregunta: string, nombre: string) => [
       'Escribe en español, en prosa, sin listas, sin asteriscos, sin markdown.',
       'Eres un guía experto en mitología y simbolismo nórdico/germánico. Responde desde el conocimiento de las sagas, la Edda Poética y la Edda en Prosa, los nueve mundos, los dioses (Aesir y Vanir) y los conceptos de Wyrd y Orlog.',
       '',
@@ -47,7 +35,7 @@ const CAMINOS: Camino[] = [
     etiqueta: '🏛️ HISTÓRICO',
     imagen: '/pagan/hellenic.jpg',
     imagenCredito: 'Escultura griega clásica',
-    prompt: (pregunta, nombre) => [
+    prompt: (pregunta: string, nombre: string) => [
       'Escribe en español, en prosa, sin listas, sin asteriscos, sin markdown.',
       'Eres un guía experto en mitología y filosofía griega y romana. Conoces profundamente los dioses olímpicos, los mitos, el oráculo de Delfos, los estoicos y los epicúreos.',
       '',
@@ -65,7 +53,7 @@ const CAMINOS: Camino[] = [
     etiqueta: '🏛️ HISTÓRICO',
     imagen: '/pagan/egyptian.jpg',
     imagenCredito: 'Grabado egipcio, 1888',
-    prompt: (pregunta, nombre) => [
+    prompt: (pregunta: string, nombre: string) => [
       'Escribe en español, en prosa, sin listas, sin asteriscos, sin markdown.',
       'Eres un guía experto en religión y mitología del antiguo Egipto. Conoces profundamente los dioses (Ra, Isis, Osiris, Anubis, Thoth, Sekhmet, Hathor...), el concepto de Ma\'at (verdad/equilibrio), el Libro de los Muertos y la cosmología egipcia.',
       '',
@@ -83,7 +71,7 @@ const CAMINOS: Camino[] = [
     etiqueta: '✨ MODERNO',
     imagen: '/pagan/celtic.jpg',
     imagenCredito: 'Libro de Kells, s. IX',
-    prompt: (pregunta, nombre) => [
+    prompt: (pregunta: string, nombre: string) => [
       'Escribe en español, en prosa, sin listas, sin asteriscos, sin markdown.',
       'Eres un guía experto en folklore celta, mitología irlandesa y galesa, y las tradiciones de los pueblos celtas históricos.',
       '',
@@ -100,9 +88,8 @@ const CAMINOS: Camino[] = [
     descripcion: 'Deidades eslavas, Baba Yaga, espíritus de la naturaleza, folklore de Europa del Este.',
     etiqueta: '🌿 VIVO',
     imagen: '/pagan/slavic.jpg',
-    video: '/pagan/slavic.mp4',
-    imagenCredito: 'Generado con Google Flow',
-    prompt: (pregunta, nombre) => [
+    imagenCredito: 'Ivan Bilibin, 1900',
+    prompt: (pregunta: string, nombre: string) => [
       'Escribe en español, en prosa, sin listas, sin asteriscos, sin markdown.',
       'Eres un guía experto en mitología y folklore eslavo: Perun, Veles, Mokosh, Baba Yaga, los domovoi, las rusalki y otros seres del folklore eslavo oriental y occidental.',
       '',
@@ -120,7 +107,7 @@ const CAMINOS: Camino[] = [
     etiqueta: '✨ MODERNO',
     imagen: '/pagan/wicca.jpg',
     imagenCredito: 'Francisco de Goya, 1798',
-    prompt: (pregunta, nombre) => [
+    prompt: (pregunta: string, nombre: string) => [
       'Escribe en español, en prosa, sin listas, sin asteriscos, sin markdown.',
       'Eres una guía experta en Wicca y brujería moderna contemporánea. Conoces la Rueda del Año, la Triple Diosa, el Dios Cornudo, los sabbats y los esbats, la magia con hierbas, cristales y elementos.',
       '',
@@ -133,7 +120,7 @@ const CAMINOS: Camino[] = [
 ]
 
 export default function PaganPaths() {
-  const [caminoSeleccionado, setCaminoSeleccionado] = useState<Camino | null>(null)
+  const [caminoSeleccionado, setCaminoSeleccionado] = useState<typeof CAMINOS[0] | null>(null)
   const [pregunta, setPregunta] = useState('')
   const [interpretacion, setInterpretacion] = useState('')
   const [cargando, setCargando] = useState(false)
@@ -165,7 +152,7 @@ export default function PaganPaths() {
       userId,
       usarLite: false,
       cacheable: false,
-      maxTokens: 2800,
+      maxTokens: 1800,
     })
 
     if (result.error) {
@@ -183,27 +170,6 @@ export default function PaganPaths() {
     if (e.includes('VIVO')) return 'bg-green-500/20 text-green-300'
     return 'bg-white/10 text-white/40'
   }
-
-  const MediaHero = ({ camino, height }: { camino: Camino, height: string }) => (
-    <div className={`relative ${height} w-full`}>
-      {camino.video ? (
-        <video
-          src={camino.video}
-          autoPlay muted loop playsInline
-          className="w-full h-full object-cover"
-          style={{ filter: 'brightness(0.55) sepia(0.2)' }}
-        />
-      ) : (
-        <img
-          src={camino.imagen}
-          alt={camino.nombre}
-          className="w-full h-full object-cover"
-          style={{ filter: 'brightness(0.55) sepia(0.2)' }}
-        />
-      )}
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 60%)' }} />
-    </div>
-  )
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
@@ -225,7 +191,7 @@ export default function PaganPaths() {
           </div>
         </div>
 
-        {/* FASE 1 — Elegir */}
+        {/* FASE 1 — Elegir tradición */}
         {fase === 'elegir' && (
           <div className="flex flex-col gap-4">
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur">
@@ -239,8 +205,11 @@ export default function PaganPaths() {
               <button key={c.id}
                 onClick={() => { setCaminoSeleccionado(c); setFase('preguntar') }}
                 className="w-full rounded-3xl overflow-hidden text-left hover:opacity-90 transition border border-white/10">
+                {/* Imagen de fondo de la card */}
                 <div className="relative h-24">
-                  <MediaHero camino={c} height="h-24" />
+                  <img src={c.imagen} alt={c.nombre}
+                    className="w-full h-full object-cover"
+                    style={{ filter: 'brightness(0.4)' }} />
                   <div className="absolute inset-0 p-4 flex flex-col justify-between">
                     <div className="flex items-center gap-2">
                       <p className="text-white font-semibold">{c.nombre}</p>
@@ -258,9 +227,13 @@ export default function PaganPaths() {
         {/* FASE 2 — Preguntar */}
         {fase === 'preguntar' && caminoSeleccionado && (
           <div className="flex flex-col gap-6">
+            {/* Hero con imagen histórica */}
             <div className="rounded-3xl overflow-hidden border border-white/15">
               <div className="relative h-48">
-                <MediaHero camino={caminoSeleccionado} height="h-48" />
+                <img src={caminoSeleccionado.imagen} alt={caminoSeleccionado.nombre}
+                  className="w-full h-full object-cover"
+                  style={{ filter: 'brightness(0.55) sepia(0.2)' }} />
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 60%)' }} />
                 <div className="absolute bottom-0 left-0 right-0 p-4">
                   <span className={`text-xs px-2 py-0.5 rounded-full ${etiquetaColor(caminoSeleccionado.etiqueta)}`}>
                     {caminoSeleccionado.etiqueta}
@@ -271,6 +244,7 @@ export default function PaganPaths() {
                 <p className="absolute top-3 right-3 text-white/30 text-xs">{caminoSeleccionado.imagenCredito}</p>
               </div>
             </div>
+
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Tu pregunta</p>
               <textarea value={pregunta} onChange={e => setPregunta(e.target.value)}
