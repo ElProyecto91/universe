@@ -45,8 +45,8 @@ jobs:
             fi
           }
 
-          download "Salix_caprea_Sturm42.jpg"             public/arboles/sauce.jpg
-          download "Illustration_Crataegus_monogyna0.jpg" public/arboles/espino.jpg
+          download "303_Salix_caprea_L.jpg"             public/arboles/sauce.jpg
+          download "Crataegus_monogyna_Sturm_08004.jpg" public/arboles/espino.jpg
 
       - name: Verify
         run: |
