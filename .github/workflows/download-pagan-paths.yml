@@ -1,0 +1,77 @@
+name: Download Pagan Paths Images
+
+on:
+  workflow_dispatch:
+
+jobs:
+  download:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create directory
+        run: mkdir -p public/pagan
+
+      - name: Create helper script
+        run: |
+          cat > /tmp/get_url.py << 'EOF'
+          import sys, json, urllib.request
+          filename = sys.argv[1]
+          api = "https://commons.wikimedia.org/w/api.php"
+          url = api + "?action=query&titles=File:" + filename + "&prop=imageinfo&iiprop=url&format=json"
+          req = urllib.request.Request(url, headers={"User-Agent": "PaganBot/1.0"})
+          data = json.loads(urllib.request.urlopen(req).read())
+          pages = data["query"]["pages"]
+          page = list(pages.values())[0]
+          ii = page.get("imageinfo")
+          print(ii[0]["url"] if ii else "NOT_FOUND")
+          EOF
+
+      - name: Download images
+        run: |
+          UA="Mozilla/5.0 (compatible; PaganBot/1.0)"
+
+          dl() {
+            local name="$1"
+            local out="$2"
+            local url=$(python3 /tmp/get_url.py "$name")
+            if [ "$url" = "NOT_FOUND" ]; then
+              echo "NO ENCONTRADO: $name"
+            else
+              echo "OK: $name"
+              curl -L -s -A "$UA" --max-time 30 "$url" -o "$out"
+            fi
+          }
+
+          dl "Johannes_Gehrts_-_Thor,_der_Donnergott.jpg"                          public/pagan/norse.jpg
+          dl "Apoksiomen.jpg"                                                        public/pagan/hellenic.jpg
+          dl "Osiris_(in_Illustrated_List_of_the_principal_Egyptian_Divinities)_(1888)_-_TIMEA.jpg" public/pagan/egyptian.jpg
+          dl "KellsFol032vChristEnthroned.jpg"                                      public/pagan/celtic.jpg
+          dl "Bilibin.Baba_Yaga.jpg"                                                public/pagan/slavic.jpg
+          dl "Francisco_de_Goya_y_Lucientes_-_Witches%27_Sabbath_-_Google_Art_Project.jpg" public/pagan/wicca.jpg
+
+      - name: Verify all 6
+        run: |
+          echo "=== Verificando ==="
+          FALLOS=0
+          for f in public/pagan/*.jpg; do
+            size=$(wc -c < "$f")
+            if [ "$size" -lt 10000 ]; then
+              echo "FALLO: $f ($size bytes)"
+              FALLOS=$((FALLOS+1))
+            else
+              echo "OK: $f ($size bytes)"
+            fi
+          done
+          echo "Total fallos: $FALLOS"
+          if [ "$FALLOS" -gt 0 ]; then exit 1; fi
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add public/pagan/
+          git commit -m "Add 6 historical illustrations for Pagan Paths (public domain)" || echo "Nothing to commit"
+          git push
