@@ -13,21 +13,10 @@ jobs:
       - name: Create directory
         run: mkdir -p public/arboles
 
-      - name: Download via Köhler + Wikimedia direct URLs
+      - name: Download illustrations
         run: |
           UA="Mozilla/5.0 (compatible; CelticBot/1.0)"
           KOEH="http://www.pharmakobotanik.eu/allgemei/koehler"
-          WK="https://upload.wikimedia.org/wikipedia/commons"
-
-          # Köhler — verificados del índice
-          curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-021.jpg" -o public/arboles/abedul.jpg
-          curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-062.jpg" -o public/arboles/fresno.jpg
-          curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-120.jpg" -o public/arboles/aliso.jpg
-          curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-118.jpg" -o public/arboles/roble.jpg
-          curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-145.jpg" -o public/arboles/vid.jpg
-          curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-127.jpg" -o public/arboles/sauco.jpg
-
-          # Wikimedia — URLs directas con hash verificado via API
           API="https://commons.wikimedia.org/w/api.php"
 
           get_url() {
@@ -43,37 +32,37 @@ else: print('NOT_FOUND')
 "
           }
 
-          for entry in \
-            "Illustration_Sorbus_aucuparia0.jpg:public/arboles/serbal.jpg" \
-            "Salix_caprea_Sturm42.jpg:public/arboles/sauce.jpg" \
-            "Illustration_Crataegus_monogyna0.jpg:public/arboles/espino.jpg" \
-            "Illustration_Ilex_aquifolium0.jpg:public/arboles/acebo.jpg" \
-            "Illustration_Corylus_avellana0.jpg:public/arboles/avellano.jpg" \
-            "Illustration_Hedera_helix0.jpg:public/arboles/hiedra.jpg" \
-            "Illustration_Phragmites_australis0.jpg:public/arboles/cana.jpg"
+          curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-021.jpg" -o public/arboles/abedul.jpg
+          curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-062.jpg" -o public/arboles/fresno.jpg
+          curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-120.jpg" -o public/arboles/aliso.jpg
+          curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-118.jpg" -o public/arboles/roble.jpg
+          curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-145.jpg" -o public/arboles/vid.jpg
+          curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-127.jpg" -o public/arboles/sauco.jpg
+
+          for entry in "Illustration_Sorbus_aucuparia0.jpg:public/arboles/serbal.jpg" "Salix_caprea_Sturm42.jpg:public/arboles/sauce.jpg" "Illustration_Crataegus_monogyna0.jpg:public/arboles/espino.jpg" "Illustration_Ilex_aquifolium0.jpg:public/arboles/acebo.jpg" "Illustration_Corylus_avellana0.jpg:public/arboles/avellano.jpg" "Illustration_Hedera_helix0.jpg:public/arboles/hiedra.jpg" "Illustration_Phragmites_australis0.jpg:public/arboles/cana.jpg"
           do
             filename="${entry%%:*}"
             output="${entry##*:}"
             url=$(get_url "$filename")
             if [ "$url" = "NOT_FOUND" ]; then
-              echo "⚠️  No encontrado: $filename"
+              echo "No encontrado: $filename"
             else
-              echo "✓ $filename"
+              echo "OK: $filename"
               curl -L -s -A "$UA" --max-time 30 "$url" -o "$output"
             fi
           done
 
       - name: Verify all 13
         run: |
-          echo "=== Verificando 13 árboles ==="
+          echo "=== Verificando ==="
           FALLOS=0
           for f in public/arboles/*.jpg; do
             size=$(wc -c < "$f")
             if [ "$size" -lt 10000 ]; then
-              echo "⚠️  FALLO: $f ($size bytes)"
+              echo "FALLO: $f ($size bytes)"
               FALLOS=$((FALLOS+1))
             else
-              echo "✅ OK: $f ($size bytes)"
+              echo "OK: $f ($size bytes)"
             fi
           done
           echo "Total fallos: $FALLOS"
