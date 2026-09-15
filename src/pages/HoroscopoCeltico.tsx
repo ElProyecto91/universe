@@ -107,7 +107,7 @@ export default function HoroscopoCeltico() {
       userId,
       usarLite: false,
       cacheable: false,
-      maxTokens: 1200,
+      maxTokens: 2200,
     })
 
     if (!result.error && result.texto) {
