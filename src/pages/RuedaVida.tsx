@@ -75,7 +75,7 @@ export default function RuedaVida() {
       userId,
       usarLite: false,
       cacheable: false,
-      maxTokens: 2500,
+      maxTokens: 2800,
     })
 
     if (result.error) {
