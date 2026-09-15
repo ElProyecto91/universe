@@ -11,6 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Create directory
+        run: mkdir -p public/arboles
+
       - name: Create helper script
         run: |
           cat > /tmp/get_url.py << 'EOF'
@@ -48,11 +51,15 @@ jobs:
       - name: Verify
         run: |
           for f in public/arboles/sauce.jpg public/arboles/espino.jpg; do
-            size=$(wc -c < "$f")
-            if [ "$size" -lt 10000 ]; then
-              echo "FALLO: $f ($size bytes)"
+            if [ -f "$f" ]; then
+              size=$(wc -c < "$f")
+              if [ "$size" -lt 10000 ]; then
+                echo "FALLO: $f ($size bytes)"
+              else
+                echo "OK: $f ($size bytes)"
+              fi
             else
-              echo "OK: $f ($size bytes)"
+              echo "FALLO: $f no existe"
             fi
           done
 
