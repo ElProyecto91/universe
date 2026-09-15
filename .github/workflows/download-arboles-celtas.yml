@@ -5,6 +5,7 @@ on:
 
 jobs:
   download:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
