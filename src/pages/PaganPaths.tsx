@@ -87,7 +87,7 @@ const CAMINOS = [
     subtitulo: '✦ Folklore eslavo',
     descripcion: 'Deidades eslavas, Baba Yaga, espíritus de la naturaleza, folklore de Europa del Este.',
     etiqueta: '🌿 VIVO',
-    imagen: '/pagan/slavic.jpg',
+    imagen: '/pagan/slavic.mp4',
     imagenCredito: 'Ivan Bilibin, 1900',
     prompt: (pregunta: string, nombre: string) => [
       'Escribe en español, en prosa, sin listas, sin asteriscos, sin markdown.',
