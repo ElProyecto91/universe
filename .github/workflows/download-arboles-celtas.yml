@@ -9,16 +9,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Create directory
         run: mkdir -p public/arboles
 
-      - name: Download illustrations
+      - name: Download all 13 tree illustrations
         run: |
           UA="Mozilla/5.0 (compatible; CelticBot/1.0)"
           KOEH="http://www.pharmakobotanik.eu/allgemei/koehler"
-          API="https://commons.wikimedia.org/w/api.php"
+          WK="https://upload.wikimedia.org/wikipedia/commons"
 
           curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-021.jpg" -o public/arboles/abedul.jpg
           curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-062.jpg" -o public/arboles/fresno.jpg
@@ -26,39 +26,13 @@ jobs:
           curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-118.jpg" -o public/arboles/roble.jpg
           curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-145.jpg" -o public/arboles/vid.jpg
           curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-127.jpg" -o public/arboles/sauco.jpg
-
-          cat > /tmp/get_url.py << 'PYEOF'
-          import sys, json, urllib.request
-          filename = sys.argv[1]
-          api = "https://commons.wikimedia.org/w/api.php"
-          url = f"{api}?action=query&titles=File:{filename}&prop=imageinfo&iiprop=url&format=json"
-          req = urllib.request.Request(url, headers={"User-Agent": "CelticBot/1.0"})
-          data = json.loads(urllib.request.urlopen(req).read())
-          pages = data["query"]["pages"]
-          page = list(pages.values())[0]
-          ii = page.get("imageinfo")
-          print(ii[0]["url"] if ii else "NOT_FOUND")
-          PYEOF
-
-          for entry in \
-            "Illustration_Sorbus_aucuparia0.jpg:public/arboles/serbal.jpg" \
-            "Salix_caprea_Sturm42.jpg:public/arboles/sauce.jpg" \
-            "Illustration_Crataegus_monogyna0.jpg:public/arboles/espino.jpg" \
-            "Illustration_Ilex_aquifolium0.jpg:public/arboles/acebo.jpg" \
-            "Illustration_Corylus_avellana0.jpg:public/arboles/avellano.jpg" \
-            "Illustration_Hedera_helix0.jpg:public/arboles/hiedra.jpg" \
-            "Illustration_Phragmites_australis0.jpg:public/arboles/cana.jpg"
-          do
-            filename="${entry%%:*}"
-            output="${entry##*:}"
-            url=$(python3 /tmp/get_url.py "$filename")
-            if [ "$url" = "NOT_FOUND" ]; then
-              echo "No encontrado: $filename"
-            else
-              echo "OK: $filename"
-              curl -L -s -A "$UA" --max-time 30 "$url" -o "$output"
-            fi
-          done
+          curl -L -s -A "$UA" --max-time 30 "$WK/a/a2/Illustration_Sorbus_aucuparia0.jpg" -o public/arboles/serbal.jpg
+          curl -L -s -A "$UA" --max-time 30 "$WK/0/04/Salix_caprea_Sturm42.jpg" -o public/arboles/sauce.jpg
+          curl -L -s -A "$UA" --max-time 30 "$WK/8/8a/Illustration_Crataegus_monogyna0.jpg" -o public/arboles/espino.jpg
+          curl -L -s -A "$UA" --max-time 30 "$WK/5/53/Illustration_Ilex_aquifolium0.jpg" -o public/arboles/acebo.jpg
+          curl -L -s -A "$UA" --max-time 30 "$WK/8/8f/Illustration_Corylus_avellana0.jpg" -o public/arboles/avellano.jpg
+          curl -L -s -A "$UA" --max-time 30 "$WK/6/69/Illustration_Hedera_helix0.jpg" -o public/arboles/hiedra.jpg
+          curl -L -s -A "$UA" --max-time 30 "$WK/1/1c/Illustration_Phragmites_australis0.jpg" -o public/arboles/cana.jpg
 
       - name: Verify all 13
         run: |
