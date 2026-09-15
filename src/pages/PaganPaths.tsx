@@ -152,7 +152,7 @@ export default function PaganPaths() {
       userId,
       usarLite: false,
       cacheable: false,
-      maxTokens: 1800,
+      maxTokens: 2800,
     })
 
     if (result.error) {
