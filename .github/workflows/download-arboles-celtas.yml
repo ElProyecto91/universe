@@ -14,25 +14,53 @@ jobs:
       - name: Create directory
         run: mkdir -p public/arboles
 
-      - name: Download all 13 tree illustrations
+      - name: Create helper script
+        run: |
+          cat > /tmp/get_url.py << 'EOF'
+          import sys, json, urllib.request
+          filename = sys.argv[1]
+          api = "https://commons.wikimedia.org/w/api.php"
+          url = api + "?action=query&titles=File:" + filename + "&prop=imageinfo&iiprop=url&format=json"
+          req = urllib.request.Request(url, headers={"User-Agent": "CelticBot/1.0"})
+          data = json.loads(urllib.request.urlopen(req).read())
+          pages = data["query"]["pages"]
+          page = list(pages.values())[0]
+          ii = page.get("imageinfo")
+          print(ii[0]["url"] if ii else "NOT_FOUND")
+          EOF
+
+      - name: Download Kohler illustrations
         run: |
           UA="Mozilla/5.0 (compatible; CelticBot/1.0)"
           KOEH="http://www.pharmakobotanik.eu/allgemei/koehler"
-          WK="https://upload.wikimedia.org/wikipedia/commons"
-
           curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-021.jpg" -o public/arboles/abedul.jpg
           curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-062.jpg" -o public/arboles/fresno.jpg
           curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-120.jpg" -o public/arboles/aliso.jpg
           curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-118.jpg" -o public/arboles/roble.jpg
           curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-145.jpg" -o public/arboles/vid.jpg
           curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-127.jpg" -o public/arboles/sauco.jpg
-          curl -L -s -A "$UA" --max-time 30 "$WK/a/a2/Illustration_Sorbus_aucuparia0.jpg" -o public/arboles/serbal.jpg
-          curl -L -s -A "$UA" --max-time 30 "$WK/0/04/Salix_caprea_Sturm42.jpg" -o public/arboles/sauce.jpg
-          curl -L -s -A "$UA" --max-time 30 "$WK/8/8a/Illustration_Crataegus_monogyna0.jpg" -o public/arboles/espino.jpg
-          curl -L -s -A "$UA" --max-time 30 "$WK/5/53/Illustration_Ilex_aquifolium0.jpg" -o public/arboles/acebo.jpg
-          curl -L -s -A "$UA" --max-time 30 "$WK/8/8f/Illustration_Corylus_avellana0.jpg" -o public/arboles/avellano.jpg
-          curl -L -s -A "$UA" --max-time 30 "$WK/6/69/Illustration_Hedera_helix0.jpg" -o public/arboles/hiedra.jpg
-          curl -L -s -A "$UA" --max-time 30 "$WK/1/1c/Illustration_Phragmites_australis0.jpg" -o public/arboles/cana.jpg
+
+      - name: Download Wikimedia illustrations
+        run: |
+          UA="Mozilla/5.0 (compatible; CelticBot/1.0)"
+          download() {
+            local name="$1"
+            local out="$2"
+            local url=$(python3 /tmp/get_url.py "$name")
+            if [ "$url" = "NOT_FOUND" ]; then
+              echo "NO ENCONTRADO: $name"
+            else
+              echo "OK: $name"
+              curl -L -s -A "$UA" --max-time 30 "$url" -o "$out"
+            fi
+          }
+          download "Illustration_Sorbus_aucuparia0.jpg"     public/arboles/serbal.jpg
+          download "Salix_caprea_Sturm42.jpg"               public/arboles/sauce.jpg
+          download "Illustration_Crataegus_monogyna0.jpg"   public/arboles/espino.jpg
+          download "Illustration_Ilex_aquifolium0.jpg"      public/arboles/acebo.jpg
+          download "Illustration_Corylus_avellana0.jpg"     public/arboles/avellano.jpg
+          download "Illustration_Hedera_helix0.jpg"         public/arboles/hiedra.jpg
+          download "Illustration_Phragmites_australis0.jpg" public/arboles/cana.jpg
 
       - name: Verify all 13
         run: |
