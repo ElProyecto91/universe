@@ -1,4 +1,4 @@
-name: Download Celtic Tree Illustrations
+name: Download Missing Trees
 
 on:
   workflow_dispatch:
@@ -7,12 +7,9 @@ jobs:
   download:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-
-      - name: Create directory
-        run: mkdir -p public/arboles
 
       - name: Create helper script
         run: |
@@ -29,20 +26,10 @@ jobs:
           print(ii[0]["url"] if ii else "NOT_FOUND")
           EOF
 
-      - name: Download Kohler illustrations
+      - name: Download sauce and espino
         run: |
           UA="Mozilla/5.0 (compatible; CelticBot/1.0)"
-          KOEH="http://www.pharmakobotanik.eu/allgemei/koehler"
-          curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-021.jpg" -o public/arboles/abedul.jpg
-          curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-062.jpg" -o public/arboles/fresno.jpg
-          curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-120.jpg" -o public/arboles/aliso.jpg
-          curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-118.jpg" -o public/arboles/roble.jpg
-          curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-145.jpg" -o public/arboles/vid.jpg
-          curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-127.jpg" -o public/arboles/sauco.jpg
 
-      - name: Download Wikimedia illustrations
-        run: |
-          UA="Mozilla/5.0 (compatible; CelticBot/1.0)"
           download() {
             local name="$1"
             local out="$2"
@@ -50,38 +37,29 @@ jobs:
             if [ "$url" = "NOT_FOUND" ]; then
               echo "NO ENCONTRADO: $name"
             else
-              echo "OK: $name"
+              echo "OK: $name -> $url"
               curl -L -s -A "$UA" --max-time 30 "$url" -o "$out"
             fi
           }
-          download "Illustration_Sorbus_aucuparia0.jpg"     public/arboles/serbal.jpg
-          download "Salix_caprea_Sturm42.jpg"               public/arboles/sauce.jpg
-          download "Illustration_Crataegus_monogyna0.jpg"   public/arboles/espino.jpg
-          download "Illustration_Ilex_aquifolium0.jpg"      public/arboles/acebo.jpg
-          download "Illustration_Corylus_avellana0.jpg"     public/arboles/avellano.jpg
-          download "Illustration_Hedera_helix0.jpg"         public/arboles/hiedra.jpg
-          download "Illustration_Phragmites_australis0.jpg" public/arboles/cana.jpg
 
-      - name: Verify all 13
+          download "Salix_caprea_Sturm42.jpg"             public/arboles/sauce.jpg
+          download "Illustration_Crataegus_monogyna0.jpg" public/arboles/espino.jpg
+
+      - name: Verify
         run: |
-          echo "=== Verificando ==="
-          FALLOS=0
-          for f in public/arboles/*.jpg; do
+          for f in public/arboles/sauce.jpg public/arboles/espino.jpg; do
             size=$(wc -c < "$f")
             if [ "$size" -lt 10000 ]; then
               echo "FALLO: $f ($size bytes)"
-              FALLOS=$((FALLOS+1))
             else
               echo "OK: $f ($size bytes)"
             fi
           done
-          echo "Total fallos: $FALLOS"
-          if [ "$FALLOS" -gt 0 ]; then exit 1; fi
 
       - name: Commit and push
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add public/arboles/
-          git commit -m "Add 13 Celtic tree botanical illustrations (public domain)" || echo "Nothing to commit"
+          git commit -m "Add sauce and espino illustrations" || echo "Nothing to commit"
           git push
