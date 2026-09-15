@@ -1,4 +1,4 @@
-name: Download All Rune SVGs
+name: Download Celtic Tree Illustrations
 
 on:
   workflow_dispatch:
@@ -11,45 +11,53 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Create directory
-        run: mkdir -p public/runas
+        run: mkdir -p public/arboles
 
-      - name: Download all 24 Elder Futhark SVGs direct URLs
+      - name: Download via Wikimedia API + Köhler direct
         run: |
-          UA="Mozilla/5.0 (compatible; RuneBot/1.0)"
-          BASE="https://upload.wikimedia.org/wikipedia/commons"
+          UA="Mozilla/5.0 (compatible; CelticBot/1.0)"
+          API="https://commons.wikimedia.org/w/api.php"
+          KOEH="http://www.pharmakobotanik.eu/allgemei/koehler"
 
-          curl -L -s -A "$UA" "$BASE/8/8f/Runic_letter_fehu.svg"     -o public/runas/fehu.svg
-          curl -L -s -A "$UA" "$BASE/3/3f/Runic_letter_uruz.svg"     -o public/runas/uruz.svg
-          curl -L -s -A "$UA" "$BASE/8/86/Runic_letter_thurisaz.svg" -o public/runas/thurisaz.svg
-          curl -L -s -A "$UA" "$BASE/d/d3/Runic_letter_ansuz.svg"    -o public/runas/ansuz.svg
-          curl -L -s -A "$UA" "$BASE/4/40/Runic_letter_raido.svg"    -o public/runas/raido.svg
-          curl -L -s -A "$UA" "$BASE/c/c5/Runic_letter_kauna.svg"    -o public/runas/kaunaz.svg
-          curl -L -s -A "$UA" "$BASE/7/70/Runic_letter_gebo.svg"     -o public/runas/gebo.svg
-          curl -L -s -A "$UA" "$BASE/3/35/Runic_letter_wunjo.svg"    -o public/runas/wunjo.svg
-          curl -L -s -A "$UA" "$BASE/2/22/Runic_letter_haglaz.svg"   -o public/runas/haglaz.svg
-          curl -L -s -A "$UA" "$BASE/3/3f/Runic_letter_naudiz.svg"   -o public/runas/naudiz.svg
-          curl -L -s -A "$UA" "$BASE/5/54/Runic_letter_isaz.svg"     -o public/runas/isa.svg
-          curl -L -s -A "$UA" "$BASE/0/08/Runic_letter_jeran.svg"    -o public/runas/jeran.svg
-          curl -L -s -A "$UA" "$BASE/5/5f/Runic_letter_iwaz.svg"     -o public/runas/iwaz.svg
-          curl -L -s -A "$UA" "$BASE/0/0e/Runic_letter_pertho.svg"   -o public/runas/pertho.svg
-          curl -L -s -A "$UA" "$BASE/d/df/Runic_letter_algiz.svg"    -o public/runas/algiz.svg
-          curl -L -s -A "$UA" "$BASE/f/f8/Runic_letter_sowilo.svg"   -o public/runas/sowilo.svg
-          curl -L -s -A "$UA" "$BASE/0/01/Runic_letter_tiwaz.svg"    -o public/runas/tiwaz.svg
-          curl -L -s -A "$UA" "$BASE/6/6e/Runic_letter_berkanan.svg" -o public/runas/berkanan.svg
-          curl -L -s -A "$UA" "$BASE/c/c2/Runic_letter_ehwaz.svg"    -o public/runas/ehwaz.svg
-          curl -L -s -A "$UA" "$BASE/5/57/Runic_letter_mannaz.svg"   -o public/runas/mannaz.svg
-          curl -L -s -A "$UA" "$BASE/4/46/Runic_letter_laukaz.svg"   -o public/runas/laukaz.svg
-          curl -L -s -A "$UA" "$BASE/d/d5/Runic_letter_ingwaz.svg"   -o public/runas/ingwaz.svg
-          curl -L -s -A "$UA" "$BASE/0/0e/Runic_letter_dagaz.svg"    -o public/runas/dagaz.svg
-          curl -L -s -A "$UA" "$BASE/c/ca/Runic_letter_othalan.svg"  -o public/runas/othalan.svg
+          download_wiki() {
+            local filename="$1"
+            local output="$2"
+            local url=$(curl -s -A "$UA" "${API}?action=query&titles=File:${filename}&prop=imageinfo&iiprop=url&format=json" | python3 -c "import sys,json; data=json.load(sys.stdin); pages=data['query']['pages']; page=list(pages.values())[0]; print(page['imageinfo'][0]['url'])")
+            echo "✓ Wiki: $filename"
+            curl -L -s -A "$UA" --max-time 30 "$url" -o "$output"
+          }
 
-      - name: Verify all 24
+          download_koeh() {
+            local num="$1"
+            local output="$2"
+            echo "✓ Köhler: koeh-${num}.jpg"
+            curl -L -s -A "$UA" --max-time 30 "$KOEH/koeh-${num}.jpg" -o "$output"
+          }
+
+          # Köhler — URLs directas verificadas del índice
+          download_koeh "021" public/arboles/abedul.jpg      # Betula lenta
+          download_koeh "062" public/arboles/fresno.jpg      # Fraxinus ornus
+          download_koeh "120" public/arboles/aliso.jpg       # Frangula alnus
+          download_koeh "118" public/arboles/roble.jpg       # Quercus petraea
+          download_koeh "145" public/arboles/vid.jpg         # Vitis vinifera
+          download_koeh "127" public/arboles/sauco.jpg       # Sambucus nigra
+
+          # Wikimedia API — ilustraciones botánicas dominio público
+          download_wiki "Illustration_Sorbus_aucuparia0.jpg"           public/arboles/serbal.jpg
+          download_wiki "Salix_alba_-_Kohler-s_Medizinal-Pflanzen-125.jpg" public/arboles/sauce.jpg
+          download_wiki "Crataegus_monogyna_—_Köhler_Medizinal-Pflanzen.jpg" public/arboles/espino.jpg
+          download_wiki "Ilex_aquifolium_-_Koehler-s_Medizinal-Pflanzen-079.jpg" public/arboles/acebo.jpg
+          download_wiki "Corylus_avellana_-_Kohler-s_Medizinal-Pflanzen-038.jpg" public/arboles/avellano.jpg
+          download_wiki "Hedera_helix_-_Koehler-s_Medizinal-Pflanzen-074.jpg"    public/arboles/hiedra.jpg
+          download_wiki "Phragmites_australis_-_Kohler-s_Medizinal-Pflanzen-261.jpg" public/arboles/cana.jpg
+
+      - name: Verify all 13
         run: |
-          echo "=== Verificando ==="
+          echo "=== Verificando 13 árboles ==="
           FALLOS=0
-          for f in public/runas/*.svg; do
+          for f in public/arboles/*.jpg; do
             size=$(wc -c < "$f")
-            if [ "$size" -lt 150 ]; then
+            if [ "$size" -lt 10000 ]; then
               echo "⚠️  FALLO: $f ($size bytes)"
               FALLOS=$((FALLOS+1))
             else
@@ -63,6 +71,6 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add public/runas/
-          git commit -m "Add all 24 Elder Futhark rune SVGs (CC0, Wikimedia)" || echo "Nothing to commit"
+          git add public/arboles/
+          git commit -m "Add 13 Celtic tree botanical illustrations (public domain)" || echo "Nothing to commit"
           git push
