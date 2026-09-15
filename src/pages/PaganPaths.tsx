@@ -15,6 +15,8 @@ const CAMINOS = [
     subtitulo: '✦ Norse / Heathen',
     descripcion: 'Mitología y simbolismo nórdico: Odin, Thor, las Nornas, los Nueve Mundos.',
     etiqueta: '🏛️ HISTÓRICO',
+    imagen: '/pagan/norse.jpg',
+    imagenCredito: 'Johannes Gehrts, 1901',
     prompt: (pregunta: string, nombre: string) => [
       'Escribe en español, en prosa, sin listas, sin asteriscos, sin markdown.',
       'Eres un guía experto en mitología y simbolismo nórdico/germánico. Responde desde el conocimiento de las sagas, la Edda Poética y la Edda en Prosa, los nueve mundos, los dioses (Aesir y Vanir) y los conceptos de Wyrd y Orlog.',
@@ -31,6 +33,8 @@ const CAMINOS = [
     subtitulo: '✦ Greco-romana',
     descripcion: 'Dioses olímpicos, mitos griegos y romanos, arquetipos y oráculos.',
     etiqueta: '🏛️ HISTÓRICO',
+    imagen: '/pagan/hellenic.jpg',
+    imagenCredito: 'Escultura griega clásica',
     prompt: (pregunta: string, nombre: string) => [
       'Escribe en español, en prosa, sin listas, sin asteriscos, sin markdown.',
       'Eres un guía experto en mitología y filosofía griega y romana. Conoces profundamente los dioses olímpicos, los mitos, el oráculo de Delfos, los estoicos y los epicúreos.',
@@ -47,6 +51,8 @@ const CAMINOS = [
     subtitulo: '✦ Kemet',
     descripcion: 'Dioses del antiguo Egipto, Ma\'at, el Libro de los Muertos, los arquetipos.',
     etiqueta: '🏛️ HISTÓRICO',
+    imagen: '/pagan/egyptian.jpg',
+    imagenCredito: 'Grabado egipcio, 1888',
     prompt: (pregunta: string, nombre: string) => [
       'Escribe en español, en prosa, sin listas, sin asteriscos, sin markdown.',
       'Eres un guía experto en religión y mitología del antiguo Egipto. Conoces profundamente los dioses (Ra, Isis, Osiris, Anubis, Thoth, Sekhmet, Hathor...), el concepto de Ma\'at (verdad/equilibrio), el Libro de los Muertos y la cosmología egipcia.',
@@ -63,6 +69,8 @@ const CAMINOS = [
     subtitulo: '✦ Inspiración celta',
     descripcion: 'Folklore celta, ciclos estacionales, el Otro Mundo, los Tuatha Dé Danann.',
     etiqueta: '✨ MODERNO',
+    imagen: '/pagan/celtic.jpg',
+    imagenCredito: 'Libro de Kells, s. IX',
     prompt: (pregunta: string, nombre: string) => [
       'Escribe en español, en prosa, sin listas, sin asteriscos, sin markdown.',
       'Eres un guía experto en folklore celta, mitología irlandesa y galesa, y las tradiciones de los pueblos celtas históricos.',
@@ -79,6 +87,8 @@ const CAMINOS = [
     subtitulo: '✦ Folklore eslavo',
     descripcion: 'Deidades eslavas, Baba Yaga, espíritus de la naturaleza, folklore de Europa del Este.',
     etiqueta: '🌿 VIVO',
+    imagen: '/pagan/slavic.jpg',
+    imagenCredito: 'Ivan Bilibin, 1900',
     prompt: (pregunta: string, nombre: string) => [
       'Escribe en español, en prosa, sin listas, sin asteriscos, sin markdown.',
       'Eres un guía experto en mitología y folklore eslavo: Perun, Veles, Mokosh, Baba Yaga, los domovoi, las rusalki y otros seres del folklore eslavo oriental y occidental.',
@@ -95,6 +105,8 @@ const CAMINOS = [
     subtitulo: '✦ Paganismo moderno',
     descripcion: 'El ciclo de las estaciones, la Triple Diosa, el Dios Cornudo, los sabbats.',
     etiqueta: '✨ MODERNO',
+    imagen: '/pagan/wicca.jpg',
+    imagenCredito: 'Francisco de Goya, 1798',
     prompt: (pregunta: string, nombre: string) => [
       'Escribe en español, en prosa, sin listas, sin asteriscos, sin markdown.',
       'Eres una guía experta en Wicca y brujería moderna contemporánea. Conoces la Rueda del Año, la Triple Diosa, el Dios Cornudo, los sabbats y los esbats, la magia con hierbas, cristales y elementos.',
@@ -179,6 +191,7 @@ export default function PaganPaths() {
           </div>
         </div>
 
+        {/* FASE 1 — Elegir tradición */}
         {fase === 'elegir' && (
           <div className="flex flex-col gap-4">
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur">
@@ -191,30 +204,47 @@ export default function PaganPaths() {
             {CAMINOS.map(c => (
               <button key={c.id}
                 onClick={() => { setCaminoSeleccionado(c); setFase('preguntar') }}
-                className="w-full bg-white/5 border border-white/10 rounded-3xl p-5 text-left hover:bg-white/10 transition backdrop-blur">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
+                className="w-full rounded-3xl overflow-hidden text-left hover:opacity-90 transition border border-white/10">
+                {/* Imagen de fondo de la card */}
+                <div className="relative h-24">
+                  <img src={c.imagen} alt={c.nombre}
+                    className="w-full h-full object-cover"
+                    style={{ filter: 'brightness(0.4)' }} />
+                  <div className="absolute inset-0 p-4 flex flex-col justify-between">
+                    <div className="flex items-center gap-2">
                       <p className="text-white font-semibold">{c.nombre}</p>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${etiquetaColor(c.etiqueta)}`}>{c.etiqueta}</span>
                     </div>
-                    <p className="text-purple-300/70 text-xs mb-1">{c.subtitulo}</p>
-                    <p className="text-white/50 text-xs">{c.descripcion}</p>
+                    <p className="text-white/70 text-xs">{c.descripcion}</p>
                   </div>
-                  <span className="text-purple-300/50 text-lg">›</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 text-lg">›</span>
                 </div>
               </button>
             ))}
           </div>
         )}
 
+        {/* FASE 2 — Preguntar */}
         {fase === 'preguntar' && caminoSeleccionado && (
           <div className="flex flex-col gap-6">
-            <div className="bg-white/5 border border-purple-500/20 rounded-3xl p-5 backdrop-blur">
-              <p className="text-purple-300 text-xs tracking-widest uppercase mb-1">{caminoSeleccionado.etiqueta}</p>
-              <p className="text-white font-semibold">{caminoSeleccionado.nombre}</p>
-              <p className="text-white/50 text-sm mt-1">{caminoSeleccionado.descripcion}</p>
+            {/* Hero con imagen histórica */}
+            <div className="rounded-3xl overflow-hidden border border-white/15">
+              <div className="relative h-48">
+                <img src={caminoSeleccionado.imagen} alt={caminoSeleccionado.nombre}
+                  className="w-full h-full object-cover"
+                  style={{ filter: 'brightness(0.55) sepia(0.2)' }} />
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 60%)' }} />
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${etiquetaColor(caminoSeleccionado.etiqueta)}`}>
+                    {caminoSeleccionado.etiqueta}
+                  </span>
+                  <p className="text-white font-bold text-xl mt-1">{caminoSeleccionado.nombre}</p>
+                  <p className="text-white/50 text-xs">{caminoSeleccionado.subtitulo}</p>
+                </div>
+                <p className="absolute top-3 right-3 text-white/30 text-xs">{caminoSeleccionado.imagenCredito}</p>
+              </div>
             </div>
+
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur">
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">Tu pregunta</p>
               <textarea value={pregunta} onChange={e => setPregunta(e.target.value)}
@@ -228,6 +258,7 @@ export default function PaganPaths() {
           </div>
         )}
 
+        {/* FASE 3 — Resultado */}
         {fase === 'resultado' && (
           <div className="flex flex-col gap-5">
             <div className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 backdrop-blur">
