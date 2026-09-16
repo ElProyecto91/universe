@@ -1,3 +1,4 @@
+import AuthCallback from './pages/AuthCallback'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Landing from './pages/Landing'
 import Auth from './pages/Auth'
@@ -75,7 +76,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/auth" element={<Auth />} />
-        <Route path="/onboarding" element={<Onboarding />} />
+<Route path="/auth/callback" element={<AuthCallback />} />  {/* ← aquí */}
+<Route path="/onboarding" element={<Onboarding />} />
         <Route path="/universo" element={<Universo />} />
         <Route path="/guia" element={<Guia />} />
         <Route path="/tarot" element={<Tarot />} />
