@@ -1,3 +1,5 @@
+// src/pages/Tarot.tsx
+
 import { useState } from 'react'
 import { limpiarMarkdown } from '../components/TextoIA'
 import { getCartaSVG } from '../components/svg/TarotSVG'
@@ -58,17 +60,16 @@ export default function Tarot() {
   const { esPremium, userId } = useUserPlan()
   useAnalytics('tarot')
 
+  const nombre = localStorage.getItem('nombre') || 'Luna'
+  const signo = localStorage.getItem('signo') || 'Leo'
+
   const bgStyle = {
     backgroundImage: 'url(/stocksnap-constellations-2609647.jpg)',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
   }
 
-  const nombre = localStorage.getItem('nombre') || 'Luna'
-  const signo = localStorage.getItem('signo') || 'Leo'
-
   const iniciarTirada = (tirada: typeof TIRADAS[0]) => {
-    // Bloquear tiradas premium para usuarios free
     if (tirada.premium && !esPremium) {
       setMostrarPaywall(true)
       registrarEvento({ herramienta: 'tarot', accion: 'paywall_mostrado', user_id: userId })
@@ -93,14 +94,18 @@ export default function Tarot() {
 
     const result = await llamarGemini({
       herramienta: 'tarot',
-      prompt: `Eres una tarotista sabia y poética. Interpreta estas cartas para ${nombre}, signo ${signo}.
-Tirada: ${tirada?.descripcion}
-Cartas: ${nombresCartas}
-
-Da una interpretación profunda, poética y personal. Conecta las cartas entre sí. No seas genérica. Habla directamente a ${nombre}. Máximo 200 palabras. Termina con una pregunta de reflexión.`,
+      prompt: [
+        'Escribe en español, en prosa, sin listas, sin asteriscos, sin markdown.',
+        `Eres una tarotista sabia y poética. Interpreta estas cartas para ${nombre}, signo ${signo}.`,
+        `Tirada: ${tirada?.descripcion}`,
+        `Cartas: ${nombresCartas}`,
+        '',
+        `Da una interpretación profunda, poética y personal. Conecta las cartas entre sí. No seas genérica. Habla directamente a ${nombre}. Máximo 250 palabras. Termina con una pregunta de reflexión.`,
+      ].join('\n'),
       userId,
+      usarLite: false,
       cacheable: false,
-      maxTokens: 1200,
+      maxTokens: 1800,
     })
 
     if (result.error) {
@@ -120,7 +125,7 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/75" />
+      <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.80)' }} />
 
       {mostrarPaywall && (
         <Paywall
@@ -139,6 +144,7 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
 
       <div className="relative z-10 flex flex-col items-center px-6 py-8 gap-8">
 
+        {/* ELEGIR TIRADA */}
         {fase === 'elegir' && (
           <>
             <div className="text-center">
@@ -147,12 +153,9 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
             </div>
             <div className="w-full max-w-sm flex flex-col gap-3">
               {TIRADAS.map(t => (
-                <button
-                  key={t.id}
-                  onClick={() => iniciarTirada(t)}
+                <button key={t.id} onClick={() => iniciarTirada(t)}
                   className="w-full bg-white/8 border border-white/20 rounded-2xl p-4 text-left hover:bg-purple-600/20 hover:border-purple-500/40 transition backdrop-blur"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
-                >
+                  style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-white font-semibold">{t.nombre}</p>
@@ -168,6 +171,7 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
           </>
         )}
 
+        {/* REVELAR CARTAS */}
         {fase === 'revelar' && (
           <>
             <div className="text-center">
@@ -177,38 +181,42 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
             <div className="flex gap-3 flex-wrap justify-center">
               {cartas.map((carta, i) => (
                 <div key={i} className="flex flex-col items-center gap-2">
-                  <div
-                    className="rounded-xl overflow-hidden"
-                    style={{
-                      width: cartas.length === 1 ? '140px' : cartas.length <= 3 ? '90px' : '70px',
-                      height: cartas.length === 1 ? '220px' : cartas.length <= 3 ? '140px' : '110px',
-                      transform: carta.invertida ? 'rotate(180deg)' : 'none',
-                      boxShadow: '0 0 20px rgba(139,92,246,0.3)',
-                    }}
-                  >
+                  <div className="rounded-xl overflow-hidden" style={{
+                    width: cartas.length === 1 ? '140px' : cartas.length <= 3 ? '90px' : '70px',
+                    height: cartas.length === 1 ? '220px' : cartas.length <= 3 ? '140px' : '110px',
+                    transform: carta.invertida ? 'rotate(180deg)' : 'none',
+                    boxShadow: '0 0 20px rgba(139,92,246,0.3)',
+                  }}>
                     {getCartaSVG(carta.nombre)}
                   </div>
-                  <p className="text-white text-xs font-medium text-center" style={{ maxWidth: cartas.length > 3 ? '70px' : '100px' }}>{carta.nombre}</p>
+                  <p className="text-white text-xs font-medium text-center"
+                    style={{ maxWidth: cartas.length > 3 ? '70px' : '100px' }}>
+                    {carta.nombre}
+                  </p>
                   {carta.invertida && <p className="text-purple-400 text-xs">Invertida</p>}
-                  <p className="text-white/40 text-xs text-center" style={{ maxWidth: '80px' }}>{carta.keywords.split(' · ')[0]}</p>
+                  <p className="text-white/40 text-xs text-center" style={{ maxWidth: '80px' }}>
+                    {carta.keywords.split(' · ')[0]}
+                  </p>
                 </div>
               ))}
             </div>
-            <button
-              onClick={interpretarCartas}
-              className="w-full max-w-sm bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition"
-            >
+            <button onClick={interpretarCartas}
+              className="w-full max-w-sm bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition">
               Interpretar mis cartas
             </button>
           </>
         )}
 
+        {/* INTERPRETAR */}
         {fase === 'interpretar' && (
           <>
             <div className="flex gap-3 flex-wrap justify-center">
               {cartas.map((carta, i) => (
                 <div key={i} className="flex flex-col items-center gap-1">
-                  <div className="rounded-xl overflow-hidden" style={{ width: '70px', height: '110px', transform: carta.invertida ? 'rotate(180deg)' : 'none' }}>
+                  <div className="rounded-xl overflow-hidden" style={{
+                    width: '70px', height: '110px',
+                    transform: carta.invertida ? 'rotate(180deg)' : 'none',
+                  }}>
                     {getCartaSVG(carta.nombre)}
                   </div>
                   <p className="text-white/60 text-xs text-center" style={{ maxWidth: '70px' }}>{carta.nombre}</p>
@@ -238,20 +246,22 @@ Da una interpretación profunda, poética y personal. Conecta las cartas entre s
                 <Compartir
                   titulo={`Mi tirada de Tarot: ${cartas.map(c => c.nombre).join(', ')}`}
                   texto={interpretacion}
-                  hashtags={['Tarot', 'Universe', 'Lectura', 'Astrologia']}
-                />
+                  hashtags={['Tarot', 'Universe', 'Lectura', 'Astrologia']} />
               </div>
             )}
 
             {!cargando && (
               <div className="w-full max-w-sm flex flex-col gap-3">
-                <button onClick={() => window.location.href = '/guia'} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition">
+                <button onClick={() => window.location.href = '/guia'}
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 rounded-full hover:opacity-90 transition">
                   Explorar con mi Guía IA
                 </button>
-                <button onClick={() => window.location.href = '/experto'} className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full hover:bg-white/20 transition backdrop-blur">
+                <button onClick={() => window.location.href = '/expertos'}
+                  className="w-full bg-white/10 border border-white/20 text-white font-semibold py-4 rounded-full hover:bg-white/20 transition backdrop-blur">
                   Hablar con un Experto
                 </button>
-                <button onClick={() => { setFase('elegir'); setCartas([]); setInterpretacion(''); setErrorMsg('') }} className="w-full text-purple-300/60 text-sm py-2">
+                <button onClick={() => { setFase('elegir'); setCartas([]); setInterpretacion(''); setErrorMsg('') }}
+                  className="w-full text-purple-300/60 text-sm py-2">
                   Nueva tirada
                 </button>
               </div>
