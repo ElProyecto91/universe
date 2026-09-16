@@ -14,7 +14,7 @@ interface Mensaje {
 }
 
 export default function Guia() {
-  const nombre = localStorage.getItem('nombre') || 'Luna'
+  const nombre = localStorage.getItem('nombre') || 'viajero'
   const signo = localStorage.getItem('signo') || 'Leo'
   const elemento = localStorage.getItem('elemento') || 'Fuego'
   const animal = localStorage.getItem('animal') || 'Águila'
@@ -24,6 +24,7 @@ export default function Guia() {
   useAnalytics('guia-ia')
 
   const systemPrompt = [
+    'Escribe en español, en prosa, sin listas, sin asteriscos, sin markdown.',
     'Eres una guía espiritual sabia, profunda y empática llamada UNIVERSE.',
     'Tu manera de comunicarte es cálida, poética y significativa. Nunca eres superficial.',
     'Siempre conectas tus respuestas con el cosmos, la energía y el camino interior del usuario.',
@@ -38,7 +39,7 @@ export default function Guia() {
 
   const [mensajes, setMensajes] = useState<Mensaje[]>([{
     rol: 'asistente',
-    contenido: `Bienvenida, ${nombre}. Soy tu guía en este universo interior.\n\nComo ${signo}, tu energía de ${elemento} te da una visión única del mundo. Estoy aquí para acompañarte en cualquier pregunta que lleves en el corazón.\n\n¿Qué quieres explorar hoy?`,
+    contenido: `Bienvenid@, ${nombre}. Soy tu guía en este universo interior.\n\nComo ${signo}, tu energía de ${elemento} te da una visión única del mundo. Estoy aquí para acompañarte en cualquier pregunta que lleves en el corazón.\n\n¿Qué quieres explorar hoy?`,
   }])
   const [input, setInput] = useState('')
   const [cargando, setCargando] = useState(false)
@@ -77,7 +78,7 @@ export default function Guia() {
       userId,
       usarLite: false,
       cacheable: false,
-      maxTokens: 1500,
+      maxTokens: 2500,
     })
 
     const respuesta = result.error
@@ -101,7 +102,6 @@ export default function Guia() {
 
       {!esPremium && <Paywall motivo="herramienta" herramienta="Guía IA · Consultas ilimitadas" />}
 
-      {/* Header */}
       <div className="relative z-10 flex items-center gap-3 px-4 py-4 border-b border-white/10 backdrop-blur">
         <button onClick={() => window.location.href = '/universo'} className="text-purple-300 text-sm">← Volver</button>
         <div className="flex-1 text-center">
@@ -114,7 +114,6 @@ export default function Guia() {
         </button>
       </div>
 
-      {/* Mensajes */}
       <div className="relative z-10 flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-4">
         <AvisoIA />
         {mensajes.map((m, i) => (
@@ -149,7 +148,6 @@ export default function Guia() {
         <div ref={finRef} />
       </div>
 
-      {/* Sugerencias */}
       {mensajes.length === 1 && (
         <div className="relative z-10 px-4 pb-2 flex gap-2 overflow-x-auto">
           {sugerencias.map(s => (
@@ -161,12 +159,10 @@ export default function Guia() {
         </div>
       )}
 
-      {/* Disclaimer */}
       <div className="relative z-10 px-4 py-2">
         <DisclaimerIA compact />
       </div>
 
-      {/* Input */}
       <div className="relative z-10 px-4 py-4 border-t border-white/10 backdrop-blur flex gap-3 items-end">
         <textarea
           value={input}
