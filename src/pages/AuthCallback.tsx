@@ -4,11 +4,21 @@ import { supabase } from '../lib/supabase'
 
 export default function AuthCallback() {
   useEffect(() => {
-    supabase.auth.onAuthStateChange((event, session) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        window.location.href = '/universo'
+        return
+      }
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
+        subscription.unsubscribe()
         window.location.href = '/universo'
       }
     })
+
+    return () => subscription.unsubscribe()
   }, [])
 
   return (
