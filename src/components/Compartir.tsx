@@ -5,7 +5,7 @@ interface Props {
 }
 
 export default function Compartir({ titulo, texto, hashtags = [] }: Props) {
-  const appUrl = 'https://universe-three-alpha.vercel.app'
+  const appUrl = 'https://semitua.com'
   const tags   = hashtags.length > 0 ? hashtags.map(h => `#${h}`).join(' ') : ''
 
   const generarImagenYCompartir = async () => {
