@@ -41,7 +41,7 @@ export default function Auth() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/universo`,
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
     })
   }
@@ -65,7 +65,6 @@ export default function Auth() {
           </p>
         </div>
 
-        {/* Google */}
         <button
           onClick={loginConGoogle}
           className="w-full bg-white text-gray-800 font-semibold py-4 rounded-full flex items-center justify-center gap-3 hover:bg-gray-100 transition"
