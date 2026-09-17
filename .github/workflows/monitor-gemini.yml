@@ -1,0 +1,65 @@
+name: Monitor Gemini Usage
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # cada hora
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Gemini spending
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+        run: |
+          # Obtener gasto del día
+          RESPONSE=$(curl -s \
+            -H "apikey: $SUPABASE_SERVICE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
+            "$SUPABASE_URL/rest/v1/ai_gasto_hoy?select=*")
+          
+          echo "Respuesta Supabase: $RESPONSE"
+          
+          GASTO=$(echo $RESPONSE | python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          if isinstance(data, list) and len(data) > 0:
+              print(float(data[0].get('gasto_usd_hoy', 0)))
+          else:
+              print(0)
+          ")
+          
+          echo "Gasto hoy: $GASTO USD"
+          
+          # Alerta si supera $3 en un día
+          python3 -c "
+          gasto = float('$GASTO')
+          limite = 3.0
+          if gasto >= limite:
+              print(f'ALERTA: Gasto diario {gasto} USD supera el límite de {limite} USD')
+              exit(1)
+          else:
+              print(f'OK: Gasto diario {gasto} USD dentro del límite')
+          "
+
+      - name: Send alert if failed
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.ALERT_EMAIL }}
+          password: ${{ secrets.ALERT_EMAIL_PASSWORD }}
+          subject: '🚨 UNIVERSE — Alerta gasto IA elevado'
+          body: |
+            El gasto de IA en UNIVERSE ha superado el límite diario de $3 USD.
+            
+            Revisa el dashboard de Supabase para más detalles.
+            
+            https://supabase.com/dashboard/project/${{ secrets.SUPABASE_PROJECT_ID }}
+          to: ${{ secrets.ALERT_EMAIL }}
+          from: UNIVERSE Monitor
