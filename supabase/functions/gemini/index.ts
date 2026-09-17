@@ -5,13 +5,22 @@ const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? ''
 const GEMINI_FLASH_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${GEMINI_API_KEY}`
 const GEMINI_LITE_URL  = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${GEMINI_API_KEY}`
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://semitua.com',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
+const ALLOWED_ORIGINS = [
+  'https://semitua.com',
+  'https://www.semitua.com',
+  'https://universe-three-alpha.vercel.app',
+]
 
 serve(async (req) => {
+  const origin = req.headers.get('origin') ?? ''
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]
+
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  }
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
