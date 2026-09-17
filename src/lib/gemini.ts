@@ -8,16 +8,13 @@
 
 import { supabase } from './supabase'
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
-
-const GEMINI_FLASH_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${GEMINI_API_KEY}`
-const GEMINI_LITE_URL  = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${GEMINI_API_KEY}`
+const SUPABASE_FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`
 
 // Costes reales septiembre 2026 (USD por token)
-const COSTE_FLASH_INPUT  = 0.00000075   // $0.75 / 1M tokens
-const COSTE_FLASH_OUTPUT = 0.00000375   // $3.75 / 1M tokens
-const COSTE_LITE_INPUT   = 0.00000025   // $0.25 / 1M tokens
-const COSTE_LITE_OUTPUT  = 0.0000015    // $1.50 / 1M tokens
+const COSTE_FLASH_INPUT  = 0.00000075
+const COSTE_FLASH_OUTPUT = 0.00000375
+const COSTE_LITE_INPUT   = 0.00000025
+const COSTE_LITE_OUTPUT  = 0.0000015
 
 export interface LlamarGeminiParams {
   herramienta: string
@@ -53,7 +50,6 @@ export async function llamarGemini(params: LlamarGeminiParams): Promise<LlamarGe
     temperatura = 0.8,
   } = params
 
-  const modeloUrl   = usarLite ? GEMINI_LITE_URL  : GEMINI_FLASH_URL
   const costoInput  = usarLite ? COSTE_LITE_INPUT  : COSTE_FLASH_INPUT
   const costoOutput = usarLite ? COSTE_LITE_OUTPUT : COSTE_FLASH_OUTPUT
   const modeloNombre: 'flash' | 'lite' = usarLite ? 'lite' : 'flash'
@@ -95,19 +91,21 @@ export async function llamarGemini(params: LlamarGeminiParams): Promise<LlamarGe
     }
   }
 
-  // ── 5. LLAMADA A GEMINI ────────────────────────────────────
+  // ── 5. LLAMADA A GEMINI VIA EDGE FUNCTION ─────────────────
   let texto = ''
   let tokensInput = 0
   let tokensOutput = 0
 
   try {
-    const response = await fetch(modeloUrl, {
+    const { data: { session } } = await supabase.auth.getSession()
+
+    const response = await fetch(`${SUPABASE_FUNCTIONS_URL}/gemini`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: temperatura, maxOutputTokens: maxTokens },
-      }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ prompt, usarLite, maxTokens, temperatura }),
     })
 
     if (!response.ok) {
