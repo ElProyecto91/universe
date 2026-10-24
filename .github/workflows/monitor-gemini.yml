@@ -5,46 +5,60 @@ on:
     - cron: '0 * * * *'  # cada hora
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   monitor:
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Check Gemini spending
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+          LIMITE_USD: '3'
         run: |
-          # Obtener gasto del día
-          RESPONSE=$(curl -s \
-            -H "apikey: $SUPABASE_SERVICE_KEY" \
-            -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
-            "$SUPABASE_URL/rest/v1/ai_gasto_hoy?select=*")
-          
-          echo "Respuesta Supabase: $RESPONSE"
-          
-          GASTO=$(echo $RESPONSE | python3 -c "
-          import sys, json
-          data = json.load(sys.stdin)
-          if isinstance(data, list) and len(data) > 0:
-              print(float(data[0].get('gasto_usd_hoy', 0)))
-          else:
-              print(0)
-          ")
-          
-          echo "Gasto hoy: $GASTO USD"
-          
-          # Alerta si supera $3 en un día
-          python3 -c "
-          gasto = float('$GASTO')
-          limite = 3.0
+          python3 - <<'PY'
+          import os, sys, json, urllib.request
+
+          url = os.environ["SUPABASE_URL"].rstrip("/") + "/rest/v1/ai_gasto_hoy?select=*"
+          key = os.environ["SUPABASE_SERVICE_KEY"]
+          limite = float(os.environ["LIMITE_USD"])
+
+          if not key or not os.environ["SUPABASE_URL"]:
+              print("ERROR: faltan los secretos SUPABASE_URL / SUPABASE_SERVICE_KEY")
+              sys.exit(2)
+
+          req = urllib.request.Request(url, headers={"apikey": key, "Authorization": f"Bearer {key}"})
+          try:
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  data = json.load(r)
+          except Exception as e:
+              print(f"ERROR: no se pudo consultar Supabase: {e}")
+              sys.exit(2)
+
+          if not isinstance(data, list):
+              print("ERROR: respuesta inesperada de Supabase (no es una lista)")
+              sys.exit(2)
+
+          gasto = 0.0
+          if data:
+              fila = data[0]
+              for col in ("gasto_usd_hoy", "total_usd", "total_eur"):
+                  if fila.get(col) is not None:
+                      gasto = float(fila[col])
+                      break
+              else:
+                  print(f"ERROR: la vista no tiene columna de gasto conocida: {list(fila.keys())}")
+                  sys.exit(2)
+
+          print(f"Gasto hoy: {gasto}")
           if gasto >= limite:
-              print(f'ALERTA: Gasto diario {gasto} USD supera el límite de {limite} USD')
-              exit(1)
-          else:
-              print(f'OK: Gasto diario {gasto} USD dentro del límite')
-          "
+              print(f"ALERTA: gasto diario {gasto} supera el límite de {limite}")
+              sys.exit(1)
+          print("OK: dentro del límite")
+          PY
 
       - name: Send alert if failed
         if: failure()
@@ -54,12 +68,12 @@ jobs:
           server_port: 465
           username: ${{ secrets.ALERT_EMAIL }}
           password: ${{ secrets.ALERT_EMAIL_PASSWORD }}
-          subject: '🚨 UNIVERSE — Alerta gasto IA elevado'
+          subject: '🚨 Semitua — Alerta del monitor de gasto IA'
           body: |
-            El gasto de IA en UNIVERSE ha superado el límite diario de $3 USD.
-            
-            Revisa el dashboard de Supabase para más detalles.
-            
+            El monitor de Semitua ha fallado: el gasto de IA supera el límite diario
+            o no se ha podido comprobar (error de configuración o de Supabase).
+
+            Revisa el log del workflow en GitHub Actions y el dashboard de Supabase:
             https://supabase.com/dashboard/project/${{ secrets.SUPABASE_PROJECT_ID }}
           to: ${{ secrets.ALERT_EMAIL }}
-          from: UNIVERSE Monitor
+          from: Semitua Monitor

@@ -105,7 +105,7 @@ export async function llamarGemini(params: LlamarGeminiParams): Promise<LlamarGe
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
       },
-      body: JSON.stringify({ prompt, usarLite, maxTokens, temperatura }),
+      body: JSON.stringify({ prompt, herramienta, usarLite, maxTokens, temperatura }),
     })
 
     if (!response.ok) {
@@ -141,10 +141,7 @@ export async function llamarGemini(params: LlamarGeminiParams): Promise<LlamarGe
 
   // ── 7. REGISTRAR USO ───────────────────────────────────────
   if (userId) {
-    supabase.from('ai_usage').insert({
-      user_id: userId, herramienta: `${herramienta}/${modeloNombre}`,
-      tokens_input: tokensInput, tokens_output: tokensOutput, coste_usd: costeUsd,
-    }).then(() => {})
+    // El registro en ai_usage lo hace ahora la Edge Function (servidor)
     supabase.rpc('incrementar_consulta', { user_id_param: userId }).then(() => {})
   }
 

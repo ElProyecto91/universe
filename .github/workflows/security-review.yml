@@ -1,0 +1,39 @@
+name: Security Review (semanal)
+
+on:
+  schedule:
+    - cron: '0 7 * * 1'  # lunes 07:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Buscar secretos en el código
+        run: |
+          set -u
+          PATRON='(sb_secret_|AIza[0-9A-Za-z_-]{30,}|sk_live_|sk_test_|whsec_|ghp_[A-Za-z0-9]{30,}|-----BEGIN [A-Z ]*PRIVATE KEY)'
+          if grep -rnEI "$PATRON" . --exclude-dir=.git --exclude-dir=node_modules --exclude=security-review.yml; then
+            echo "::error::Posible secreto en el repositorio"
+            exit 1
+          fi
+          echo "OK: sin secretos evidentes"
+
+      - name: Prohibir claves de IA con prefijo VITE_ en el código
+        run: |
+          if grep -rnE "VITE_GEMINI|generativelanguage.googleapis.com" src; then
+            echo "::error::Llamada directa a Gemini o clave VITE_ en el frontend"
+            exit 1
+          fi
+          echo "OK"
+
+      - name: Auditoría de dependencias
+        run: |
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm audit --audit-level=high --omit=dev
