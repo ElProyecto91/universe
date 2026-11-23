@@ -1,7 +1,7 @@
 // src/pages/Legal.tsx
 import { useState } from 'react'
 
-const URL_APP = 'universe-three-alpha.vercel.app'
+const URL_APP = 'semitua.com'
 const NOMBRE_APP = 'UNIVERSE'
 const EMAIL_CONTACTO = 'esxdinero@gmail.com'
 const FECHA_ACTUALIZACION = 'Septiembre 2026'
@@ -34,7 +34,7 @@ export default function Legal() {
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/92" />
+      <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.92)' }} />
 
       <div className="relative z-10 flex items-center px-4 py-4 border-b border-white/10">
         <button onClick={() => window.history.back()} className="text-purple-300 text-sm">← Volver</button>
