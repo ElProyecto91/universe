@@ -31,10 +31,12 @@ interface UsoPorHora {
   total: number
 }
 
+// Columnas reales de public.ai_config. `activo = false` es el kill switch.
+// Los presupuestos están en USD (igual que ai_usage.coste_usd).
 interface ConfigIA {
-  kill_switch: boolean
-  presupuesto_diario: number
-  presupuesto_mensual: number
+  activo: boolean
+  presupuesto_diario_usd: number
+  presupuesto_mensual_usd: number
 }
 
 interface Usuario {
@@ -143,8 +145,9 @@ export default function Admin() {
         totalUsuarios: totalUsuarios ?? 0,
         usuariosPremium: usuariosPremium ?? 0,
         consultasHoy: consultasHoy ?? 0,
-        gastoHoy: gastoHoyData?.total_eur ?? 0,
-        gastoMes: gastoMesData?.total_eur ?? 0,
+        // Las vistas ai_gasto_hoy / ai_gasto_mes devuelven USD; sum() sin filas es null.
+        gastoHoy: Number(gastoHoyData?.gasto_usd_hoy ?? 0),
+        gastoMes: Number(gastoMesData?.gasto_usd_mes ?? 0),
         cacheHits: cacheHits ?? 0,
         cacheMisses: cacheMisses ?? 0,
       })
@@ -206,15 +209,20 @@ export default function Admin() {
   async function toggleKillSwitch() {
     if (!configIA) return
     setGuardandoConfig(true)
-    const nuevoValor = !configIA.kill_switch
-    const { error } = await supabase
+    const nuevoActivo = !configIA.activo
+    // .select('id') devuelve las filas realmente modificadas: si el RLS bloquea la
+    // escritura, PostgREST responde sin error pero con 0 filas.
+    const { data, error } = await supabase
       .from('ai_config')
-      .update({ kill_switch: nuevoValor })
+      .update({ activo: nuevoActivo, updated_at: new Date().toISOString() })
       .eq('id', 1)
+      .select('id')
 
-    if (!error) {
-      setConfigIA({ ...configIA, kill_switch: nuevoValor })
-      setMsg(nuevoValor ? '🔴 IA desactivada' : '🟢 IA activada')
+    if (!error && data && data.length > 0) {
+      setConfigIA({ ...configIA, activo: nuevoActivo })
+      setMsg(nuevoActivo ? '🟢 IA activada' : '🔴 IA desactivada')
+    } else {
+      setMsg('❌ No se pudo cambiar el estado de la IA')
     }
     setGuardandoConfig(false)
     setTimeout(() => setMsg(''), 3000)
@@ -223,15 +231,26 @@ export default function Admin() {
   async function guardarPresupuestos() {
     if (!configIA) return
     setGuardandoConfig(true)
-    const { error } = await supabase
+    const diario = Number(configIA.presupuesto_diario_usd)
+    const mensual = Number(configIA.presupuesto_mensual_usd)
+    if (!Number.isFinite(diario) || !Number.isFinite(mensual) || diario <= 0 || mensual <= 0) {
+      setMsg('❌ Los límites deben ser números mayores que 0')
+      setGuardandoConfig(false)
+      setTimeout(() => setMsg(''), 3000)
+      return
+    }
+
+    const { data, error } = await supabase
       .from('ai_config')
       .update({
-        presupuesto_diario: configIA.presupuesto_diario,
-        presupuesto_mensual: configIA.presupuesto_mensual,
+        presupuesto_diario_usd: diario,
+        presupuesto_mensual_usd: mensual,
+        updated_at: new Date().toISOString(),
       })
       .eq('id', 1)
+      .select('id')
 
-    setMsg(error ? '❌ Error al guardar' : '✅ Presupuestos guardados')
+    setMsg(!error && data && data.length > 0 ? '✅ Presupuestos guardados' : '❌ Error al guardar')
     setGuardandoConfig(false)
     setTimeout(() => setMsg(''), 3000)
   }
@@ -242,12 +261,13 @@ export default function Admin() {
       ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
       : null
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .update({ plan: nuevoPlan, plan_fin: planFin })
       .eq('id', userId)
+      .select('id')
 
-    if (!error) {
+    if (!error && data && data.length > 0) {
       setUsuarios(prev => prev.map(u => u.id === userId ? { ...u, plan: nuevoPlan } : u))
       setMsg(`✅ Plan actualizado a ${nuevoPlan}`)
     } else {
@@ -273,7 +293,7 @@ export default function Admin() {
       } else if (tipo === 'eventos') {
         const { data: d } = await supabase
           .from('analytics_eventos')
-          .select('herramienta, accion, created_at, desde_cache, tiempo_respuesta_ms, signo, dispositivo, pais')
+          .select('herramienta, evento, created_at, desde_cache, tiempo_ms, signo_zodiacal, dispositivo, pais_iso')
           .order('created_at', { ascending: false })
           .limit(5000)
         data = d ?? []
@@ -281,7 +301,7 @@ export default function Admin() {
       } else if (tipo === 'ia') {
         const { data: d } = await supabase
           .from('ai_usage')
-          .select('herramienta, modelo, tokens_entrada, tokens_salida, coste_eur, created_at')
+          .select('herramienta, tokens_input, tokens_output, coste_usd, created_at')
           .order('created_at', { ascending: false })
           .limit(5000)
         data = d ?? []
@@ -312,7 +332,7 @@ export default function Admin() {
   if (autorizado === false) {
     return (
       <div className="min-h-screen text-white flex items-center justify-center relative" style={bgStyle}>
-        <div className="absolute inset-0 bg-black/92" />
+        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.92)' }} />
         <div className="relative z-10 text-center px-6">
           <p className="text-5xl mb-4">🔒</p>
           <p className="text-white font-bold text-xl mb-2">Acceso restringido</p>
@@ -327,7 +347,7 @@ export default function Admin() {
   if (autorizado === null || cargando) {
     return (
       <div className="min-h-screen text-white flex items-center justify-center relative" style={bgStyle}>
-        <div className="absolute inset-0 bg-black/92" />
+        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.92)' }} />
         <div className="relative z-10 flex gap-2">
           <div className="w-3 h-3 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
           <div className="w-3 h-3 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -351,7 +371,7 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen text-white flex flex-col relative" style={bgStyle}>
-      <div className="absolute inset-0 bg-black/92" />
+      <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.92)' }} />
 
       {/* Header */}
       <div className="relative z-10 flex items-center px-4 py-4 border-b border-white/10 backdrop-blur">
@@ -412,28 +432,28 @@ export default function Admin() {
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">💶 Costes IA</p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-2xl font-bold text-white">€{resumen.gastoHoy.toFixed(4)}</p>
+                  <p className="text-2xl font-bold text-white">${resumen.gastoHoy.toFixed(4)}</p>
                   <p className="text-white/40 text-xs">Hoy</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-white">€{resumen.gastoMes.toFixed(4)}</p>
+                  <p className="text-2xl font-bold text-white">${resumen.gastoMes.toFixed(4)}</p>
                   <p className="text-white/40 text-xs">Este mes</p>
                 </div>
               </div>
               {configIA && (
                 <div className="mt-3 pt-3 border-t border-white/10">
                   <div className="flex justify-between text-xs">
-                    <span className="text-white/40">Límite diario: €{configIA.presupuesto_diario}</span>
-                    <span className={resumen.gastoHoy > configIA.presupuesto_diario * 0.8 ? 'text-red-400' : 'text-green-400'}>
-                      {Math.round((resumen.gastoHoy / configIA.presupuesto_diario) * 100)}% usado
+                    <span className="text-white/40">Límite diario: ${configIA.presupuesto_diario_usd}</span>
+                    <span className={resumen.gastoHoy > configIA.presupuesto_diario_usd * 0.8 ? 'text-red-400' : 'text-green-400'}>
+                      {Math.round((resumen.gastoHoy / configIA.presupuesto_diario_usd) * 100)}% usado
                     </span>
                   </div>
                   <div className="mt-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all"
                       style={{
-                        width: `${Math.min(100, (resumen.gastoHoy / configIA.presupuesto_diario) * 100)}%`,
-                        backgroundColor: resumen.gastoHoy > configIA.presupuesto_diario * 0.8 ? '#f87171' : '#a78bfa',
+                        width: `${Math.min(100, (resumen.gastoHoy / configIA.presupuesto_diario_usd) * 100)}%`,
+                        backgroundColor: resumen.gastoHoy > configIA.presupuesto_diario_usd * 0.8 ? '#f87171' : '#a78bfa',
                       }}
                     />
                   </div>
@@ -447,7 +467,7 @@ export default function Admin() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-xl font-bold text-green-300">{resumen.cacheHits}</p>
-                  <p className="text-white/40 text-xs">Hits (€0)</p>
+                  <p className="text-white/40 text-xs">Hits ($0)</p>
                 </div>
                 <div>
                   <p className="text-xl font-bold text-amber-300">{resumen.cacheMisses}</p>
@@ -547,18 +567,18 @@ export default function Admin() {
                 <div>
                   <p className="text-white font-semibold">Kill Switch IA</p>
                   <p className="text-white/40 text-xs mt-0.5">
-                    {configIA.kill_switch ? '🔴 IA desactivada globalmente' : '🟢 IA activa'}
+                    {!configIA.activo ? '🔴 IA desactivada globalmente' : '🟢 IA activa'}
                   </p>
                 </div>
                 <button
                   onClick={toggleKillSwitch}
                   disabled={guardandoConfig}
-                  className={`w-14 h-7 rounded-full transition-colors relative ${configIA.kill_switch ? 'bg-red-500' : 'bg-green-500'} disabled:opacity-40`}
+                  className={`w-14 h-7 rounded-full transition-colors relative ${!configIA.activo ? 'bg-red-500' : 'bg-green-500'} disabled:opacity-40`}
                 >
-                  <div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition-all ${configIA.kill_switch ? 'left-1' : 'left-8'}`} />
+                  <div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition-all ${!configIA.activo ? 'left-1' : 'left-8'}`} />
                 </button>
               </div>
-              {configIA.kill_switch && (
+              {!configIA.activo && (
                 <div className="mt-3 bg-red-500/10 border border-red-500/30 rounded-xl p-3">
                   <p className="text-red-400 text-xs">⚠️ La IA está desactivada. Todas las llamadas a Gemini fallarán hasta que la reactives.</p>
                 </div>
@@ -571,22 +591,22 @@ export default function Admin() {
 
               <div className="flex flex-col gap-4">
                 <div>
-                  <label className="text-white/60 text-xs mb-1 block">Límite diario (€)</label>
+                  <label className="text-white/60 text-xs mb-1 block">Límite diario (US$)</label>
                   <input
                     type="number"
                     step="0.01"
-                    value={configIA.presupuesto_diario}
-                    onChange={e => setConfigIA({ ...configIA, presupuesto_diario: parseFloat(e.target.value) })}
+                    value={configIA.presupuesto_diario_usd}
+                    onChange={e => setConfigIA({ ...configIA, presupuesto_diario_usd: parseFloat(e.target.value) })}
                     className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-purple-400"
                   />
                 </div>
                 <div>
-                  <label className="text-white/60 text-xs mb-1 block">Límite mensual (€)</label>
+                  <label className="text-white/60 text-xs mb-1 block">Límite mensual (US$)</label>
                   <input
                     type="number"
                     step="0.1"
-                    value={configIA.presupuesto_mensual}
-                    onChange={e => setConfigIA({ ...configIA, presupuesto_mensual: parseFloat(e.target.value) })}
+                    value={configIA.presupuesto_mensual_usd}
+                    onChange={e => setConfigIA({ ...configIA, presupuesto_mensual_usd: parseFloat(e.target.value) })}
                     className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-purple-400"
                   />
                 </div>
@@ -605,11 +625,11 @@ export default function Admin() {
               <p className="text-purple-300 text-xs tracking-widest uppercase mb-3">🤖 Modelos activos</p>
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-white text-sm">gemini-3.5-flash</span>
+                  <span className="text-white text-sm">gemini-3.6-flash</span>
                   <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full">Flash · Principal</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-white text-sm">gemini-2.0-flash-lite</span>
+                  <span className="text-white text-sm">gemini-3.1-flash-lite</span>
                   <span className="text-xs bg-green-500/20 text-green-300 px-2 py-0.5 rounded-full">Lite · Económico</span>
                 </div>
               </div>
